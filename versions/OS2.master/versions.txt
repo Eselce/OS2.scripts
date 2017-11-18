@@ -1,0 +1,13 @@
+﻿
+OS2.master.user.js
+
+1.0		20:30, 14. Feb. 2013‎	SLC		OS2.master
+		17:12, 15. Feb. 2013‎	SLC		Greasemonkey
+1.0-SLC
+2.0		15:26, 24. Feb. 2013‎	Andreas Eckes	Release Version 2.0
+2.0-SP-0.3-old	18:27, 24. Feb. 2013‎	Andreas Eckes	→‎Version 2.0: Korrektur Einbindung Spielplan-Skript
+		18:30, 24. Feb. 2013‎	SLC		→‎Quellcode: Replace von &
+2.0-SP-0.3	18:51, 24. Feb. 2013‎	SLC		→‎Quellcode: & amp ;
+2.1		19:40, 6. Jul. 2014‎	Andreas Eckes	Update Version 2.1
+2.2		15:36, 13. Jul. 2014‎	Andreas Eckes	Update Version 2.2
+2.3		20:50, 2. Mär. 2016‎	Andreas Eckes	Update auf Skript-Version 2.3
