@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name OS2.vereinshistorieMitKruecke
-// @version 0.1
+// @version 1.0
 // @description OS 2.0 - Ergaenzt fehlende Zeilen und zeigt absoluten und relativen MW-Zuwachs an
 // @include http://os.ongapo.com/showteam.php?s=7
 // @include http://os.ongapo.com/st.php?s=7*
@@ -35,7 +35,7 @@ var popupFensterFaktorX = 0.2; // Faktor, um den die Breite des Popupfensters ve
 
 var offsetTop = 2;
 var offsetBottom = 1;
-var table = document.getElementsByTagName("table")[1];
+var table = document.getElementsByTagName("table")[2];
 var offsets = [offsetTop, offsetBottom, 0, 0]; // 2 Zeilen oben, 1 Zeile unten ausschliessen
 
 // Kruecken-Logik ***********************************************************************
