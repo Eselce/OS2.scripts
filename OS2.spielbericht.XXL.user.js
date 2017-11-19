@@ -1,8 +1,8 @@
-ï»¿// ==UserScript==
+// ==UserScript==
 // @name OS2.spielbericht.XXL
-// @version 0.6
-// @description ZÃ¤hlt Textbausteine
-// @description OS 2.0 - ErgÃ¤nzt Summen- und Durchschnittswerte bei den Spielerstatistiken im Spielbericht
+// @version 0.61
+// @description Zählt Textbausteine
+// @description OS 2.0 - Ergänzt Summen- und Durchschnittswerte bei den Spielerstatistiken im Spielbericht
 // @include http://os.ongapo.com/rep/saison/*
 // @include http://online-soccer.eu/rep/saison/*
 // @include http://www.online-soccer.eu/rep/saison/*
@@ -23,17 +23,17 @@ function inflateRow(row, length) {
 }
 
 
-// ==================== Funktionen neu fÃ¼r Textbausteine ====================
+// ==================== Funktionen neu für Textbausteine ====================
 
 var gruppen = [ "Pass", "ZWK_ov","SCH", "Erfolg_l_TB"];
 gruppen.Pass = [/spielt/i, /pass /i, / passt/i, /flankt/i, /zieht den Ball/i];
 gruppen.ZWK_ov = [/versucht/i, /erk\u00E4mpft/i, /nicht vorbei/i, /nicht umspielen/i, /nicht \u00FCberspielen/i, /nicht mit einem/i];
 gruppen.SCH = [/e eck/i, /link/i, /recht/i, /richtung/i, /aufs Tor/i, /kopfball/i, /volley/i, /zieht ab/i];
 // gruppen.Ecken = [/zieht den Ball/i];
-gruppen.Erfolg_l_TB = [/Keeper/i, /ABSEITS/i, /gefahrenzone/i, /der Ball/i, /kann den Ball/i, /Bein in/i, /streckt/i]; // TB Ã¼berprÃ¼fen
+gruppen.Erfolg_l_TB = [/Keeper/i, /ABSEITS/i, /gefahrenzone/i, /der Ball/i, /kann den Ball/i, /Bein in/i, /streckt/i]; // TB überprüfen
 
 var kopfz = [ "ZWKo", "ZWKo %","ZWKd", "ZWKd %","Pass", "P\u00E4sse %","Ansp."]; //der Tabelle berichtsstatistik
-var kategorien = [ "Z_o_v", "Z_d_g","P_e", "P_f","Ansp_e", "Ansp_f","Sch_e","Sch_f"]; //zu zÃ¤hlende Elemente
+var kategorien = [ "Z_o_v", "Z_d_g","P_e", "P_f","Ansp_e", "Ansp_f","Sch_e","Sch_f"]; //zu zählende Elemente
 
 function regexsuche (begriff) {
     var ergebnis = false;
@@ -91,9 +91,11 @@ function textbausteine(){
             for (var i = 0; i < Math.min(2, spielernamen.length); i++) { // aktiven und passiven Spieler feststellen
                 if ((/erk\u00E4mpft sich den Ball/i).test(spielbericht.rows[j].cells[1].textContent) === true) {
                     // TB-Spalten spielbericht.rows[j].cells[4-i].textContent = spielernamen[i].textContent;
-                    // TB-Spalten spielbericht.rows[j].cells[3].textContent = spielbericht.rows[j-1].cells[4].textContent; // Zweikampfgegener aus der letzten Zeile
                     spielerakt[j][1-i] = spielernamen[i].textContent;
-                    spielerakt[j][0] = spielerakt[j-1][1];
+                    if (spielbericht.rows[j].cells[0].textContent === "") {
+                        // TB-Spalten spielbericht.rows[j].cells[3].textContent = spielbericht.rows[j-1].cells[4].textContent; // Zweikampfgegener aus der letzten Zeile
+                        spielerakt[j][0] = spielerakt[j-1][1];
+                    }
                 }
                 else if ((/nicht vorbei/i).test(spielbericht.rows[j].cells[1].textContent) === true) {
                     // TB-Spalten spielbericht.rows[j].cells[4-i].textContent = spielernamen[i].textContent;
@@ -194,8 +196,8 @@ function berstatistik () {
                 break;
 
             case "SCH":
-                // Anweisungen werden ausgefÃ¼hrt,
-                // falls expression mit valueN Ã¼bereinstimmt
+                // Anweisungen werden ausgeführt,
+                // falls expression mit valueN übereinstimmt
                 break;
             default:
                 // nichts
@@ -238,11 +240,11 @@ function berstatistik () {
     }
 }
 
-// ==================== Ende Funktionen fÃ¼r Textbausteine ====================
+// ==================== Ende Funktionen für Textbausteine ====================
 
 
 
-// ==================== Code neu fÃ¼r Textbausteine ====================
+// ==================== Code neu für Textbausteine ====================
 
 spielbericht = document.getElementsByTagName("table")[2];
 spielerakt = Array(spielbericht.rows.length); // Beteiligte je Zeile
@@ -260,7 +262,7 @@ berstatistik();
 
 console.log("End of script");
 
-// ==================== Ende Code fÃ¼r Textbausteine ====================
+// ==================== Ende Code für Textbausteine ====================
 
 
 
