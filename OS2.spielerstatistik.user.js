@@ -1,29 +1,33 @@
-﻿// ==UserScript==
+// ==UserScript==
 // @name         OS2.spielerstatistik
 // @namespace    http://os.ongapo.com/
 // @version      0.1
 // @copyright    2016+
 // @author       Roman Bauer
 // @description  Sortierung/Formatierung der Statistikspalten
-// @include      http*://os.ongapo.com/showteam.php?s=3&*
-// @include      http*://www.os.ongapo.com/showteam.php?s=3&*
-// @include      http*://online-soccer.eu/showteam.php?s=3&*
-// @include      http*://www.online-soccer.eu/showteam.php?s=3&*
-// @include      http*://www.os-zeitungen.com/showteam.php?s=3
+// @include      http*://os.ongapo.com/showteam.php?*s=3*
+// @include      http*://www.os.ongapo.com/showteam.php?*s=3*
+// @include      http*://online-soccer.eu/showteam.php?*s=3*
+// @include      http*://www.online-soccer.eu/showteam.php?*s=3*
+// @include      http*://os-zeitungen.com/showteam.php?*s=3*
+// @include      http*://www.os-zeitungen.com/showteam.php?*s=3*
 // @include      http*://os.ongapo.com/st.php?*s=3*
 // @include      http*://www.os.ongapo.com/st.php?*s=3*
 // @include      http*://online-soccer.eu/st.php?*s=3*
 // @include      http*://www.online-soccer.eu/st.php?*s=3*
+// @include      http*://os-zeitungen.com/st.php?*s=3*
 // @include      http*://www.os-zeitungen.com/st.php?*s=3*
-// @include      http*://os.ongapo.com/showteam.php?s=4&*
-// @include      http*://www.os.ongapo.com/showteam.php?s=4&*
-// @include      http*://online-soccer.eu/showteam.php?s=4&*
-// @include      http*://www.online-soccer.eu/showteam.php?s=4&*
-// @include      http*://www.os-zeitungen.com/showteam.php?s=4
+// @include      http*://os.ongapo.com/showteam.php?*s=4*
+// @include      http*://www.os.ongapo.com/showteam.php?*s=4*
+// @include      http*://online-soccer.eu/showteam.php?*s=4*
+// @include      http*://www.online-soccer.eu/showteam.php?*s=4*
+// @include      http*://os-zeitungen.com/showteam.php?*s=4*
+// @include      http*://www.os-zeitungen.com/showteam.php?*s=4*
 // @include      http*://os.ongapo.com/st.php?*s=4*
 // @include      http*://www.os.ongapo.com/st.php?*s=4*
 // @include      http*://online-soccer.eu/st.php?*s=4*
 // @include      http*://www.online-soccer.eu/st.php?*s=4*
+// @include      http*://os-zeitungen.com/st.php?*s=4*
 // @include      http*://www.os-zeitungen.com/st.php?*s=4*
 // @grant        GM_addStyle
 // ==/UserScript==
@@ -58,7 +62,7 @@
 		row = tableClone.rows[r];
 
 		if (r === 0 || r === (tableClone.rows.length - 1)) {
-			// Zeile wird weier unten gelöscht
+			// Zeile wird weier unten gel�scht
 		} else if (r === 1 || r === (tableClone.rows.length - 2)) {
 
 			row.cells[SORT_COLUMNS.indexOf("Land")].colSpan = 1;
