@@ -1,37 +1,30 @@
 ﻿// ==UserScript==
-// @name OS2.master
-// @version 2.2
+// @name 		OS2.master
+// @namespace  	http://os.ongapo.com/
+// @version 	2.3
 // @description OS 2.0 - Master-Skript
-// @include http://os.ongapo.com/showteam.php?s=*
-// @include http://os.ongapo.com/st.php?s=*
-// @include http://os.ongapo.com/tplatz.php?t=*
-// @include http://os.ongapo.com/spielpreview.php?*
-// @include http://os.ongapo.com/sp.php?*
-// @include http://os.ongapo.com/training.php
-// @include http://os.ongapo.com/ka.php
-// @include http://online-soccer.eu/showteam.php?s=*
-// @include http://online-soccer.eu/st.php?s=*
-// @include http://online-soccer.eu/tplatz.php?t=*
-// @include http://online-soccer.eu/spielpreview.php?*
-// @include http://online-soccer.eu/sp.php?*
-// @include http://online-soccer.eu/training.php
-// @include http://online-soccer.eu/ka.php
-// @include http://www.online-soccer.eu/showteam.php?s=*
-// @include http://www.online-soccer.eu/st.php?s=*
-// @include http://www.online-soccer.eu/tplatz.php?t=*
-// @include http://www.online-soccer.eu/spielpreview.php?*
-// @include http://www.online-soccer.eu/sp.php?*
-// @include http://www.online-soccer.eu/training.php
-// @include http://www.online-soccer.eu/ka.php
+// @include 	http://os.ongapo.com/showteam.php?s=*
+// @include 	http://os.ongapo.com/st.php?s=*
+// @include 	http://os.ongapo.com/sp.php?*
+// @include 	http://os.ongapo.com/training.php
+// @include 	http://os.ongapo.com/ka.php
+// @include 	http://online-soccer.eu/showteam.php?s=*
+// @include 	http://online-soccer.eu/st.php?s=*
+// @include 	http://online-soccer.eu/sp.php?*
+// @include 	http://online-soccer.eu/training.php
+// @include 	http://online-soccer.eu/ka.php
+// @include 	http://www.online-soccer.eu/showteam.php?s=*
+// @include 	http://www.online-soccer.eu/st.php?s=*
+// @include 	http://www.online-soccer.eu/sp.php?*
+// @include 	http://www.online-soccer.eu/training.php
+// @include 	http://www.online-soccer.eu/ka.php
+// @grant		none
 // ==/UserScript==
 
 // Dieses Skript ist in der Lage, folgendes zu machen:
 // Teamansicht - Einzelwerte: Primaerskills hervorheben
-// Teamansicht - Saisonplan: Runde eintragen, Abrechnungen trennen
-// Teamansicht - Tabellenplaetze: Fenster vergroessern
 // Teamansicht - Statistik Saison / Gesamt: Spalten umordnen, Hoechstwerte markieren, Wettbewerbe bzw. Kategorien trennen
 // Teamansicht - Vereinshistorie: Saisons trennen
-// Vorschau: Fenster vergroessern
 // Spielerprofil: Primaerskills hervorheben, Saisons in Historie trennen
 // Training: Trainingswahrscheinlichkeiten je nach Einsatzdauer berechnen
 // Kontoauszug: Abrechnungen trennen
@@ -40,13 +33,11 @@
 
 // Konfiguration ************************************************************************
 var einzelwerte = true; // Teamansicht - Einzelwerte bearbeiten?
-var tabellenplaetze = true; // Tabellenplatz-Fenster vergroessern?
 var statistiken = true; // Teamansicht - Statistik Saison/Gesamt bearbeiten?
 var statistikenUmordnen = true; // In Teamansicht - Statistik Saison/Gesamt Wettbewerbe und Kategorien vertauschen?
 var vereinshistorie = true; // Teamansicht - Vereinshistorie bearbeiten?
 var spielerprofil = true; // Spielerprofil bearbeiten?
 var training = true; // Training bearbeiten?
-var vorschau = true; // Vorschau-Fenster vergroessern?
 var kontoauszug = true; // Kontoauszug bearbeiten?
 // Konfiguration Ende *******************************************************************
 
@@ -58,8 +49,6 @@ var pageString = parseURL(url);
 // Je nach URL in die Verarbeitungsfunktionen verzweigen
 switch (pageString) {
 	case "teamansicht": procTeamansicht(); break;
-	case "tabellenplatz": if (tabellenplaetze) { procTabellenplaetze(); } break;
-	case "vorschau": if (vorschau) { procVorschau(); } break;
 	case "spielerprofil": if (spielerprofil) { procSpielerprofil(); } break;
 	case "training": if (training) { procTraining(); } break;
 	case "kontoauszug": if (kontoauszug) { procKontoauszug(); } break;
@@ -96,8 +85,6 @@ function procTeamansicht() {
 			var table = document.getElementsByTagName("table")[2];
 			var offsets = [2, 1, 0, 0]; // 2 Zeilen oben, 1 Zeile unten ausschliessen
 			drawHorizontalLines(table, offsets, 1, 0);
-			// Fenster verbreitern
-			if (isPopupWindow(this)) { this.resizeBy(this.innerWidth * 0.1, 0); }
 			break;
 	}
 }
@@ -179,9 +166,8 @@ function procStatistiken(table) {
 function procSpielerprofil() {
 	// Primaerskills hervorheben
 	var tdTags = document.getElementsByTagName("td");
-	var pos = tdTags[14].textContent;
+	var pos = tdTags[21].textContent;
 	var color = getColor(pos);
-	//alert(color);
 	var skills = getIdxPriSkillsDetailsPage(pos);
 	for (var i = 0; i < skills.length; i++) {
 		tdTags[skills[i]].style.color = color;
@@ -261,20 +247,6 @@ function procTraining() {
 			appendCell(currentRow, newProbabilityString, color);
 		}
 	}
-}
-
-// **************************************************************************************
-// Tabellenplaetze: Fenster vergroessern
-// **************************************************************************************
-function procTabellenplaetze() {
-	if (isPopupWindow(this)) { this.resizeBy(this.innerWidth * 0.1, this.innerHeight * 0.1); }
-}
-
-// **************************************************************************************
-// Vorschau: Fenster vergroessern
-// **************************************************************************************
-function procVorschau() {
-	if (isPopupWindow(this)) { this.resizeBy(0, this.innerHeight * 1.45); }
 }
 
 // ****************************************************************************
@@ -365,12 +337,6 @@ function drawHorizontalLines(table, offsets, mode, colIdx) {
 				break;
 		}
 	}
-}
-
-// Gibt true zurueck, wenn das uebergebene Fenster keine sichtbare Menueleiste hat.
-// Im Allgemeinen ist das Fenster dann ein Popupfenster.
-function isPopupWindow(aWindow) {
-	return !(aWindow.menubar && aWindow.menubar.visible);
 }
 
 // Fuegt eine Zelle am Ende einer Zeile hinzu, fuellt die Zelle und gibt sie (td-Tag) zurueck.
@@ -477,13 +443,15 @@ function stringToNumber(string) {
 
 // Liefert je nach Position die Indizes der Primaerskills im Spielerprofil.
 function getIdxPriSkillsDetailsPage(pos) {
+	var tdOffset = 0;
+	
     switch (pos) {
-        case "TOR": return new Array(36,38,40,42);
-        case "ABW": return new Array(36,38,40,62);
-        case "DMI": return new Array(50,54,40,34);
-        case "MIT": return new Array(50,54,38,34);
-        case "OMI": return new Array(50,54,34,42);
-        case "STU": return new Array(32,36,42,38);
+        case "TOR": return new Array(tdOffset + 38,tdOffset + 40,tdOffset + 42,tdOffset + 44);
+		case "ABW": return new Array(tdOffset + 38,tdOffset + 40,tdOffset + 42,tdOffset + 64);
+        case "DMI": return new Array(tdOffset + 52,tdOffset + 56,tdOffset + 42,tdOffset + 36);
+        case "MIT": return new Array(tdOffset + 52,tdOffset + 56,tdOffset + 40,tdOffset + 36);
+		case "OMI": return new Array(tdOffset + 52,tdOffset + 56,tdOffset + 36,tdOffset + 44);
+		case "STU": return new Array(tdOffset + 34,tdOffset + 38,tdOffset + 44,tdOffset + 40);
         default:    return new Array();
     }
 }
