@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
-// @name OS2.masterV2
-// @version 2.0
-// @description OS 2.0 - Master-Skript Version 2.0
+// @name OS2.master
+// @version 2.1
+// @description OS 2.0 - Master-Skript Version 2.1
 // @include http://os.ongapo.com/showteam.php?s=*
 // @include http://os.ongapo.com/st.php?s=*
 // @include http://os.ongapo.com/tplatz.php?t=*
@@ -40,11 +40,6 @@
 
 // Konfiguration ************************************************************************
 var einzelwerte = true; // Teamansicht - Einzelwerte bearbeiten?
-var spielplan = true; // Saisonplan bearbeiten?
-var sepMonths = true;	// Im Spielplan Striche zwischen den Monaten
-var shortKom = true;	// Vorbericht(e) & Kommentar(e) nicht ausschreiben
-var showStats = true;	// Ergebnisse aufaddieren und Stand anzeigen
-var longStats = false;	// Detailliertere Ausgabe des Stands
 var tabellenplaetze = true; // Tabellenplatz-Fenster vergroessern?
 var statistiken = true; // Teamansicht - Statistik Saison/Gesamt bearbeiten?
 var statistikenUmordnen = true; // In Teamansicht - Statistik Saison/Gesamt Wettbewerbe und Kategorien vertauschen?
@@ -93,16 +88,12 @@ function procTeamansicht() {
 			break;
 		// Statistiken
 		case (((s == 3) || (s == 4)) && statistiken):
-			var table = document.getElementsByTagName("table")[1];
+			var table = document.getElementsByTagName("table")[2];
 			procStatistiken(table);
-			break;
-		// Saisonplan
-		case ((s == 6) && spielplan):
-			procSpielplan(sepMonths, shortKom, showStats);
 			break;
 		// Vereinshistorie
 		case (s == 7):
-			var table = document.getElementsByTagName("table")[1];
+			var table = document.getElementsByTagName("table")[2];
 			var offsets = [2, 1, 0, 0]; // 2 Zeilen oben, 1 Zeile unten ausschliessen
 			drawHorizontalLines(table, offsets, 1, 0);
 			// Fenster verbreitern
@@ -182,194 +173,6 @@ function procStatistiken(table) {
 	}
 }
 
-
-// **************************************************************************************
-// Verarbeitet Ansicht "Saisonplan"
-// sepMonths Im Spielplan Striche zwischen den Monaten
-// shortKom Vorbericht(e) & Kommentar(e) nicht ausschreiben
-// **************************************************************************************
-function procSpielplan(sepMonths, shortKom, showStats) {
-    var pokalRunden = [ "1. Runde", "2. Runde", "3. Runde", "Achtelfinale", "Viertelfinale", "Halbfinale", "Finale" ];
-    var qualiRunden = [ "Quali 1", "Quali 2", "Quali 3" ];
-    var oscRunden = [ "Viertelfinale", "Halbfinale", "Finale" ];
-    var oseRunden = [ "Runde 1", "Runde 2", "Runde 3", "Runde 4", "Achtelfinale", "Viertelfinale", "Halbfinale", "Finale" ];
-    var hinrueck = [ " Hin", " Rück", "" ];
-
-    var table = document.getElementsByTagName("table")[1];
-    var saisons = document.getElementsByTagName("option");
-    var saison = getSaisonFromComboBox(saisons);
-
-    var anzZATperMonth = (saison < 2) ? 7 : 6;	// Erste Saison 7, danach 6...
-
-    var rowOffsetUpper = 1;
-    var rowOffsetLower = 0;
-
-    var columnIndexArt = 1;
-    var columnIndexErg = 3;
-    var columnIndexZus = 5;
-    var columnIndexKom = 6;
-
-    var ligaSpieltag = 0;
-    var pokalRunde = 0;
-    var euroRunde = -1;
-    var hinrueckspiel = 0;
-    var ZATrueck = 0;
-    var ZATkorr = 0;
-    var ZAT = 1;
-
-    var ligaStats;
-    var euroStats;
-
-    var spielart;
-    var ergebnis;
-    var kommentar;
-    var stats;
-    var zusatz;
-    var gruppenPhase;
-
-    var i;
-    var j;
-
-    ligaStats = emptyStats();
-
-    for (i = rowOffsetUpper; i < table.rows.length - rowOffsetLower; i++, ZAT++) {
-        if ((ZAT > 12) && (ZAT % 10 == 5)) {	// paßt für alle Saisons: 12, 20, 30, 40, 48, 58, 68 / 3, 15, 27, 39, 51, 63, 69
-            pokalRunde++;
-        }
-        if ((ZAT + ZATkorr) % 6 == 4) {
-            if (ZAT < 63) {
-                ZATrueck = ZAT + 2;
-                euroRunde++;
-                hinrueckspiel = 0;
-            } else {
-                euroRunde = 10;	// Finale
-                hinrueckspiel = 2;
-            }
-        }
-        if (ZAT == ZATrueck) {
-            hinrueckspiel = 1;	// 5, 7; 11, 13;  (17, 19)  / 23,   25; 29, 31; 35,  37; 41,  43; 47, 49; 53,  55; 59,  61; 69
-            if (saison < 3) {	// 4, 6; 10, 14*; (16, 22*) / 24**, 26; 34, 36; 38*, 42; 44*, 50; 52, 54; 56*, 60; 62*, 66; 70
-                if (ZAT == 22) {
-                    ZATkorr = 4;
-                } else if ((ZAT - 6) % 20 > 6) {
-                    ZATkorr = 2;
-                } else {
-                    ZATkorr = 0;
-                }
-                if ((ZAT == 22) || (ZAT == 30)) {
-                    euroRunde--;	// Früher: 3. Quali-Rückspiel erst knapp vor 1. Hauptrunde
-                }
-            }
-        }
-        if (shortKom) {
-            kommentar = table.rows[i].cells[columnIndexKom].innerHTML;
-            table.rows[i].cells[columnIndexKom].innerHTML = kommentar.replace("Vorbericht(e)", "V").replace("Kommentar(e)", "K").replace("&amp;", "/").replace("&", "/");
-        }
-        stats = "";
-        spielart = table.rows[i].cells[columnIndexArt].textContent.split(" : ", 2);
-        ergebnis = table.rows[i].cells[columnIndexErg].textContent.split(" : ", 2);
-        table.rows[i].cells[columnIndexZus].className = table.rows[i].cells[columnIndexArt].className;
-        if (table.rows[i].cells[columnIndexZus].textContent == "") {
-            zusatz = spielart[0];
-            if (zusatz == "Liga") {
-                if (ZAT < 70) {
-                    stats = addResultToStats(ligaStats, ergebnis);
-                    zusatz = ++ligaSpieltag + ". Spieltag";
-                } else {
-                    zusatz = "Relegation";
-                }
-            } else if (zusatz == "LP") {
-                zusatz = pokalRunden[pokalRunde];
-            } else if ((zusatz == "OSCQ") || (zusatz == "OSEQ")) {
-                if (hinrueckspiel != 1) {
-                    euroStats = emptyStats();
-                }
-                stats = addResultToStats(euroStats, ergebnis);
-                zusatz = qualiRunden[euroRunde] + hinrueck[hinrueckspiel];
-            } else if (zusatz == "OSC") {
-                if ((hinrueckspiel != 1) && ((euroRunde >= 8) || ((euroRunde - 2) % 3 == 0))) {
-                    euroStats = emptyStats();
-                }
-                stats = addResultToStats(euroStats, ergebnis);
-                if (euroRunde < 8) {
-                    gruppenPhase = (euroRunde < 5) ? "HR-Grp. " : "ZR-Grp. ";
-                    zusatz = gruppenPhase + "Spiel " + (((euroRunde - 2) % 3) * 2 + 1 + hinrueckspiel);
-                } else {
-                    zusatz = oscRunden[euroRunde - 8] + hinrueck[hinrueckspiel];
-                }
-            } else if (zusatz == "OSE") {
-                if (hinrueckspiel != 1) {
-                    euroStats = emptyStats();
-                }
-                stats = addResultToStats(euroStats, ergebnis);
-                zusatz = oseRunden[euroRunde - 3] + hinrueck[hinrueckspiel];
-            } else if (zusatz == "Friendly") {
-                zusatz = "";	// irgendwie besser lesbar!
-            }
-            if (showStats && (stats != "")) {
-                zusatz = zusatz + " " + stats;
-            }
-            table.rows[i].cells[columnIndexZus].textContent = zusatz;
-        }
-        if (sepMonths && (ZAT % anzZATperMonth == 0) && (i < table.rows.length - rowOffsetLower - 1)) {
-            for (j = 0; j < table.rows[i].cells.length; j++) {
-                table.rows[i].cells[j].style.borderBottom = borderString;
-            }
-        }
-    }
-}
-
-// Verarbeitet die URL der Seite und ermittelt die Nummer der gewünschten Unterseite
-// saisons Alle "option"-Einträge der Combo-Box
-function getSaisonFromComboBox(saisons) {
-    var saison = 0;
-    var i;
-
-    for (i = 0; i < saisons.length; i++) {
-        if (saisons[i].outerHTML.match(/selected/)) {
-            saison = saisons[i].textContent;
-        }
-    }
-
-    return saison;
-}
-
-// Liefert eine auf 0 zurückgesetzte Ergebnissumme
-// stats Enthält die summierten Stats
-function emptyStats(stats) {
-    return [ 0, 0, 0, 0, 0, 0 ];
-}
-
-// Liefert die Stats als String
-// stats Enthält die summierten Stats
-function getStats(stats) {
-    return (longStats ? "[" + stats[0] + " " + stats[1] + " " + stats[2] + "] " : "/ ") + stats[3] + ":" + stats[4] + " "
-    + ((stats[3] < stats[4]) ? "" : ((stats[3] > stats[4]) ? "+" : "")) + (stats[3] - stats[4]) + " (" + stats[5] + ")";
-}
-
-// Summiert ein Ergebnis auf die Stats und liefert den neuen Text zurück
-// stats Enthält die summierten Stats
-// ergebnis Spielergebnis [ Eigene Tore, Gegentore ]
-function addResultToStats(stats, ergebnis) {
-    var ret = "";
-    var sgn;
-    var gfor;
-    var gagainst;
-    if (ergebnis.length == 2) {
-        gfor = parseInt(ergebnis[0], 10);
-        gagainst = parseInt(ergebnis[1], 10);
-        sgn = (gfor > gagainst) ? 0 : (gfor == gagainst) ? 1 : 2;
-        stats[sgn]++;
-        stats[3] += gfor;
-        stats[4] += gagainst;
-        stats[5] += (sgn > 0) ? 2 - sgn : 3;
-
-        ret = getStats(stats);
-    }
-
-    return ret;
-}
-
 // **************************************************************************************
 // Spielerprofil: Primaerskills hervorheben, Saisons in Spielerhistorie trennen.
 // **************************************************************************************
@@ -427,10 +230,10 @@ function procTraining() {
 	// Warnungen hinzufuegen
 	var warning1 = "Die Wahrscheinlichkeiten in den Spalten \"" + titleBankeinsatz + "\", \"" + titleTeilweise + "\" und \"" + titleDurchgehend + "\" dienen nur zur Information!"
 	var warning2 = "Die maximale Wahrscheinlichkeit einer Aufwertung ist immer 99.00 %!";
-	var newCell1 = appendCell(warningTable.insertRow(-1), warning1);
-	newCell1.setAttribute("colspan", 4, false);
-	var newCell2 = appendCell(warningTable.insertRow(-1), warning2);
-	newCell2.setAttribute("colspan", 3, false);
+	//var newCell1 = appendCell(warningTable.insertRow(-1), warning1);
+	//newCell1.setAttribute("colspan", 4, false);
+	//var newCell2 = appendCell(warningTable.insertRow(-1), warning2);
+	//newCell2.setAttribute("colspan", 3, false);
 	// Ueberschriften hinzufuegen
 	var colWidth = 80;
 	var titleRow = table.rows[0];
@@ -470,7 +273,7 @@ function procTabellenplaetze() {
 // Vorschau: Fenster vergroessern
 // **************************************************************************************
 function procVorschau() {
-	if (isPopupWindow(this)) { this.resizeBy(0, this.innerHeight * 1.1); }
+	if (isPopupWindow(this)) { this.resizeBy(0, this.innerHeight * 1.45); }
 }
 
 // ****************************************************************************
