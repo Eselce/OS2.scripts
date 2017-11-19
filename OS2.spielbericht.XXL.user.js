@@ -1,11 +1,16 @@
 // ==UserScript==
 // @name OS2.spielbericht.XXL
-// @version 0.61
+// @version 0.62
 // @description Zählt Textbausteine
 // @description OS 2.0 - Ergänzt Summen- und Durchschnittswerte bei den Spielerstatistiken im Spielbericht
-// @include http://os.ongapo.com/rep/saison/*
-// @include http://online-soccer.eu/rep/saison/*
-// @include http://www.online-soccer.eu/rep/saison/*
+
+// @description Quoten mit Nachkomma
+// @description Leere Zeilen nicht genullt
+// @description Fenstergröße
+
+// @include http*://os.ongapo.com/rep/saison/*
+// @include http*://online-soccer.eu/rep/saison/*
+// @include http*://www.online-soccer.eu/rep/saison/*
 // @grant none
 // ==/UserScript==
 
@@ -214,28 +219,32 @@ function berstatistik () {
         if (tabberstat.rows[j].cells[16].textContent !== "") tabberstat.rows[j].cells[11].textContent = (tabspielstat.rows[j].cells[13].textContent * (100 - tabspielstat.rows[j].cells[14].textContent) / 100).toFixed(0) - tabberstat.rows[j].cells[10].textContent + tabberstat.rows[j].cells[12].textContent * 1;
 
         // ZWKo %
-        if (tabberstat.rows[j].cells[1].textContent === "0") tabberstat.rows[j].cells[2].textContent = 0;
+        if (tabberstat.rows[j].cells[1].textContent === "0") tabberstat.rows[j].cells[2].textContent = (0).toFixed(2);
         else if (tabberstat.rows[j].cells[1].textContent === "") tabberstat.rows[j].cells[2].textContent = "";
         else tabberstat.rows[j].cells[2].textContent = (100 - tabberstat.rows[j].cells[2].textContent / tabberstat.rows[j].cells[1].textContent * 100).toFixed(2);
-        if (tabberstat.rows[j].cells[9].textContent === "0") tabberstat.rows[j].cells[10].textContent = 0;
+        if (tabberstat.rows[j].cells[9].textContent === "0") tabberstat.rows[j].cells[10].textContent = (0).toFixed(2);
         else if (tabberstat.rows[j].cells[9].textContent === "") tabberstat.rows[j].cells[10].textContent = "";
         else tabberstat.rows[j].cells[10].textContent = (100 - tabberstat.rows[j].cells[10].textContent / tabberstat.rows[j].cells[9].textContent * 100).toFixed(2);
 
         // ZWKd %
-        if (tabberstat.rows[j].cells[3].textContent === "0") tabberstat.rows[j].cells[4].textContent = 0;
+        if (tabberstat.rows[j].cells[3].textContent === "0") tabberstat.rows[j].cells[4].textContent = (0).toFixed(2);
         else if (tabberstat.rows[j].cells[3].textContent === "") tabberstat.rows[j].cells[4].textContent = "";
         else tabberstat.rows[j].cells[4].textContent = (tabberstat.rows[j].cells[4].textContent / tabberstat.rows[j].cells[3].textContent * 100).toFixed(2);
-        if (tabberstat.rows[j].cells[11].textContent === "0") tabberstat.rows[j].cells[12].textContent = 0;
+        if (tabberstat.rows[j].cells[11].textContent === "0") tabberstat.rows[j].cells[12].textContent = (0).toFixed(2);
         else if (tabberstat.rows[j].cells[11].textContent === "") tabberstat.rows[j].cells[12].textContent = "";
         else tabberstat.rows[j].cells[12].textContent = (tabberstat.rows[j].cells[12].textContent / tabberstat.rows[j].cells[11].textContent * 100).toFixed(2);
 
         // Zellen nullen
-        if (tabberstat.rows[j].cells[5].textContent === "") tabberstat.rows[j].cells[5].textContent = 0;
-        if (tabberstat.rows[j].cells[6].textContent === "") tabberstat.rows[j].cells[6].textContent = 0;
-        if (tabberstat.rows[j].cells[7].textContent === "") tabberstat.rows[j].cells[7].textContent = 0;
-        if (tabberstat.rows[j].cells[13].textContent === "") tabberstat.rows[j].cells[13].textContent = 0;
-        if (tabberstat.rows[j].cells[14].textContent === "") tabberstat.rows[j].cells[14].textContent = 0;
-        if (tabberstat.rows[j].cells[15].textContent === "") tabberstat.rows[j].cells[15].textContent = 0;
+        if (tabberstat.rows[j].cells[0].textContent !== "") {
+            if (tabberstat.rows[j].cells[5].textContent === "") tabberstat.rows[j].cells[5].textContent = 0;
+            if (tabberstat.rows[j].cells[6].textContent === "") tabberstat.rows[j].cells[6].textContent = (0).toFixed(2);
+            if (tabberstat.rows[j].cells[7].textContent === "") tabberstat.rows[j].cells[7].textContent = 0;
+        }
+        if (tabberstat.rows[j].cells[16].textContent !== "") {
+            if (tabberstat.rows[j].cells[13].textContent === "") tabberstat.rows[j].cells[13].textContent = 0;
+            if (tabberstat.rows[j].cells[14].textContent === "") tabberstat.rows[j].cells[14].textContent = (0).toFixed(2);
+            if (tabberstat.rows[j].cells[15].textContent === "") tabberstat.rows[j].cells[15].textContent = 0;
+        }
 
     }
 }
@@ -258,7 +267,7 @@ tabberstat = document.getElementsByTagName("table")[5];
 
 berstatistik();
 
-
+window.resizeTo(1100,1000);
 
 console.log("End of script");
 
