@@ -2,7 +2,7 @@
 // @name OS2.spielbericht.XXL
 // @version 0.63
 // @description Zaehlt Textbausteine
-// @description OS 2.0 - Erg�nzt Summen- und Durchschnittswerte bei den Spielerstatistiken im Spielbericht
+// @description OS 2.0 - Ergänzt Summen- und Durchschnittswerte bei den Spielerstatistiken im Spielbericht
 
 // @description Quoten mit Nachkomma
 // @description Leere Zeilen nicht genullt
@@ -29,17 +29,17 @@ function inflateRow(row, length) {
 }
 
 
-// ==================== Funktionen neu f�r Textbausteine ====================
+// ==================== Funktionen neu für Textbausteine ====================
 
 var gruppen = [ "Pass", "ZWK_ov","SCH", "Erfolg_l_TB"];
 gruppen.Pass = [/spielt/i, /pass /i, / passt/i, /flankt/i, /zieht den Ball/i];
 gruppen.ZWK_ov = [/versucht/i, /erk\u00E4mpft/i, /nicht vorbei/i, /nicht umspielen/i, /nicht \u00FCberspielen/i, /nicht mit einem/i];
 gruppen.SCH = [/e eck/i, / link/i, / recht/i, /richtung/i, /aufs Tor/i, /kopfball/i, /volley/i, /zieht ab/i];
 // gruppen.Ecken = [/zieht den Ball/i];
-gruppen.Erfolg_l_TB = [/Keeper/i, /ABSEITS/i, /gefahrenzone/i, /der Ball/i, /kann den Ball/i, /Bein in/i, /streckt/i]; // TB �berpr�fen
+gruppen.Erfolg_l_TB = [/Keeper/i, /ABSEITS/i, /gefahrenzone/i, /der Ball/i, /kann den Ball/i, /Bein in/i, /streckt/i]; // TB überprüfen
 
 var kopfz = [ "ZWKo", "ZWKo %","ZWKd", "ZWKd %","Pass", "P\u00E4sse %","Ansp."]; //der Tabelle berichtsstatistik
-var kategorien = [ "Z_o_v", "Z_d_g","P_e", "P_f","Ansp_e", "Ansp_f","Sch_e","Sch_f"]; //zu z�hlende Elemente
+var kategorien = [ "Z_o_v", "Z_d_g","P_e", "P_f","Ansp_e", "Ansp_f","Sch_e","Sch_f"]; //zu zählende Elemente
 
 function regexsuche (begriff) {
     var ergebnis = false;
@@ -90,13 +90,13 @@ function textbausteine(){
         spielerakt[j] = ["", "a"];
         ereignis[j] = ["", 0];
         if (ergebnis !== "") {  //SCH, PASS, ZWK_ov registriert
-            inflateRow(spielbericht.rows[j], 3);          //.........................................................Spalten neben Bericht einf�gen
+            inflateRow(spielbericht.rows[j], 3);          //.........................................................Spalten neben Bericht einfügen
 
             spielernamen = spielbericht.rows[j].getElementsByTagName ("b");
 
             for (var i = 0; i < Math.min(2, spielernamen.length); i++) { // aktiven und passiven Spieler feststellen
                 if ((/erk\u00E4mpft sich den Ball/i).test(spielbericht.rows[j].cells[1].textContent) === true) {
-                    //spielbericht.rows[j].cells[4-i].textContent = spielernamen[i].textContent;          //.........................................................Spielenamen aktiv / passiv neben Bericht einf�gen
+                    //spielbericht.rows[j].cells[4-i].textContent = spielernamen[i].textContent;          //.........................................................Spielenamen aktiv / passiv neben Bericht einfügen
                     spielerakt[j][1-i] = spielernamen[i].textContent;
                     if (spielbericht.rows[j].cells[0].textContent === "") {
                         //spielbericht.rows[j].cells[3].textContent = spielbericht.rows[j-1].cells[4].textContent;          //.........................................................Zweikampfgegener (Name) aus der letzten Zeile
@@ -104,15 +104,15 @@ function textbausteine(){
                     }
                 }
                 else if ((/nicht vorbei/i).test(spielbericht.rows[j].cells[1].textContent) === true) {
-                    //spielbericht.rows[j].cells[4-i].textContent = spielernamen[i].textContent;          //.........................................................Spielenamen aktiv / passiv neben Bericht einf�gen
+                    //spielbericht.rows[j].cells[4-i].textContent = spielernamen[i].textContent;          //.........................................................Spielenamen aktiv / passiv neben Bericht einfügen
                     spielerakt[j][1-i] = spielernamen[i].textContent;
                 }
                 else if ((/zieht den Ball/i).test(spielbericht.rows[j].cells[1].textContent) === true) {
-                    //spielbericht.rows[j].cells[4-i].textContent = spielernamen[i].textContent;          //.........................................................Spielenamen aktiv / passiv neben Bericht einf�gen
+                    //spielbericht.rows[j].cells[4-i].textContent = spielernamen[i].textContent;          //.........................................................Spielenamen aktiv / passiv neben Bericht einfügen
                     spielerakt[j][1-i] = spielernamen[i].textContent;
                 }
                 else {
-                    //spielbericht.rows[j].cells[3+i].textContent = spielernamen[i].textContent;          //.........................................................Spielenamen aktiv / passiv neben Bericht einf�gen
+                    //spielbericht.rows[j].cells[3+i].textContent = spielernamen[i].textContent;          //.........................................................Spielenamen aktiv / passiv neben Bericht einfügen
                     spielerakt[j][0+i] = spielernamen[i].textContent;
                 }
             }
@@ -121,15 +121,15 @@ function textbausteine(){
                 spielerakt[j][1] = "a";
             }
 
-            //spielbericht.rows[j].cells[4].textContent = ergebnis;          //.........................................................Aktion neben Bericht einf�gen
+            //spielbericht.rows[j].cells[4].textContent = ergebnis;          //.........................................................Aktion neben Bericht einfügen
             ereignis[j][0] = ergebnis;
 
             if (ereignis[j][0] == "ZWK_ov") {
-                //spielbericht.rows[j].cells[5].textContent = "0";          //.........................................................Erfolg neben Bericht einf�gen
+                //spielbericht.rows[j].cells[5].textContent = "0";          //.........................................................Erfolg neben Bericht einfügen
                 ereignis[j][1] = 0;
             }
             else {
-                //spielbericht.rows[j].cells[5].textContent = "1";          //.........................................................Erfolg neben Bericht einf�gen
+                //spielbericht.rows[j].cells[5].textContent = "1";          //.........................................................Erfolg neben Bericht einfügen
                 ereignis[j][1] = 1;
             }
             if ((/TOR/).test(spielbericht.rows[j].cells[1].textContent) === true) { //Erfolgsmeldung zweiter Halbsatz
@@ -137,11 +137,11 @@ function textbausteine(){
             }
             else {
                 if ((/ - /).test(spielbericht.rows[j].cells[1].textContent) === true) { //Misserfolgsmeldung zweiter Halbsatz
-                    //spielbericht.rows[j].cells[5].textContent = "0";          //.........................................................Erfolg neben Bericht einf�gen
+                    //spielbericht.rows[j].cells[5].textContent = "0";          //.........................................................Erfolg neben Bericht einfügen
                     ereignis[j][1] = 0;
                 }
                 else if ((/ABSEITS/).test(spielbericht.rows[j+1].cells[1].textContent) === true) { //Abseits Folgesatz
-                    //spielbericht.rows[j].cells[5].textContent = "0";          //.........................................................Erfolg neben Bericht einf�gen
+                    //spielbericht.rows[j].cells[5].textContent = "0";          //.........................................................Erfolg neben Bericht einfügen
                     ereignis[j][1] = 0;
                 }
                 else if ((/ - /).test(spielbericht.rows[j+1].cells[1].textContent) === false) { //Erfolgsmeldung Folgesatz
@@ -153,7 +153,7 @@ function textbausteine(){
                         suche = gruppen[temp][y];
                         ergebnis = suche.test(spielbericht.rows[j+1].cells[1].textContent);
                         if (ergebnis === true) {
-                            //spielbericht.rows[j].cells[5].textContent = "0";          //.........................................................Erfolg neben Bericht einf�gen
+                            //spielbericht.rows[j].cells[5].textContent = "0";          //.........................................................Erfolg neben Bericht einfügen
                             ereignis[j][1] = 0;
                             break;
                         }
@@ -246,8 +246,8 @@ function berstatistik () {
                 break;
 
             case "SCH":
-                // Anweisungen werden ausgef�hrt,
-                // falls expression mit valueN �bereinstimmt
+                // Anweisungen werden ausgeführt,
+                // falls expression mit valueN übereinstimmt
                 break;
             default:
                 // nichts
@@ -294,11 +294,11 @@ function berstatistik () {
     }
 }
 
-// ==================== Ende Funktionen f�r Textbausteine ====================
+// ==================== Ende Funktionen für Textbausteine ====================
 
 
 
-// ==================== Code neu f�r Textbausteine ====================
+// ==================== Code neu für Textbausteine ====================
 
 spielbericht = document.getElementsByTagName("table")[2];
 spielerakt = Array(spielbericht.rows.length); // Beteiligte je Zeile
@@ -316,7 +316,7 @@ window.resizeTo(1100,1000);
 
 console.log("End of script");
 
-// ==================== Ende Code f�r Textbausteine ====================
+// ==================== Ende Code für Textbausteine ====================
 
 
 
