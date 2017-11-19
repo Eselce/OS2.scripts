@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name OS2.spielbericht
-// @version 0.1
+// @version 1.0
 // @description OS 2.0 - Ergänzt Summen- und Durchschnittswerte bei den Spielerstatistiken im Spielbericht
 // @include http://os.ongapo.com/rep/saison/*
 // @include http://online-soccer.eu/rep/saison/*
@@ -35,14 +35,14 @@ var nonEmptyCellCount = 0;
 var sumValue = 0;
 var avgValue = 0.00;
 for (var i = 0; i < simpleCols.length; i++) {
-    colIdx = simpleCols[i];
-    nonEmptyCellCount = getNonEmptyCellCount(playerStatistics, colIdx, offsetsVertical);
-    // Summe
-    sumValue = getColSum(playerStatistics, colIdx, offsetsVertical);
-    sumRow.cells[colIdx].textContent = sumValue;
-    // Durchschnitt
-    avgValue = getColAvg(playerStatistics, colIdx, offsetsVertical);
-    avgRow.cells[colIdx].textContent = avgValue.toFixed(2);
+	colIdx = simpleCols[i];
+	nonEmptyCellCount = getNonEmptyCellCount(playerStatistics, colIdx, offsetsVertical);
+	// Summe
+	sumValue = getColSum(playerStatistics, colIdx, offsetsVertical);
+	sumRow.cells[colIdx].textContent = sumValue;
+	// Durchschnitt
+	avgValue = getColAvg(playerStatistics, colIdx, offsetsVertical);
+	//avgRow.cells[colIdx].textContent = avgValue.toFixed(2);
 }
 
 // Durchschnitt der ZK-%-Spalten berechnen und eintragen
@@ -71,9 +71,9 @@ drawHorizontalLine(playerStatistics, playerStatistics.rows.length - 1 - offsetsV
 // row: Zeile, die aufgepumpt werden soll
 // length: Anzahl der zu erzeugenden Zellen
 function inflateRow(row, length) {
-    for (var i = 0; i < length; i++) {
-        row.insertCell(-1);
-    }
+	for (var i = 0; i < length; i++) {
+		row.insertCell(-1);
+	}
 }
 
 // Liefert die Anzahl nichtleerer Zellen einer Spalte.
@@ -81,11 +81,11 @@ function inflateRow(row, length) {
 // col: Index der Spalte, die inspiziert werden soll
 // offsets[0]/[1]: Anzahl Zeilen oben/unten, die ignoriert werden
 function getNonEmptyCellCount(table, col, offsets) {
-    var returnValue = 0;
-    for (var i = offsets[0]; i < table.rows.length - offsets[1]; i++) {
-        if (table.rows[i].cells[col].textContent != "") { returnValue += 1; }
-    }
-    return returnValue;
+	var returnValue = 0;
+	for (var i = offsets[0]; i < table.rows.length - offsets[1]; i++) {
+		if (table.rows[i].cells[col].textContent != "") { returnValue += 1; }
+	}
+	return returnValue;
 }
 
 // Liefert das Summenprodukt (wie in der Excel-Formel) von Spalten einer Tabelle.
@@ -94,17 +94,17 @@ function getNonEmptyCellCount(table, col, offsets) {
 // offsets[0]/[1]: Anzahl Zeilen oben/unten, die ignoriert werden
 // round: Ob jeder Summand kaufmaennisch auf Ganzzahl gerundet werden soll
 function getColSumProduct(table, cols, offsets, round) {
-    var returnValue = 0;
-    var product = 1;
-    for (var i = offsets[0]; i < table.rows.length - offsets[1]; i++) {
-        product = 1;
-        for (var j = 0; j < cols.length; j++) {
-            product *= stringToNumber(table.rows[i].cells[cols[j]].textContent);
-        }
-        if (round) { returnValue += Math.round(product); }
-        else { returnValue += product; }
-    }
-    return returnValue;
+	var returnValue = 0;
+	var product = 1;
+	for (var i = offsets[0]; i < table.rows.length - offsets[1]; i++) {
+		product = 1;
+		for (var j = 0; j < cols.length; j++) {
+			product *= stringToNumber(table.rows[i].cells[cols[j]].textContent);
+		}
+		if (round) { returnValue += Math.round(product); }
+		else { returnValue += product; }
+	}
+	return returnValue;
 }
 
 // Liefert die Summe der Werte einer Spalte.
@@ -112,11 +112,11 @@ function getColSumProduct(table, cols, offsets, round) {
 // col: Index der Spalte, deren Werte summiert werden sollen
 // offsets[0]/[1]: Anzahl Zeilen oben/unten, die ignoriert werden
 function getColSum(table, col, offsets) {
-    var returnValue = 0;
-    for (var i = offsets[0]; i < table.rows.length - offsets[1]; i++) {
-        returnValue += stringToNumber(table.rows[i].cells[col].textContent);
-    }
-    return returnValue;
+	var returnValue = 0;
+	for (var i = offsets[0]; i < table.rows.length - offsets[1]; i++) {
+		returnValue += stringToNumber(table.rows[i].cells[col].textContent);
+	}
+	return returnValue;
 }
 
 // Liefert den Mittelwert der Werte einer Spalte. Leere Zellen werden ignoriert.
@@ -124,18 +124,18 @@ function getColSum(table, col, offsets) {
 // col: Index der Spalte, deren Mittelwert berechnet werden soll
 // offsets[0]/[1]: Anzahl Zeilen oben/unten, die ignoriert werden
 function getColAvg(table, col, offsets) {
-    var returnValue = 0.0;
-    var countValues = 0;
-    var cellContent = "";
-    for (var i = offsets[0]; i < table.rows.length - offsets[1]; i++) {
-        cellContent = table.rows[i].cells[col].textContent;
-        if (cellContent != "") {
-            returnValue += stringToNumber(cellContent);
-            countValues += 1;
-        }
-    }
-    if (countValues != 0) { return returnValue / countValues; }
-    else { return ""; }
+	var returnValue = 0.0;
+	var countValues = 0;
+	var cellContent = "";
+	for (var i = offsets[0]; i < table.rows.length - offsets[1]; i++) {
+		cellContent = table.rows[i].cells[col].textContent;
+		if (cellContent != "") {
+			returnValue += stringToNumber(cellContent);
+			countValues += 1;
+		}
+	}
+	if (countValues != 0) { return returnValue / countValues; }
+	else { return ""; }
 }
 
 // Zeichnet eine horizontale Linie in eine Tabelle.
@@ -143,10 +143,10 @@ function getColAvg(table, col, offsets) {
 // row: Index der Zeile, unterhalb derer die Linie gezeichnet werden soll
 // offsets[0]/[1]: Anzahl Spalten links/rechts, in denen keine Linie gezeichnet werden soll
 function drawHorizontalLine(table, rowIdx, offsets) {
-    var row = table.rows[rowIdx];
-    for (var i = offsets[0]; i < row.cells.length - offsets[1]; i++) {
-        row.cells[i].style.borderBottom = borderString;
-    }
+	var row = table.rows[rowIdx];
+	for (var i = offsets[0]; i < row.cells.length - offsets[1]; i++) {
+		row.cells[i].style.borderBottom = borderString;
+	}
 }
 
 // Wandelt einen String in eine Zahl um.
@@ -155,33 +155,33 @@ function drawHorizontalLine(table, rowIdx, offsets) {
 // Dezimalzahlen werden erkannt, wenn sie mit "." gefolgt von beliebig vielen Ziffern enden.
 // Da zuerst auf ganze Zahlen geprueft wird, koennen Dezimalzahlen nicht 3 Nachkommaziffern haben.
 function stringToNumber(string) {
-    // parseXXX interpretiert einen Punkt immer als Dezimaltrennzeichen
-    var returnValue = "";
-    var percent = false;
-    // Buchstaben und Whitespaces entfernen
-    string = string.replace(/[\sa-zA-Z]/g, "");
-    // Auf % pruefen und % entfernen
-    if (string.lastIndexOf("%") != -1) {
-        percent = true;
-        string = string.replace(/%/g, "");
-    }
-    var regexpWholeSimple = /^\d+$/;
-    var regexpWholeWithDots = /^\d+(\.\d{3}){1,}$/;
-    var regexpDecimal = /^\d*\.\d{1,}$/;
-    if (regexpWholeSimple.test(string)) {
-        // Einfache ganze Zahl
-        returnValue = parseInt(string);
-    } else if (regexpWholeWithDots.test(string)) {
-        // Ganze Zahl mit Tausenderpunkten
-        returnValue = parseInt(string.replace(/\./g, ""));
-    } else if (regexpDecimal.test(string)) {
-        // Dezimalzahl mit Punkt als Trennzeichen
-        returnValue = parseFloat(string);
-    } else {
-        // Kein gueltiger String
-        percent = false;
-        returnValue = "";
-    }
-    if (percent) { returnValue /= 100; }
-    return returnValue;
+	// parseXXX interpretiert einen Punkt immer als Dezimaltrennzeichen
+	var returnValue = "";
+	var percent = false;
+	// Buchstaben und Whitespaces entfernen
+	string = string.replace(/[\sa-zA-Z]/g, "");
+	// Auf % pruefen und % entfernen
+	if (string.lastIndexOf("%") != -1) {
+		percent = true;
+		string = string.replace(/%/g, "");
+	}
+	var regexpWholeSimple = /^\d+$/;
+	var regexpWholeWithDots = /^\d+(\.\d{3}){1,}$/;
+	var regexpDecimal = /^\d*\.\d{1,}$/;
+	if (regexpWholeSimple.test(string)) {
+		// Einfache ganze Zahl
+		returnValue = parseInt(string);
+	} else if (regexpWholeWithDots.test(string)) {
+		// Ganze Zahl mit Tausenderpunkten
+		returnValue = parseInt(string.replace(/\./g, ""));
+	} else if (regexpDecimal.test(string)) {
+		// Dezimalzahl mit Punkt als Trennzeichen
+		returnValue = parseFloat(string);
+	} else {
+		// Kein gueltiger String
+		percent = false;
+		returnValue = "";
+	}
+	if (percent) { returnValue /= 100; }
+	return returnValue;
 }
