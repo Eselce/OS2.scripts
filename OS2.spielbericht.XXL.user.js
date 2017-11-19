@@ -1,13 +1,23 @@
 // ==UserScript==
 // @name         OS2.spielbericht.XXL
 // @namespace    http://os.ongapo.com/
-// @version      0.63-SLC-WE
+// @version      0.70+WE
 // @copyright    2013+
-// @author       Andreas Eckes (Strindheim BK) / Michael Bertram
+// @author       Andreas Eckes (Strindheim BK) / Michael Bertram / Sven Loges (SLC)
 // @description  OS 2.0 - Ergänzt Summen- und Durchschnittswerte bei den Spielerstatistiken im Spielbericht / Zaehlt Textbausteine / Quoten mit Nachkomma / Leere Zeilen nicht genullt / Fenstergroesse
 // @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/rep/saison/\d+/\d+/\d+-\d+.html$/
-// @grant        none
+// @grant        GM.getResourceUrl
+// @require      https://greasemonkey.github.io/gm4-polyfill/gm4-polyfill.js
+// @grant        GM_getResourceURL
+// @resource PAS https://eselce.github.io/GitTest/img/pass.png
+// @resource SCH https://eselce.github.io/GitTest/img/sch.png
+// @resource TOR https://eselce.github.io/GitTest/img/tor.png
+// @resource ZWK https://eselce.github.io/GitTest/img/zwk.png
 // ==/UserScript==
+
+// ECMAScript 6:
+/* jshint esnext: true */
+/* jshint moz: true */
 
 // **************************************************************************************
 // Hilfsfunktionen
@@ -24,8 +34,6 @@ function inflateRow(row, length) {
 
 
 // ==================== Funktionen neu fuer Textbausteine ====================
-
-const __IMGBASE = "https://eselce.github.io/GitTest/img";
 
 var gruppen = [ "Pass", "ZWK_ov","SCH", "Erfolg_l_TB"];
 gruppen.Pass = [/spielt/i, /pass /i, / passt/i, /flankt/i, /zieht den Ball/i];
@@ -168,23 +176,26 @@ function textbausteine(){
                     l = 2; //Gastteam
                 }
             }
-            if (ereignis[j][1] === 0) { //Ballverlust
-                spielbericht.rows[j].cells[2+l].textContent = ereignis[j][0]; //Ereignis in Spielbericht eintragen
+
+            const __CELL = spielbericht.rows[j].cells[2 + l];
+
+            if (ereignis[j][1] === 0) { // Ballverlust
+                //__CELL.textContent = ereignis[j][0];  // Ereignis in Spielbericht eintragen
                 switch (ereignis[j][0]) {
-                    case "SCH":
-                        spielbericht.rows[j].cells[2+l].innerHTML = `<img src="${__IMGBASE}/sch.png" alt="schuss" height="15" width="15">`;
+                    case 'SCH':
+                        addIcon(__CELL, 'SCH', "schuss", 15, 15);
                         break;
-                    case "Pass":
-                        spielbericht.rows[j].cells[2+l].innerHTML = `<img src="${__IMGBASE}/pass.png" alt="pass" height="15" width="15">`;
+                    case 'Pass':
+                        addIcon(__CELL, 'PAS', "pass", 15, 15);
                         break;
-                    case "ZWK_ov":
-                        spielbericht.rows[j].cells[2+l].innerHTML = `<img src="${__IMGBASE}/zwk.png" alt="zwk" height="25" width="25">`;
+                    case 'ZWK_ov':
+                        addIcon(__CELL, 'ZWK', "zwk", 25, 25);
                         break;
                 }
             }
-            else if (ereignis[j][0] == "SCH") { // Tor weil Erfolg = 1 (else)
-                //spielbericht.rows[j].cells[2+l].textContent = "TOR"; //Ereignis in Spielbericht eintragen
-                spielbericht.rows[j].cells[2+l].innerHTML = `<img src="${__IMGBASE}/tor.png" alt="<TOR>" height="25" width="25">`; //TOR
+            else if (ereignis[j][0] == 'SCH') { // Tor weil Erfolg = 1 (else)
+                //__CELL.textContent = "TOR";  // Ereignis in Spielbericht eintragen
+                addIcon(__CELL, 'TOR', "<TOR>", 25, 25); // TOR
             }
 
             if (spielbericht.rows[j].cells[0].textContent !== "y") {
@@ -542,3 +553,30 @@ function stringToNumber(string) {
     if (percent) { returnValue /= 100; }
     return returnValue;
 }
+
+// Laedt in ein Element eine IMG-Resource ueber den Namen
+// node: Zu belegendes Element
+// altText: Text, wenn Icon nicht geladen werden konnte
+// height: Hoehe des Icons in Pixel
+// width: Breite des Icons in Pixel
+// return Die IMG-Resource, die asynchron gefuellt wird
+function addIcon(node, iconName, altText = `${iconName}`, height = 32, width = 32) {
+    const __IMG = document.createElement('img');
+
+    GM.getResourceUrl(iconName).then(src => {
+            //console.log(`Got icon ${iconName}`);
+
+            __IMG.src = src;
+            __IMG.heigth = height;
+            __IMG.width = width;
+            node.appendChild(__IMG);
+        }).catch(error => {
+            //console.error(`Failed to load icon ${iconName}:`, error);
+
+            node.innerHTML = node.innerHTML + altText;
+        });
+
+    return __IMG;
+}
+
+// *** EOF ***
