@@ -1,9 +1,10 @@
-﻿// ==UserScript==
+// ==UserScript==
 // @name         OS2.spielersuche
 // @namespace    http://os.ongapo.com/
-// @version      0.11
+// @version      0.12
 // @copyright    2016+
 // @author       Michael Bertram
+// @author       Sven Loges (SLC)
 // @description  Transferdetails einblenden
 // @include      http*://os.ongapo.com/suchspieler.php
 // @include      http*://www.os.ongapo.com/suchspieler.php
@@ -18,14 +19,14 @@
 
 function procSpielersucheTDetails() {
     'use strict';
-    const __ELEMENTS = document.getElementsByTagName('option');
+    const __SELECT = document.getElementById('cAtt');
+    const __OPTIONS = __SELECT.options;
+    const __VLZOPT = __OPTIONS[__OPTIONS.length - 1];  // derzeit letzte Option 'VLZ'
+    const __NEWOPT = document.createElement('option');
 
-    for (let thisElement of __ELEMENTS) {
-        if (thisElement.text === 'VLZ') {
-            thisElement.value = 35;
-            thisElement.text = 'TDetails';
-        }
-    }
+    __NEWOPT.text = 'TDetails';
+    __NEWOPT.value = 35;
+    __SELECT.add(__NEWOPT, __VLZOPT);  // 'TDetails' zwischen 'TStatus' und 'VLZ' einfuegen
 }
 
 procSpielersucheTDetails();
