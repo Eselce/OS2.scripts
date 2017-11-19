@@ -1,25 +1,21 @@
 // ==UserScript==
-// @name        OS2.master
-// @namespace   http://os.ongapo.com/
-// @version     2.3
-// @description OS 2.0 - Master-Skript
-// @include     http://os.ongapo.com/showteam.php?s=*
-// @include     http://os.ongapo.com/st.php?s=*
-// @include     http://os.ongapo.com/sp.php?*
-// @include     http://os.ongapo.com/training.php
-// @include     http://os.ongapo.com/ka.php
-// @include     http://online-soccer.eu/showteam.php?s=*
-// @include     http://online-soccer.eu/st.php?s=*
-// @include     http://online-soccer.eu/sp.php?*
-// @include     http://online-soccer.eu/training.php
-// @include     http://online-soccer.eu/ka.php
-// @include     http://www.online-soccer.eu/showteam.php?s=*
-// @include     http://www.online-soccer.eu/st.php?s=*
-// @include     http://www.online-soccer.eu/sp.php?*
-// @include     http://www.online-soccer.eu/training.php
-// @include     http://www.online-soccer.eu/ka.php
-// @grant       none
+// @name         OS2.master
+// @namespace    http://os.ongapo.com/
+// @version      2.3-SLC-WE
+// @copyright    2013+
+// @author       Andreas Eckes (Strindheim BK)
+// @description  OS 2.0 - Master-Skript
+// @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/sp\.php\?s=\d+$/
+// @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/st\.php\?(s=\d+&)?c=\d+$/
+// @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/showteam\.php(\?s=\d+)?$/
+// @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/training\.php$/
+// @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/ka\.php$/
+// @grant        none
 // ==/UserScript==
+
+// ECMAScript 6:
+/* jshint esnext: true */
+/* jshint moz: true */
 
 // Dieses Skript ist in der Lage, folgendes zu machen:
 // Teamansicht - Einzelwerte: Primaerskills hervorheben
