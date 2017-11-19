@@ -1,17 +1,18 @@
 // ==UserScript==
 // @name         OS2.training
 // @namespace    http://os.ongapo.com/
-// @version      1.0 SLC
+// @version      0.20+WE
 // @copyright    2013+
-// @author       Andreas Eckes (Strindheim BK)
-// @author       Sven Loges (SLC)
+// @author       Sven Loges (SLC) / Andreas Eckes (Strindheim BK)
 // @description  OS 2.0 - Berechnet die Trainingswahrscheinlichkeiten abhaengig von der Art des Einsatzes
-// @include      http*://os.ongapo.com/training.php
-// @include      http*://www.os.ongapo.com/training.php
-// @include      http*://online-soccer.eu/training.php
-// @include      http*://www.online-soccer.eu/training.php
+// @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/training\.php$/
 // @grant        none
 // ==/UserScript==
+
+// Konstante 0.99 ^ 99
+const __099HOCH99 = 0.36972963764972677265718790562881;
+
+const __FACTORS = [ 1.00, 1.10, 1.25, 1.35 ];	// Tribuene, Bank, teilweise, durchgehend
 
 var trainingTable = document.getElementsByTagName("table")[2];
 var titleProb1 = "Bankeinsatz";
@@ -19,7 +20,9 @@ var titleProb2 = "Teilweise";
 var titleProb3 = "Durchgehend";
 var titlePS = "Primary";
 var titleValue = "EW";
-var titleProb = "WS";
+var titleWS0 = "WS";
+var titleMin0 = "min.";
+var titleMin3 = "max.";
 
 var colIdxSkill = 5;
 var colIdxChance = 7;
@@ -65,7 +68,9 @@ function procTraining() {
 	var col2 = titleRow.cells.length;
 	appendCell(titleRow, titlePS);
 	appendCell(titleRow, titleValue);
-	appendCell(titleRow, titleProb);
+	appendCell(titleRow, titleWS0);
+	appendCell(titleRow, titleMin0);
+	appendCell(titleRow, titleMin3);
 
 	// Breite der neuen Spalten festlegen
 	for (var i = orgLength + 1; i < titleRow.cells.length; i++) {
@@ -82,9 +87,9 @@ function procTraining() {
 	var value;
 	var valueStr;
 	var probStr;
-	sum = 0.0;console.log("====");
+	sum = 0.0;
 	for (i = 1; i < trainingTable.rows.length; i++) {
-		currentRow = trainingTable.rows[i];console.log(currentRow);
+		currentRow = trainingTable.rows[i];
 		pos = getPos(currentRow);
 		skill = getSkill(currentRow);
 		color = getColor(pos);
@@ -97,14 +102,18 @@ function procTraining() {
 		} else {
 			value = 0.0;
 		}
-		valueStr = value.toFixed(2).toString();console.log(valueStr);
-		probStr = calcProbPercent(getAlter(currentRow), getPSkill(currentRow), getTSkill(currentRow));
+		valueStr = value.toFixed(2).toString();
+		probStr0 = calcProbPercent(getAlter(currentRow), getPSkill(currentRow), getTSkill(currentRow));
+		minStr0 = calcMinPSkill(getAlter(currentRow), getTSkill(currentRow));
+		minStr3 = calcMinPSkill(getAlter(currentRow), getTSkill(currentRow), 3);
 		for (var j = 1; j <= 3; j++) {
 			appendCell(currentRow, getProbability(probString, j), color);
 		}
 		appendCell(currentRow, practicePS ? skill : "", color);
 		appendCell(currentRow, valueStr, color);
-		appendCell(currentRow, probStr, color);
+		appendCell(currentRow, probStr0.toFixed(2), color);
+		appendCell(currentRow, value ? minStr0.toFixed(0) : "", color);
+		appendCell(currentRow, value ? minStr3.toFixed(0) : "", color);
 /*		if (practicePS) {
 			for (var j = 0; j < currentRow.length; j++) {
 				currentRow.cells[j].style.color = "#FFFFFF";
@@ -135,17 +144,7 @@ function getProbability(probString, mode) {
 		return "";
 	}
 
-	var prob1 = 1.1;
-	var prob2 = 1.25;
-	var prob3 = 1.35;
-
-	var returnValue = parseFloat(probString);
-	switch(mode) {
-		case 0: break;
-		case 1: returnValue *= prob1; break;
-		case 2: returnValue *= prob2; break;
-		case 3: returnValue *= prob3; break;
-	}
+	var returnValue = parseFloat(probString) * __FACTORS[mode];
 
 	return returnValue.toFixed(2).toString() + " %";
 }
@@ -205,39 +204,55 @@ function getProbString(row) {
 }
 
 // Gibt das Alter des Spielers dieser Zeile zurueck
-function getAlter(row) {console.log("ALTER");
-	alterStr = row.cells[colIdxAlter].textContent;console.log(alterStr);
+function getAlter(row) {
+	alterStr = row.cells[colIdxAlter].textContent;
 	return parseInt(alterStr, 10);
 }
 
 // Gibt den Skillwert des trainierten Skills des Spielers dieser Zeile zurueck
-function getPSkill(row) {console.log("PSKILL");
-	pSkillStr = row.cells[colIdxPSkill].textContent;console.log(pSkillStr);
-	return ((pSkillStr.length === 0) ? 0 : parseInt(pSkillStr, 10));
+function getPSkill(row) {
+	pSkillStr = row.cells[colIdxPSkill].textContent;
+	return ((pSkillStr.length === 0) ? undefined : parseInt(pSkillStr, 10));
 }
 
 // Gibt den Trainer-Skill dieser Zeile zurueck
-function getTSkill(row) {console.log("TSKILL");
+function getTSkill(row) {
 	HTML = row.cells[colIdxTSkill].innerHTML;
 	//tSkillStr = HTML.substr(HTML.indexOf("\"selected\"") + 15);
-	tSkillStr = HTML.substr(HTML.indexOf("selected=\"\"") + 16);console.log(tSkillStr);
-	tSkill = ((tSkillStr.substr(0, 1) === '/') ? 0 : parseInt(tSkillStr.substr(0, tSkillStr.indexOf('<')), 10));
+	tSkillStr = HTML.substr(HTML.indexOf("selected=\"\"") + 16);
+	tSkill = ((tSkillStr.substr(0, 1) === '/') ? undefined : parseFloat(tSkillStr.substr(0, tSkillStr.indexOf('<'))));
 	return tSkill;
 }
-
-// Konstante 0.99 ^ 99
-const __099HOCH99 = 0.36972963764972677265718790562881;
 
 // Gibt die Wahrscheinlichkeit fuer ein Training zurueck
 // alter: Alter des Spielers
 // pSkill: Derzeitiger Wert des zu trainierenden Spieler-Skills
 // tSkill: Trainer-Skill (60, 62.5, ..., 97.5, 99.5)
+// mode: Einsatztyp (0: Tribuene/Basis, 1: Bank, 2: teilweise, 3: durchgehend)
 // limit: Obere Grenze (99), Default ist unbegrenzt (undefined)
-function calcProbPercent(alter, pSkill, tSkill = 99.5, limit = undefined) {
-    const __SKILLDIFF = Math.max(0, tSkill - pSkill);
-    const __SKILLFACT = (0.5 + __SKILLDIFF) / (100.5 - __SKILLDIFF);
+// return Trainingswahrscheinlichkeit
+function calcProbPercent(alter, pSkill = 100, tSkill = 99.5, mode = 0, limit = undefined) {
+    const __SKILLDIFF = tSkill - pSkill;
+    const __SKILLPLUS = Math.max(0, __SKILLDIFF + 0.5);
+    const __SKILLFACT = __SKILLPLUS / (101 - __SKILLPLUS);
     const __ALTERFACT = Math.pow((100 - alter) / 37, 7);
-    const __PROB = __099HOCH99 * __SKILLFACT * __ALTERFACT;
+    const __PROB = __099HOCH99 * __SKILLFACT * __ALTERFACT * __FACTORS[mode];
 
     return ((limit === undefined) ? __PROB : Math.min(limit, __PROB));
+}
+
+// Gibt die Wahrscheinlichkeit fuer ein Training zurueck
+// alter: Alter des Spielers
+// tSkill: Trainer-Skill (60, 62.5, ..., 97.5, 99.5)
+// mode: Einsatztyp (0: Tribuene/Basis, 1: Bank, 2: teilweise, 3: durchgehend)
+// prob: Gewuenschte Wahrscheinlichkeit (Default ist 99)
+// return Spieler-Skill eines zu trainierenden Spielers, der optimal trainiert wird
+function calcMinPSkill(alter, tSkill = 99.5, mode = 0, prob = 99) {
+    const __ALTERFACT = Math.pow((100 - alter) / 37, 7);
+    const __SKILLFACT = prob / (__099HOCH99 * __ALTERFACT * __FACTORS[mode]);
+    const __SKILLPLUS = 101 * __SKILLFACT / (__SKILLFACT + 1);
+    const __SKILLDIFF = Math.max(0, __SKILLPLUS) - 0.5;
+    const __PSKILL = tSkill - __SKILLDIFF;
+
+    return Math.max(0, __PSKILL);
 }
