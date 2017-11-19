@@ -47,11 +47,11 @@ var restTage = 0;
 // alignment: Ausrichtung des Texts (left, center, right)
 // Bei Aufruf ohne Farbe wird die Standardfarbe benutzt
 function appendCell(row, content, color, alignment) {
-	var returnValue = row.insertCell(-1);
-	returnValue.textContent = content;
-	returnValue.style.color = color;
-	if (alignment !== "") { returnValue.align = alignment; }
-	return returnValue;
+    var returnValue = row.insertCell(-1);
+    returnValue.textContent = content;
+    returnValue.style.color = color;
+    if (alignment !== "") { returnValue.align = alignment; }
+    return returnValue;
 }
 
 // Wandelt einen String in eine Zahl um.
@@ -60,44 +60,44 @@ function appendCell(row, content, color, alignment) {
 // Dezimalzahlen werden erkannt, wenn sie mit "." gefolgt von beliebig vielen Ziffern enden.
 // Da zuerst auf ganze Zahlen geprueft wird, koennen Dezimalzahlen nicht 3 Nachkommaziffern haben.
 function stringToNumber(string) {
-	// parseXXX interpretiert einen Punkt immer als Dezimaltrennzeichen
-	var returnValue = "";
-	var percent = false;
-	// Buchstaben und Whitespaces entfernen
-	string = string.replace(/[\sa-zA-Z]/g, "");
-	// Auf % pruefen und % entfernen
-	if (string.lastIndexOf("%") != -1) {
-		percent = true;
-		string = string.replace(/%/g, "");
-	}
-	var regexpWholeSimple = /^\d+$/;
-	var regexpWholeWithDots = /^\d+(\.\d{3}){1,}$/;
-	var regexpDecimal = /^\d*\.\d{1,}$/;
-	if (regexpWholeSimple.test(string)) {
-		// Einfache ganze Zahl
-		returnValue = parseInt(string);
-	} else if (regexpWholeWithDots.test(string)) {
-		// Ganze Zahl mit Tausenderpunkten
-		returnValue = parseInt(string.replace(/\./g, ""));
-	} else if (regexpDecimal.test(string)) {
-		// Dezimalzahl mit Punkt als Trennzeichen
-		returnValue = parseFloat(string);
-	} else {
-		// Kein gueltiger String
-		percent = false;
-		returnValue = "";
-	}
-	if (percent) { returnValue /= 100; }
-	return returnValue;
+    // parseXXX interpretiert einen Punkt immer als Dezimaltrennzeichen
+    var returnValue = "";
+    var percent = false;
+    // Buchstaben und Whitespaces entfernen
+    string = string.replace(/[\sa-zA-Z]/g, "");
+    // Auf % pruefen und % entfernen
+    if (string.lastIndexOf("%") != -1) {
+        percent = true;
+        string = string.replace(/%/g, "");
+    }
+    var regexpWholeSimple = /^\d+$/;
+    var regexpWholeWithDots = /^\d+(\.\d{3}){1,}$/;
+    var regexpDecimal = /^\d*\.\d{1,}$/;
+    if (regexpWholeSimple.test(string)) {
+        // Einfache ganze Zahl
+        returnValue = parseInt(string);
+    } else if (regexpWholeWithDots.test(string)) {
+        // Ganze Zahl mit Tausenderpunkten
+        returnValue = parseInt(string.replace(/\./g, ""));
+    } else if (regexpDecimal.test(string)) {
+        // Dezimalzahl mit Punkt als Trennzeichen
+        returnValue = parseFloat(string);
+    } else {
+        // Kein gueltiger String
+        percent = false;
+        returnValue = "";
+    }
+    if (percent) { returnValue /= 100; }
+    return returnValue;
 }
 
 // Erzeugt die uebergebene Anzahl von Zellen in der uebergebenen Zeile.
 // row: Zeile, die aufgepumpt werden soll
 // length: Anzahl der zu erzeugenden Zellen
 function inflateRow(row, length) {
-	for (var i = 0; i < length; i++) {
-		row.insertCell(-1);
-	}
+    for (var i = 0; i < length; i++) {
+        row.insertCell(-1);
+    }
 }
 
 // Gibt die laufende Nummer des ZATs im Text einer Zelle zurueck
