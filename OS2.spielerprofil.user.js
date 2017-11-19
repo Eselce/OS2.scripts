@@ -1,24 +1,23 @@
 // ==UserScript==
-// @name        OS.Spielerprofil_kurz
-// @namespace   http://os.ongapo.com/
-// @version     0.2
-// @copyright   2016+
-// @author      Michael Bertram
-// @author      Andreas Eckes (Strindheim BK)
-// @author      Sven Loges (SLC)
-// @description  Alter exakt
-// @description  Summe der trainierbaren Skills
-// @description  Talent (trainierbare Skills mit Alter 19,0 bei unterstelltem 17er Trainer seitdem)
-// @include http://os.ongapo.com/sp.php?s=*
-// @include http://online-soccer.eu/sp.php?s=*
-// @include http://www.online-soccer.eu/sp.php?s=*
-// @grant       none
-
-
+// @name         OS2.spielerprofil
+// @namespace    http://os.ongapo.com/
+// @version      0.3
+// @copyright    2016+
+// @author       Michael Bertram
+// @author       Andreas Eckes (Strindheim BK)
+// @author       Sven Loges (SLC)
+// @description  Alter exakt / Summe der trainierbaren Skills / Talent (trainierbare Skills mit Alter 19.00 bei unterstelltem 17er-Trainer seitdem)
+// @include      http*://os.ongapo.com/haupt.php
+// @include      http*://os.ongapo.com/sp.php?s=*
+// @include      http*://www.os.ongapo.com/haupt.php
+// @include      http*://www.os.ongapo.com/sp.php?s=*
+// @include      http*://online-soccer.eu/haupt.php
+// @include      http*://online-soccer.eu/sp.php?s=*
+// @include      http*://www.online-soccer.eu/haupt.php
+// @include      http*://www.online-soccer.eu/sp.php?s=*
+// @grant        GM_getValue
+// @grant        GM_setValue
 // ==/UserScript==
-
-var zat = 57;
-
 
 var color = "";
 var textAusrichtung = "right"; // Text-Ausrichtung in den neuen Spalten
@@ -34,48 +33,7 @@ var faktor = new Array(110,110,110,110,110,110,110,110,110,110,110,110,110,110,1
 var seTrainierb = 0;
 var seEQ19 = 0;
 var trainiert = 0;
-
-alter = stringToNumber(table1.rows[0].cells[5].textContent);
-gebtag = stringToNumber(table1.rows[1].cells[4].textContent);
-
-// Skills auslesen
-for (var i = 1; i < 7; i++) {
-    for (var j = 0; j < 3; j++) {
-        wert = table2.rows[i].cells[j*2].textContent;
-        skills[count] = stringToNumber(wert.substring(wert.length-2,wert.length));
-        count++;
-    }
-}
-
-// berechnen
-for (i = 0; i < 11; i++) {
-    seTrainierb = seTrainierb + skills[trainierb[i]];
-    seEQ19 = seEQ19 + dauer[skills[trainierb[i]]];
-}
-
-if (gebtag > zat) {  // hat dieses Jahr Geburtstag
-            var restTage = 72 - (gebtag - zat);
-        } else {     // hatte schon Geburtstag
-            var restTage = zat - gebtag;
-}
-
-trainiert = tage[alter] + restTage * faktor[alter] / 100;
-var EQ19 = seEQ19 - trainiert;
-var alterDez = alter + restTage / 72;
-
-//ausgeben
-appendCell(table1.rows[3], "trainierbare Skills:", color, textAusrichtung);
-appendCell(table1.rows[3], seTrainierb, color, textAusrichtung);
-var neu = table1.insertRow(4); // neue Zeile
-inflateRow (table1.rows[4],4);
-appendCell(table1.rows[4], "Talent:", color, textAusrichtung);
-appendCell(table1.rows[4], EQ19.toFixed(0), color, textAusrichtung);
-inflateRow (table1.rows[4],1);
-appendCell(table1.rows[4], "ZAT:", color, textAusrichtung);
-appendCell(table1.rows[4], zat, color, textAusrichtung);
-
-table1.rows[0].cells[5].textContent = alterDez.toFixed(2);
-
+var restTage = 0;
 
 
 // ****************************************************************************
@@ -140,6 +98,121 @@ function inflateRow(row, length) {
 	for (var i = 0; i < length; i++) {
 		row.insertCell(-1);
 	}
+}
+
+// Gibt die laufende Nummer des ZATs im Text einer Zelle zurueck
+// cell: Tabellenzelle mit der ZAT-Nummer im Text
+// return ZAT-Nummer im Text
+function getZATNrFromCell(cell) {
+    const __TEXT = cell.textContent.split(' ');
+    let ZATNr = 0;
+
+    for (let i = 1; (ZATNr === 0) && (i < __TEXT.length); i++) {
+        if (__TEXT[i - 1] === "ZAT") {
+            if (__TEXT[i] !== "ist") {
+                ZATNr = parseInt(__TEXT[i], 10);
+            }
+        }
+    }
+    return ZATNr;
+}
+
+// Helferfunktion fuer die Ermittlung der Zeilen einer Tabelle
+// index: Laufende Nummer des Elements (0-based)
+// doc: Dokument (document)
+function getRows(index, doc = document) {
+    const __TABLE = getTable(index, "table", doc);
+    const __ROWS = (__TABLE === undefined) ? undefined : __TABLE.rows;
+
+    return __ROWS;
+}
+
+// Helferfunktion fuer die Ermittlung eines Elements der Seite (Default: Tabelle)
+// index: Laufende Nummer des Elements (0-based)
+// tag: Tag des Elements ("table")
+// doc: Dokument (document)
+function getTable(index, tag = "table", doc = document) {
+    const __TAGS = document.getElementsByTagName(tag);
+    const __TABLE = __TAGS[index];
+
+    return __TABLE;
+}
+
+function getPageIdFromURL(url) {
+    // Variablen zur Identifikation der Seite
+    const __SUCH = "page=";
+    const __INDEXS = url.lastIndexOf(__SUCH);
+    const __HAUPT = url.match(/haupt\.php/);        // Ansicht "Haupt" (Managerbuero)
+    const __SP = url.match(/sp\.php/);              // Ansicht "Jugendteam"
+    let page = -1;                                  // Seitenindex (Rueckgabewert)
+
+    // Wert von page (Seitenindex) ermitteln...
+    // Annahme: Entscheidend ist jeweils das letzte Vorkommnis von "page=" und ggf. von '&'
+    if (__HAUPT) {
+        page = 0;
+    } else if (__SP) {
+        if (__INDEXS < 0) {
+            page = 1;
+        }
+    }
+
+    return page;
+}
+
+function procHaupt() {
+    const zat = getZATNrFromCell(getRows(0)[2].cells[0]) - 1;
+    GM_setValue("currZAT", zat);
+}
+
+function procSpieler() {
+    alter = stringToNumber(table1.rows[0].cells[5].textContent);
+    gebtag = stringToNumber(table1.rows[1].cells[4].textContent);
+    var zat = GM_getValue("currZAT", 100);
+
+    // Skills auslesen
+    for (var i = 1; i < 7; i++) {
+        for (var j = 0; j < 3; j++) {
+            wert = table2.rows[i].cells[j*2].textContent;
+            skills[count] = stringToNumber(wert.substring(wert.length-2,wert.length));
+            count++;
+        }
+    }
+
+    // berechnen
+    for (i = 0; i < 11; i++) {
+        seTrainierb = seTrainierb + skills[trainierb[i]];
+        seEQ19 = seEQ19 + dauer[skills[trainierb[i]]];
+    }
+
+    if (gebtag > zat) {  // hat dieses Jahr Geburtstag
+        restTage = 72 - (gebtag - zat);
+    } else {     // hatte schon Geburtstag
+        restTage = zat - gebtag;
+    }
+
+    trainiert = tage[alter] + restTage * faktor[alter] / 100;
+    var EQ19 = seEQ19 - trainiert;
+    var alterDez = alter + restTage / 72;
+
+    //ausgeben
+    appendCell(table1.rows[3], "trainierbare Skills:", color, textAusrichtung);
+    appendCell(table1.rows[3], seTrainierb, color, textAusrichtung);
+    var neu = table1.insertRow(4); // neue Zeile
+    inflateRow (table1.rows[4],4);
+    appendCell(table1.rows[4], "Talent:", color, textAusrichtung);
+    appendCell(table1.rows[4], EQ19.toFixed(0), color, textAusrichtung);
+    inflateRow (table1.rows[4],1);
+    appendCell(table1.rows[4], "ZAT:", color, textAusrichtung);
+    appendCell(table1.rows[4], zat, color, textAusrichtung);
+
+    table1.rows[0].cells[5].textContent = alterDez.toFixed(2);
+}
+
+// Verzweige in unterschiedliche Verarbeitungen je nach Wert von page:
+switch (getPageIdFromURL(window.location.href)) {
+    case 0: procHaupt(); break;
+    case 1: procSpieler(); break;
+    default: break;
 }
 
 console.log("SCRIPT END");
