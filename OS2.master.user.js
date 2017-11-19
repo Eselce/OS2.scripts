@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name OS2.master
-// @version 2.1
-// @description OS 2.0 - Master-Skript Version 2.1
+// @version 2.2
+// @description OS 2.0 - Master-Skript
 // @include http://os.ongapo.com/showteam.php?s=*
 // @include http://os.ongapo.com/st.php?s=*
 // @include http://os.ongapo.com/tplatz.php?t=*
@@ -179,8 +179,9 @@ function procStatistiken(table) {
 function procSpielerprofil() {
 	// Primaerskills hervorheben
 	var tdTags = document.getElementsByTagName("td");
-	var pos = tdTags[13].textContent;
+	var pos = tdTags[14].textContent;
 	var color = getColor(pos);
+	//alert(color);
 	var skills = getIdxPriSkillsDetailsPage(pos);
 	for (var i = 0; i < skills.length; i++) {
 		tdTags[skills[i]].style.color = color;
@@ -477,12 +478,12 @@ function stringToNumber(string) {
 // Liefert je nach Position die Indizes der Primaerskills im Spielerprofil.
 function getIdxPriSkillsDetailsPage(pos) {
     switch (pos) {
-        case "TOR": return new Array(35,37,39,41);
-        case "ABW": return new Array(35,37,39,61);
-        case "DMI": return new Array(49,53,39,33);
-        case "MIT": return new Array(49,53,37,33);
-        case "OMI": return new Array(49,53,33,41);
-        case "STU": return new Array(31,35,41,37);
+        case "TOR": return new Array(36,38,40,42);
+        case "ABW": return new Array(36,38,40,62);
+        case "DMI": return new Array(50,54,40,34);
+        case "MIT": return new Array(50,54,38,34);
+        case "OMI": return new Array(50,54,34,42);
+        case "STU": return new Array(32,36,42,38);
         default:    return new Array();
     }
 }
