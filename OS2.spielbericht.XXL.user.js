@@ -1,14 +1,15 @@
 // ==UserScript==
 // @name OS2.spielbericht.XXL
-// @version 0.62
-// @description Zählt Textbausteine
-// @description OS 2.0 - Ergänzt Summen- und Durchschnittswerte bei den Spielerstatistiken im Spielbericht
+// @version 0.63
+// @description Zaehlt Textbausteine
+// @description OS 2.0 - Ergï¿½nzt Summen- und Durchschnittswerte bei den Spielerstatistiken im Spielbericht
 
 // @description Quoten mit Nachkomma
 // @description Leere Zeilen nicht genullt
-// @description Fenstergröße
+// @description Fenstergroesse
 
 // @include http*://os.ongapo.com/rep/saison/*
+// @include http*://www.os.ongapo.com/rep/saison/*
 // @include http*://online-soccer.eu/rep/saison/*
 // @include http*://www.online-soccer.eu/rep/saison/*
 // @grant none
@@ -28,17 +29,17 @@ function inflateRow(row, length) {
 }
 
 
-// ==================== Funktionen neu für Textbausteine ====================
+// ==================== Funktionen neu fï¿½r Textbausteine ====================
 
 var gruppen = [ "Pass", "ZWK_ov","SCH", "Erfolg_l_TB"];
 gruppen.Pass = [/spielt/i, /pass /i, / passt/i, /flankt/i, /zieht den Ball/i];
 gruppen.ZWK_ov = [/versucht/i, /erk\u00E4mpft/i, /nicht vorbei/i, /nicht umspielen/i, /nicht \u00FCberspielen/i, /nicht mit einem/i];
-gruppen.SCH = [/e eck/i, /link/i, /recht/i, /richtung/i, /aufs Tor/i, /kopfball/i, /volley/i, /zieht ab/i];
+gruppen.SCH = [/e eck/i, / link/i, / recht/i, /richtung/i, /aufs Tor/i, /kopfball/i, /volley/i, /zieht ab/i];
 // gruppen.Ecken = [/zieht den Ball/i];
-gruppen.Erfolg_l_TB = [/Keeper/i, /ABSEITS/i, /gefahrenzone/i, /der Ball/i, /kann den Ball/i, /Bein in/i, /streckt/i]; // TB überprüfen
+gruppen.Erfolg_l_TB = [/Keeper/i, /ABSEITS/i, /gefahrenzone/i, /der Ball/i, /kann den Ball/i, /Bein in/i, /streckt/i]; // TB ï¿½berprï¿½fen
 
 var kopfz = [ "ZWKo", "ZWKo %","ZWKd", "ZWKd %","Pass", "P\u00E4sse %","Ansp."]; //der Tabelle berichtsstatistik
-var kategorien = [ "Z_o_v", "Z_d_g","P_e", "P_f","Ansp_e", "Ansp_f","Sch_e","Sch_f"]; //zu zählende Elemente
+var kategorien = [ "Z_o_v", "Z_d_g","P_e", "P_f","Ansp_e", "Ansp_f","Sch_e","Sch_f"]; //zu zï¿½hlende Elemente
 
 function regexsuche (begriff) {
     var ergebnis = false;
@@ -89,42 +90,46 @@ function textbausteine(){
         spielerakt[j] = ["", "a"];
         ereignis[j] = ["", 0];
         if (ergebnis !== "") {  //SCH, PASS, ZWK_ov registriert
-            // TB-Spalten inflateRow(spielbericht.rows[j], 4);
+            inflateRow(spielbericht.rows[j], 3);          //.........................................................Spalten neben Bericht einfï¿½gen
 
             spielernamen = spielbericht.rows[j].getElementsByTagName ("b");
 
             for (var i = 0; i < Math.min(2, spielernamen.length); i++) { // aktiven und passiven Spieler feststellen
                 if ((/erk\u00E4mpft sich den Ball/i).test(spielbericht.rows[j].cells[1].textContent) === true) {
-                    // TB-Spalten spielbericht.rows[j].cells[4-i].textContent = spielernamen[i].textContent;
+                    //spielbericht.rows[j].cells[4-i].textContent = spielernamen[i].textContent;          //.........................................................Spielenamen aktiv / passiv neben Bericht einfï¿½gen
                     spielerakt[j][1-i] = spielernamen[i].textContent;
                     if (spielbericht.rows[j].cells[0].textContent === "") {
-                        // TB-Spalten spielbericht.rows[j].cells[3].textContent = spielbericht.rows[j-1].cells[4].textContent; // Zweikampfgegener aus der letzten Zeile
+                        //spielbericht.rows[j].cells[3].textContent = spielbericht.rows[j-1].cells[4].textContent;          //.........................................................Zweikampfgegener (Name) aus der letzten Zeile
                         spielerakt[j][0] = spielerakt[j-1][1];
                     }
                 }
                 else if ((/nicht vorbei/i).test(spielbericht.rows[j].cells[1].textContent) === true) {
-                    // TB-Spalten spielbericht.rows[j].cells[4-i].textContent = spielernamen[i].textContent;
+                    //spielbericht.rows[j].cells[4-i].textContent = spielernamen[i].textContent;          //.........................................................Spielenamen aktiv / passiv neben Bericht einfï¿½gen
                     spielerakt[j][1-i] = spielernamen[i].textContent;
                 }
                 else if ((/zieht den Ball/i).test(spielbericht.rows[j].cells[1].textContent) === true) {
-                    // TB-Spalten spielbericht.rows[j].cells[4-i].textContent = spielernamen[i].textContent;
+                    //spielbericht.rows[j].cells[4-i].textContent = spielernamen[i].textContent;          //.........................................................Spielenamen aktiv / passiv neben Bericht einfï¿½gen
                     spielerakt[j][1-i] = spielernamen[i].textContent;
                 }
                 else {
-                    // TB-Spalten spielbericht.rows[j].cells[3+i].textContent = spielernamen[i].textContent;
+                    //spielbericht.rows[j].cells[3+i].textContent = spielernamen[i].textContent;          //.........................................................Spielenamen aktiv / passiv neben Bericht einfï¿½gen
                     spielerakt[j][0+i] = spielernamen[i].textContent;
                 }
             }
+            if (spielerakt[j][0] == "Freistoss") {
+                spielerakt[j][0] = spielerakt[j][1];
+                spielerakt[j][1] = "a";
+            }
 
-            // TB-Spalten spielbericht.rows[j].cells[2].textContent = ergebnis;
+            //spielbericht.rows[j].cells[4].textContent = ergebnis;          //.........................................................Aktion neben Bericht einfï¿½gen
             ereignis[j][0] = ergebnis;
 
             if (ereignis[j][0] == "ZWK_ov") {
-                // TB-Spalten spielbericht.rows[j].cells[5].textContent = "0";
+                //spielbericht.rows[j].cells[5].textContent = "0";          //.........................................................Erfolg neben Bericht einfï¿½gen
                 ereignis[j][1] = 0;
             }
             else {
-                // TB-Spalten spielbericht.rows[j].cells[5].textContent = "1";
+                //spielbericht.rows[j].cells[5].textContent = "1";          //.........................................................Erfolg neben Bericht einfï¿½gen
                 ereignis[j][1] = 1;
             }
             if ((/TOR/).test(spielbericht.rows[j].cells[1].textContent) === true) { //Erfolgsmeldung zweiter Halbsatz
@@ -132,11 +137,11 @@ function textbausteine(){
             }
             else {
                 if ((/ - /).test(spielbericht.rows[j].cells[1].textContent) === true) { //Misserfolgsmeldung zweiter Halbsatz
-                    // TB-Spalten spielbericht.rows[j].cells[5].textContent = "0";
+                    //spielbericht.rows[j].cells[5].textContent = "0";          //.........................................................Erfolg neben Bericht einfï¿½gen
                     ereignis[j][1] = 0;
                 }
                 else if ((/ABSEITS/).test(spielbericht.rows[j+1].cells[1].textContent) === true) { //Abseits Folgesatz
-                    // TB-Spalten spielbericht.rows[j].cells[5].textContent = "0";
+                    //spielbericht.rows[j].cells[5].textContent = "0";          //.........................................................Erfolg neben Bericht einfï¿½gen
                     ereignis[j][1] = 0;
                 }
                 else if ((/ - /).test(spielbericht.rows[j+1].cells[1].textContent) === false) { //Erfolgsmeldung Folgesatz
@@ -148,7 +153,7 @@ function textbausteine(){
                         suche = gruppen[temp][y];
                         ergebnis = suche.test(spielbericht.rows[j+1].cells[1].textContent);
                         if (ergebnis === true) {
-                            // TB-Spalten spielbericht.rows[j].cells[5].textContent = "0";
+                            //spielbericht.rows[j].cells[5].textContent = "0";          //.........................................................Erfolg neben Bericht einfï¿½gen
                             ereignis[j][1] = 0;
                             break;
                         }
@@ -156,6 +161,46 @@ function textbausteine(){
                 }
 
                 // hier weiter mit Erfolg (wovon? SCH?)--------------------------------------------------------------------------------------------------------------------------------
+            }
+
+            for (k = 1; k < tabberstat.rows.length; k++) {  // Spieler
+                if (tabberstat.rows[k].cells[0].textContent == spielerakt[j][0]) {
+                    l = 0; //Heimteam
+                    break;
+                }
+                else {
+                    l = 2; //Gastteam
+                }
+            }
+            if (ereignis[j][1] === 0) { //Ballverlust
+                spielbericht.rows[j].cells[2+l].textContent = ereignis[j][0]; //Ereignis in Spielbericht eintragen
+                switch (ereignis[j][0]) {
+                    case "SCH":
+                        spielbericht.rows[j].cells[2+l].innerHTML = '<img src="http://os2.bertram-michael.de/img/sch.png" height="15" width="15">';
+                        break;
+                    case "Pass":
+                        spielbericht.rows[j].cells[2+l].innerHTML = '<img src="http://os2.bertram-michael.de/img/pass.png" height="15" width="15">';
+                        break;
+                    case "ZWK_ov":
+                        spielbericht.rows[j].cells[2+l].innerHTML = '<img src="http://os2.bertram-michael.de/img/zwk.png" height="25" width="25">';
+                        break;
+                }
+            }
+            else if (ereignis[j][0] == "SCH") { // Tor weil Erfolg = 1 (else)
+                //spielbericht.rows[j].cells[2+l].textContent = "TOR"; //Ereignis in Spielbericht eintragen
+                spielbericht.rows[j].cells[2+l].innerHTML = '<img src="http://os2.bertram-michael.de/img/tor.png" height="25" width="25">'; //TOR
+            }
+
+            if (spielbericht.rows[j].cells[0].textContent !== "y") {
+                spielbericht.rows[j].cells[3].style.fontWeight="bold";
+                if (l === 0) {
+                    spielbericht.rows[j].cells[3].style.color="#33ff33";
+                    spielbericht.rows[j].cells[3].textContent=" | ";
+                }
+                else {
+                    spielbericht.rows[j].cells[3].style.color="#3377ff";
+                    spielbericht.rows[j].cells[3].textContent=" | ";
+                }
             }
         }
     }
@@ -201,8 +246,8 @@ function berstatistik () {
                 break;
 
             case "SCH":
-                // Anweisungen werden ausgeführt,
-                // falls expression mit valueN übereinstimmt
+                // Anweisungen werden ausgefï¿½hrt,
+                // falls expression mit valueN ï¿½bereinstimmt
                 break;
             default:
                 // nichts
@@ -249,29 +294,29 @@ function berstatistik () {
     }
 }
 
-// ==================== Ende Funktionen für Textbausteine ====================
+// ==================== Ende Funktionen fï¿½r Textbausteine ====================
 
 
 
-// ==================== Code neu für Textbausteine ====================
+// ==================== Code neu fï¿½r Textbausteine ====================
 
 spielbericht = document.getElementsByTagName("table")[2];
 spielerakt = Array(spielbericht.rows.length); // Beteiligte je Zeile
 ereignis = Array(spielbericht.rows.length); // Ereignis, Erfolg je Zeile
 
-textbausteine();
 tabelleneu();
 
 tabspielstat = document.getElementsByTagName("table")[4];
 tabberstat = document.getElementsByTagName("table")[5];
 
+textbausteine();
 berstatistik();
 
 window.resizeTo(1100,1000);
 
 console.log("End of script");
 
-// ==================== Ende Code für Textbausteine ====================
+// ==================== Ende Code fï¿½r Textbausteine ====================
 
 
 
