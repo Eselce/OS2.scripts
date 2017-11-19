@@ -1,26 +1,33 @@
 ﻿// ==UserScript==
-// @name         Spielersuche
+// @name         OS2.spielersuche
 // @namespace    http://os.ongapo.com/
-// @version      0.1
-// @description  Transferdetails einblenden
+// @version      0.11
+// @copyright    2016+
 // @author       Michael Bertram
+// @description  Transferdetails einblenden
 // @include      http*://os.ongapo.com/suchspieler.php
+// @include      http*://www.os.ongapo.com/suchspieler.php
+// @include      http*://online-soccer.eu/suchspieler.php
+// @include      http*://www.online-soccer.eu/suchspieler.php
 // @grant        none
 // ==/UserScript==
 
-(function() {
+// ECMAScript 6: Erlaubt 'const', 'let', ...
+/* jshint esnext: true */
+/* jshint moz: true */
+
+function procSpielersucheTDetails() {
     'use strict';
-    
-    var Elements, thisElement;
-    Elements = document.getElementsByTagName('option');
-    for (var i = 0; i < Elements.length; i++) {
-        thisElement = Elements[i];
-        if (thisElement.text == 'VLZ') {
+    const __ELEMENTS = document.getElementsByTagName('option');
+
+    for (let thisElement of __ELEMENTS) {
+        if (thisElement.text === 'VLZ') {
             thisElement.value = 35;
-            thisElement.text = 'TDetails';            
-        } else {
-            // nichts
-            // alert("hello world");
+            thisElement.text = 'TDetails';
         }
-    }   
-})();
+    }
+}
+
+procSpielersucheTDetails();
+
+console.log("SCRIPT END");
