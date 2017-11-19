@@ -1,19 +1,15 @@
 // ==UserScript==
 // @name         OS2.spielersuche
 // @namespace    http://os.ongapo.com/
-// @version      0.12
+// @version      0.13+WE
 // @copyright    2016+
-// @author       Michael Bertram
-// @author       Sven Loges (SLC)
+// @author       Sven Loges (SLC) / Michael Bertram
 // @description  Transferdetails einblenden
-// @include      http*://os.ongapo.com/suchspieler.php
-// @include      http*://www.os.ongapo.com/suchspieler.php
-// @include      http*://online-soccer.eu/suchspieler.php
-// @include      http*://www.online-soccer.eu/suchspieler.php
+// @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/suchspieler\.php$/
 // @grant        none
 // ==/UserScript==
 
-// ECMAScript 6: Erlaubt 'const', 'let', ...
+// ECMAScript 6:
 /* jshint esnext: true */
 /* jshint moz: true */
 
