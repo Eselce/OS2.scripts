@@ -19,13 +19,18 @@
 // @grant GM_registerMenuCommand
 // ==/UserScript==
 
+// ECMAScript 6: Erlaubt 'const'...
+/* jshint esnext: true */
+/* jshint moz: true */
+
 // Optionen (hier die Standardwerte editieren oder ueber das Benutzermenu setzen):
 var sepMonths = true;    // Im Spielplan Trennstriche zwischen den Monaten
 var shortKom  = true;    // "Vorbericht(e) & Kommentar(e)" nicht ausschreiben
 var showStats = true;    // Ergebnisse aufaddieren und Stand anzeigen
 var longStats = false;   // Detailliertere Ausgabe des Stands
 
-var borderString = "solid white 1px";           // Format der Trennlinie zwischen den Monaten
+var __BORDERSTRING = "solid white 1px";
+var borderString = __BORDERSTRING;                // Format der Trennlinie zwischen den Monaten
 
 // Verarbeitet die URL der Seite und ermittelt die Nummer der gewuenschten Unterseite
 // url Adresse der Seite
@@ -37,15 +42,15 @@ function getPageIdFromURL(url) {
     var s = -1;                                 // Seitenindex (Rueckgabewert)
 
     // Wert von s (Seitenindex) ermitteln...
-    // Annahme: Entscheidend ist jeweils das letzte Vorkommnis von "s=" und ggf. von "&"
+    // Annahme: Entscheidend ist jeweils das letzte Vorkommnis von "s=" und ggf. von '&'
     if (indexS < 0) {
         s = 0;
     } else if (showteam) {
         // Wert von s setzt sich aus allen Zeichen hinter "s=" zusammen
         s = parseInt(url.substring(indexS + 2, url.length), 10);
     } else {
-        // Wert von s setzt sich aus allen Zeichen zwischen "s=" und "&" zusammen
-        s = parseInt(url.substring(indexS + 2, url.indexOf("&", indexS)), 10);
+        // Wert von s setzt sich aus allen Zeichen zwischen "s=" und '&' zusammen
+        s = parseInt(url.substring(indexS + 2, url.indexOf('&', indexS)), 10);
     }
 
     return s;
@@ -106,8 +111,8 @@ function setMonthsSeparated(on) {
 // funOff Funktion zum Ausschalten
 // keyOff Hotkey zum Ausschalten im Menu
 function registerMenuOption(opt, menuOn, funOn, keyOn, menuOff, funOff, keyOff) {
-    var on  = (opt ? "*" : "");
-    var off = (opt ? "" : "*");
+    var on  = (opt ? '*' : "");
+    var off = (opt ? "" : '*');
 
     console.log("OPTION " + on + menuOn + on + " / " + off + menuOff + off);
     if (opt) {
@@ -117,13 +122,13 @@ function registerMenuOption(opt, menuOn, funOn, keyOn, menuOff, funOff, keyOff) 
     }
 }
 
-// Baut das Benutzermenu für den Spielplan auf
+// Baut das Benutzermenu fuer den Spielplan auf
 function registerSpielplanMenu() {
     console.log("registerSpielplanMenu()");
-    registerMenuOption(longStats, 'Lange Stats', setLongStats, 'L', 'Kurze Stats', setShortStats, 'K');
-    registerMenuOption(showStats, 'Stats ein', setShowStats, 'S', 'Stats aus', setShowNoStats, 'S');
-    registerMenuOption(shortKom, 'Kurze Texte', setShortKom, 'T', 'Lange Texte', setFullKom, 'T');
-    registerMenuOption(sepMonths, 'Monate trennen', setSepMonths, 'M', 'Keine Monate', setNoSepMonths, 'M');
+    registerMenuOption(longStats, "Lange Stats", setLongStats, 'L', "Kurze Stats", setShortStats, 'K');
+    registerMenuOption(showStats, "Stats ein", setShowStats, 'S', "Stats aus", setShowNoStats, 'S');
+    registerMenuOption(shortKom, "Kurze Texte", setShortKom, 'T', "Lange Texte", setFullKom, 'T');
+    registerMenuOption(sepMonths, "Monate trennen", setSepMonths, 'M', "Keine Monate", setNoSepMonths, 'M');
     GM_registerMenuCommand("Standard-Optionen", resetSpielplanOptions, 'O');
 }
 
@@ -184,6 +189,32 @@ function setNoSepMonths() {
     setMonthsSeparated(false);
 }
 
+// Liefert einen vor den ersten ZAT zurueckgesetzten Spielplanzeiger
+// saison Enthaelt die Nummer der laufenden Saison
+// 0: Saison
+// 1: ZAT
+// 2: GameTypeID
+// 3: Heim/Auswärts
+// 4: Ligaspieltag
+// 5: Pokalrunde
+// 6: Eurorunde
+// 7: Hin/Rueck
+// 8: ZAT Rueck
+// 9: ZAT Korr
+function firstZAT(saison) {
+    return [ saison, 0, 0, 0, 0, 0, 0, 0, 0, 0 ];
+}
+
+// Liefert den ZAT als String
+// nextZAT Enthaelt den Spielplanzeiger auf den ZAT
+function getStats(nextZAT) {
+    return (longStats ? nextZAT[2] + ' ' + (nextZAT[3] ? "Ausw\xE4rts" : "Heim") + ' ' : "") +
+           (longStats ? '[' + nextZAT[4] + ' ' + nextZAT[5] + ' ' + nextZAT[6] + "] " : "") +
+           (longStats ? '[' + (nextZAT[7] ? "R\xFCck" : "Hin") + ' ' + nextZAT[8] +
+                        ' ' + ((nextZAT[9] < 0) ? "" : '+') + nextZAT[9] : "") +
+           'S' + nextZAT[0] + 'Z' + ((nextZAT[1] < 10) ? '0' : "") + nextZAT[1];
+}
+
 // Liefert eine auf 0 zurueckgesetzte Ergebnissumme
 // stats Enthaelt die summierten Stats
 // 0: Siege
@@ -192,16 +223,16 @@ function setNoSepMonths() {
 // 3: Tore
 // 4: Gegentore
 // 5: Siegpunkte
-function emptyStats(stats) {
+function emptyStats() {
     return [ 0, 0, 0, 0, 0, 0 ];
 }
 
 // Liefert die Stats als String
 // stats Enthaelt die summierten Stats
 function getStats(stats) {
-    return (longStats ? "[" + stats[0] + " " + stats[1] + " " + stats[2] + "] " : "/ ")
-         + stats[3] + ":" + stats[4] + " " + ((stats[3] < stats[4]) ? "" : (stats[3] > stats[4]) ? "+" : "")
-         + (stats[3] - stats[4]) + " (" + stats[5] + ")";
+    return (longStats ? '[' + stats[0] + ' ' + stats[1] + ' ' + stats[2] + "] " : "/ ") +
+           stats[3] + ':' + stats[4] + ' ' + ((stats[3] < stats[4]) ? "" : (stats[3] > stats[4]) ? '+' : "") +
+           (stats[3] - stats[4]) + " (" + stats[5] + ')';
 }
 
 // Summiert ein Ergebnis auf die Stats und liefert den neuen Text zurueck
@@ -212,7 +243,7 @@ function addResultToStats(stats, ergebnis) {
     var sgn;
     var gfor;
     var gagainst;
- 
+
     if (ergebnis.length == 2) {
         gfor = parseInt(ergebnis[0], 10);
         gagainst = parseInt(ergebnis[1], 10);
@@ -230,7 +261,7 @@ function addResultToStats(stats, ergebnis) {
 
 // Ermittelt das Spiel-Ergebnis aus einer Tabellenzelle, etwa "2 : 1" und liefert zwei Werte zurueck
 // cell Tabellenzelle mit Eintrag "2 : 1"
-// return { "2", "1" } im Beispiel
+// return { '2', '1' } im Beispiel
 function getErgebnisFromCell(cell) {
     var ret = cell.textContent.split(" : ", 2);
 
@@ -241,11 +272,11 @@ function getErgebnisFromCell(cell) {
 // cell Tabellenzelle mit Eintrag "Liga : Heim" oder "Liga Heim"
 // return { "Liga", "Heim" } im Beispiel
 function getSpielArtFromCell(cell) {
-    var ret = cell.textContent.split(" ", 2);
+    var ret = cell.textContent.split(' ', 2);
 
     if (ret.length > 1) {
-        // Alle ":" und " " raus...
-        ret[1] = ret[1].replace(":", "").replace(" ", "");
+        // Alle ':' und ' ' raus...
+        ret[1] = ret[1].replace(':', "").replace(' ', "");
     }
 
     return ret;
@@ -283,13 +314,13 @@ function getBilanzLinkFromCell(cell, gameType, label) {
 
     if (bericht != "Vorschau") {   // Nur falls Link nicht bereits vorhanden
         if (gameTypeID > 1) {      // nicht moeglich fuer "Friendly" bzw. "spielfrei"
-            var searchFun = "javascript:os_bericht(";
-            var paarung = cell.innerHTML.substr(cell.innerHTML.indexOf(searchFun) + searchFun.length);
+            var __SEARCHFUN = ":os_bericht(";
+            var paarung = cell.innerHTML.substr(cell.innerHTML.indexOf(__SEARCHFUN) + __SEARCHFUN.length);
 
-            paarung = paarung.substr(0, paarung.indexOf(")"));
-            paarung = paarung.substr(0, paarung.lastIndexOf(","));
-            paarung = paarung.substr(0, paarung.lastIndexOf(","));
-            ret = " <a href=\"javascript:spielpreview(" + paarung + "," + gameTypeID + ")\">" + label + "</a>";
+            paarung = paarung.substr(0, paarung.indexOf(')'));
+            paarung = paarung.substr(0, paarung.lastIndexOf(','));
+            paarung = paarung.substr(0, paarung.lastIndexOf(','));
+            ret = ' <a href="javascript:spielpreview(' + paarung + ',' + gameTypeID + ')">' + label + "</a>";
         }
     }
 
@@ -303,34 +334,34 @@ function getBilanzLinkFromCell(cell, gameType, label) {
 function addBilanzLinkToCell(cell, gameType, label) {
     var bilanzLink = getBilanzLinkFromCell(cell, gameType, label);
 
-    if (bilanzLink != "") {
+    if (bilanzLink !== "") {
         cell.innerHTML += bilanzLink;
     }
 }
 
 // Verarbeitet Ansicht "Saisonplan"
 function procSpielplan() {
-    var pokalRunden = [ "1. Runde", "2. Runde", "3. Runde", "Achtelfinale", "Viertelfinale", "Halbfinale", "Finale" ];
-    var qualiRunden = [ "Quali 1", "Quali 2", "Quali 3" ];
-    var oscRunden = [ "Viertelfinale", "Halbfinale", "Finale" ];
-    var oseRunden = [ "Runde 1", "Runde 2", "Runde 3", "Runde 4", "Achtelfinale", "Viertelfinale", "Halbfinale", "Finale" ];
-    var hinrueck = [ " Hin", " R\374ck", "" ];
+    var __POKALRUNDEN = [ "1. Runde", "2. Runde", "3. Runde", "Achtelfinale", "Viertelfinale", "Halbfinale", "Finale" ];
+    var __QUALIRUNDEN = [ "Quali 1", "Quali 2", "Quali 3" ];
+    var __OSCRUNDEN = [ "Viertelfinale", "Halbfinale", "Finale" ];
+    var __OSERUNDEN = [ "Runde 1", "Runde 2", "Runde 3", "Runde 4", "Achtelfinale", "Viertelfinale", "Halbfinale", "Finale" ];
+    var __HINRUECK = [ " Hin", " R\xFCck", "" ];
 
     var table = document.getElementsByTagName("table")[2];
     var saisons = document.getElementsByTagName("option");
-    var saison = getSaisonFromComboBox(saisons);
+    var __SAISON = getSaisonFromComboBox(saisons);
 
-    var anzZATperMonth = ((saison < 2) ? 7 : 6);    // Erste Saison 7, danach 6...
+    var __ANZZATPERMONTH = ((__SAISON < 2) ? 7 : 6);    // Erste Saison 7, danach 6...
 
-    var rowOffsetUpper = 1;
-    var rowOffsetLower = 0;
+    var __ROWOFFSETUPPER = 1;
+    var __ROWOFFSETLOWER = 0;
 
-    var columnIndexArt = 1;
-    var columnIndexGeg = 2;
-    var columnIndexErg = 3;
-    var columnIndexBer = 4;
-    var columnIndexZus = 5;
-    var columnIndexKom = 6;
+    var __COLUMNINDEXART = 1;
+    var __COLUMNINDEXGEG = 2;
+    var __COLUMNINDEXERG = 3;
+    var __COLUMNINDEXBER = 4;
+    var __COLUMNINDEXZUS = 5;
+    var __COLUMNINDEXKOM = 6;
 
     var ligaSpieltag = 0;
     var pokalRunde = 0;
@@ -359,12 +390,12 @@ function procSpielplan() {
 
     ligaStats = emptyStats();
 
-    for (i = rowOffsetUpper; i < table.rows.length - rowOffsetLower; i++, ZAT++) {
+    for (i = __ROWOFFSETUPPER; i < table.rows.length - __ROWOFFSETLOWER; i++, ZAT++) {
         if (shortKom) {
-            var kommentar = table.rows[i].cells[columnIndexKom].innerHTML;
+            var kommentar = table.rows[i].cells[__COLUMNINDEXKOM].innerHTML;
 
-            kommentar = kommentar.replace("Vorbericht(e)", "V").replace("Kommentar(e)", "K").replace("&amp;", "/").replace("&", "/");
-            table.rows[i].cells[columnIndexKom].innerHTML = kommentar;
+            kommentar = kommentar.replace("Vorbericht(e)", 'V').replace("Kommentar(e)", 'K').replace("&amp;", '/').replace('&', '/');
+            table.rows[i].cells[__COLUMNINDEXKOM].innerHTML = kommentar;
         }
         if ((ZAT > 12) && (ZAT % 10 == 5)) {    // passt fuer alle Saisons: 12, 20, 30, 40, 48, 58, 68 / 3, 15, 27, 39, 51, 63, 69
             pokalRunde++;
@@ -381,7 +412,7 @@ function procSpielplan() {
         }
         if (ZAT == ZATrueck) {
             hinrueckspiel = 1;   // 5, 7; 11, 13;  (17, 19)  / 23,   25; 29, 31; 35,  37; 41,  43; 47, 49; 53,  55; 59,  61; 69
-            if (saison < 3) {    // 4, 6; 10, 14*; (16, 22*) / 24**, 26; 34, 36; 38*, 42; 44*, 50; 52, 54; 56*, 60; 62*, 66; 70
+            if (__SAISON < 3) {    // 4, 6; 10, 14*; (16, 22*) / 24**, 26; 34, 36; 38*, 42; 44*, 50; 52, 54; 56*, 60; 62*, 66; 70
                 if (ZAT == 22) {
                     ZATkorr = 4;
                 } else if ((ZAT - 6) % 20 > 6) {
@@ -395,13 +426,23 @@ function procSpielplan() {
             }
         }
         stats = "";
-        spielart = getSpielArtFromCell(table.rows[i].cells[columnIndexArt]);
-        ergebnis = getErgebnisFromCell(table.rows[i].cells[columnIndexErg]);
-        table.rows[i].cells[columnIndexZus].className = table.rows[i].cells[columnIndexArt].className;
-        if (table.rows[i].cells[columnIndexZus].textContent == "") {
+        spielart = getSpielArtFromCell(table.rows[i].cells[__COLUMNINDEXART]);
+        ergebnis = getErgebnisFromCell(table.rows[i].cells[__COLUMNINDEXERG]);
+        if (shortKom) {
+            var cellArt = table.rows[i].cells[__COLUMNINDEXART]
+
+            cellArt.innerHTML = cellArt.innerHTML.replace(": Heim", "(H)").replace(": Ausw\xE4rts", "(A)").replace("Friendly", "FSS");
+        }
+        table.rows[i].cells[__COLUMNINDEXZUS].className = table.rows[i].cells[__COLUMNINDEXART].className;
+        if (table.rows[i].cells[__COLUMNINDEXZUS].textContent === "") {
+            var cellBer = table.rows[i].cells[__COLUMNINDEXBER];
+
             zusatz = "";
             gameType = spielart[0];
-            addBilanzLinkToCell(table.rows[i].cells[columnIndexBer], gameType, shortKom ? "B" : "Bilanz");
+            addBilanzLinkToCell(cellBer, gameType, "Bilanz");
+            if (shortKom) {
+                cellBer.innerHTML = cellBer.innerHTML.replace("Klick", "(*)").replace("Bilanz", 'V').replace("Vorschau", 'V');
+            }
             if (gameType == "Liga") {
                 if (ZAT < 70) {
                     stats = addResultToStats(ligaStats, ergebnis);
@@ -410,15 +451,15 @@ function procSpielplan() {
                     zusatz = "Relegation";
                 }
             } else if (gameType == "LP") {
-                zusatz = pokalRunden[pokalRunde];
+                zusatz = __POKALRUNDEN[pokalRunde];
             } else if ((gameType == "OSCQ") || (gameType == "OSEQ")) {
                 if (hinrueckspiel != 1) {
                     euroStats = emptyStats();
                 }
                 stats = addResultToStats(euroStats, ergebnis);
-                zusatz = qualiRunden[euroRunde] + hinrueck[hinrueckspiel];
+                zusatz = __QUALIRUNDEN[euroRunde] + __HINRUECK[hinrueckspiel];
             } else if (gameType == "OSC") {
-                if ((hinrueckspiel != 1) && ((euroRunde >= 8) || ((euroRunde - 2) % 3 == 0))) {
+                if ((hinrueckspiel != 1) && ((euroRunde >= 8) || ((euroRunde - 2) % 3 === 0))) {
                     euroStats = emptyStats();
                 }
                 stats = addResultToStats(euroStats, ergebnis);
@@ -426,23 +467,23 @@ function procSpielplan() {
                     gruppenPhase = ((euroRunde < 5) ? "HR-Grp. " : "ZR-Grp. ");
                     zusatz = gruppenPhase + "Spiel " + (((euroRunde - 2) % 3) * 2 + 1 + hinrueckspiel);
                 } else {
-                    zusatz = oscRunden[euroRunde - 8] + hinrueck[hinrueckspiel];
+                    zusatz = __OSCRUNDEN[euroRunde - 8] + __HINRUECK[hinrueckspiel];
                 }
             } else if (gameType == "OSE") {
                 if (hinrueckspiel != 1) {
                     euroStats = emptyStats();
                 }
                 stats = addResultToStats(euroStats, ergebnis);
-                zusatz = oseRunden[euroRunde - 3] + hinrueck[hinrueckspiel];
+                zusatz = __OSERUNDEN[euroRunde - 3] + __HINRUECK[hinrueckspiel];
             } else if (gameType == "Friendly") {
                 zusatz = "";    // irgendwie besser lesbar!
             }
-            if (showStats && (stats != "")) {
-                zusatz = zusatz + " " + stats;
+            if (showStats && (stats !== "")) {
+                zusatz = zusatz + ' ' + stats;
             }
-            table.rows[i].cells[columnIndexZus].textContent = zusatz;
+            table.rows[i].cells[__COLUMNINDEXZUS].textContent = zusatz;
         }
-        if (sepMonths && (ZAT % anzZATperMonth == 0) && (i < table.rows.length - rowOffsetLower - 1)) {
+        if (sepMonths && (ZAT % __ANZZATPERMONTH === 0) && (i < table.rows.length - __ROWOFFSETLOWER - 1)) {
             for (j = 0; j < table.rows[i].cells.length; j++) {
                 table.rows[i].cells[j].style.borderBottom = borderString;
             }
