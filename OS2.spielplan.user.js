@@ -12,17 +12,20 @@
 // @include http://online-soccer.eu/showteam.php?s=*
 // @include http://www.online-soccer.eu/st.php?s=*
 // @include http://www.online-soccer.eu/showteam.php?s=*
+// @grant GM_getValue
+// @grant GM_setValue
+// @grant GM_registerMenuCommand
 // ==/UserScript==
 
 // Optionen (hier editieren):
-var sepMonths = true;	// Im Spielplan Striche zwischen den Monaten
-var shortKom = true;	// Vorbericht(e) & Kommentar(e) nicht ausschreiben
-var showStats = true;	// Ergebnisse aufaddieren und Stand anzeigen
-var longStats = false;	// Detailliertere Ausgabe des Stands
+var sepMonths = GM_getValue("sepMonths", true);    // Im Spielplan Striche zwischen den Monaten
+var shortKom  = GM_getValue("shortKom",  true);    // Vorbericht(e) & Kommentar(e) nicht ausschreiben
+var showStats = GM_getValue("showStats", true);    // Ergebnisse aufaddieren und Stand anzeigen
+var longStats = GM_getValue("longStats", false);   // Detailliertere Ausgabe des Stands
 
 var borderString = "solid white 1px";
 
-//registerMenu();
+registerMenu();
 
 // Verarbeitet die URL der Seite und ermittelt die Nummer der gewuenschten Unterseite
 // url Adresse der Seite
@@ -32,7 +35,7 @@ function getPageIdFromURL(url) {
     var st = url.match(/st\.php/);              // Teamansicht Popupfenster
     var showteam = url.match(/showteam\.php/);  // Teamansicht Hauptfenster
     var s = -1;                                 // Seitenindex (Rueckgabewert)
-    
+
     // Wert von s (Seitenindex) ermitteln...
     // Annahme: Entscheidend ist jeweils das letzte Vorkommnis von "s=" und ggf. von "&"
     if (indexS < 0) {
@@ -44,7 +47,7 @@ function getPageIdFromURL(url) {
         // Wert von s setzt sich aus allen Zeichen zwischen "s=" und "&" zusammen
         s = parseInt(url.substring(indexS + 2, url.indexOf("&", indexS)), 10);
     }
-    
+
     return s;
 }
 
@@ -53,42 +56,90 @@ function getPageIdFromURL(url) {
 function getSaisonFromComboBox(saisons) {
     var saison = 0;
     var i;
-    
+
     for (i = 0; i < saisons.length; i++) {
         if (saisons[i].outerHTML.match(/selected/)) {
             saison = saisons[i].textContent;
         }
     }
-    
+
     return saison;
 }
 
 // Baut das User-Menue auf
 function registerMenu() {
-
-    GM_registerMenuCommand("Short format", setShortStats, "s");
-
-    GM_registerMenuCommand("Long format", setLongStats, "l");
+    GM_registerMenuCommand("Short format", setShortStats, "S");
+    GM_registerMenuCommand("Long format", setLongStats, "L");
+    GM_registerMenuCommand("No stats", setShowNoStats, "N");
+    GM_registerMenuCommand("Show stats", setShowStats, "h");
+    GM_registerMenuCommand("Short links", setShortKom, "l");
+    GM_registerMenuCommand("Full links", setFullKom, "F");
+    GM_registerMenuCommand("Mark months", setSepMonths, "M");
+    GM_registerMenuCommand("Unmark months", setNoSepMonths, "U");
 }
 
 // Setzt das Stats-Format neu auf short/long
 function setLongStatsFormat(long) {
-
     longStats = long;
+    GM_setValue("longStats", longStats);
+}
 
-    registerMenu();
+// Setzt das Stats-Format neu auf an/aus
+function setStatsShown(visible) {
+    showStats = visible;
+    GM_setValue("showStats", showStats);
+}
+
+// Setzt das Kommentar-Link neu auf gekürzt/lang
+function setKomLength(isShort) {
+    shortKom = isShort;
+    GM_setValue("shortKom", shortKom);
+}
+
+// Setzt die Trennung der Monate neu auf an/aus
+function setMonthsSeparated(on) {
+    sepMonths = on;
+    GM_setValue("sepMonths", sepMonths);
 }
 
 // Setzt das Stats-Format neu auf short
 function setShortStats() {
-
     setLongStatsFormat(false);
 }
 
 // Setzt das Stats-Format neu auf long
 function setLongStats() {
-
     setLongStatsFormat(true);
+}
+
+// Setzt das Stats-Format neu auf aus
+function setShowNoStats() {
+    setStatsShown(false);
+}
+
+// Setzt das Stats-Format neu auf an
+function setShowStats() {
+    setStatsShown(true);
+}
+
+// Setzt das Kommentar-Link neu auf gekürzt
+function setShortKom() {
+    setKomLength(true);
+}
+
+// Setzt das Kommentar-Link neu auf lang
+function setFullKom() {
+    setKomLength(false);
+}
+
+// Setzt zwischen den Monaten Trennungslinien
+function setSepMonths() {
+    setMonthsSeparated(true);
+}
+
+// Entfernt die Trennungslinien zwischen den Monaten
+function setNoSepMonths() {
+    setMonthsSeparated(false);
 }
 
 // Liefert eine auf 0 zurueckgesetzte Ergebnissumme
@@ -120,10 +171,10 @@ function addResultToStats(stats, ergebnis) {
         stats[3] += gfor;
         stats[4] += gagainst;
         stats[5] += (sgn > 0) ? 2 - sgn : 3;
-        
+
         ret = getStats(stats);
     }
-    
+
     return ret;
 }
 
@@ -152,7 +203,7 @@ function getSpielArtFromCell(cell) {
 
 // Gibt die ID fuer den Namen eines Wettbewerbs zurueck
 // gameType Name des Wettbewerbs eines Spiels
-// return OS2-ID für den Spieltyp (1 bis 7)
+// return OS2-ID fÃ¼r den Spieltyp (1 bis 7)
 function getGameTypeID(gameType) {
     var ID = -1;
 
@@ -174,14 +225,14 @@ function getGameTypeID(gameType) {
 // cell Tabellenzelle mit Link auf den Spielberichts-Link
 // gameType Name des Wettbewerbs eines Spiels
 // label Anzuklickender Text des neuen Links
-// return HTML-Link auf die Preview-Seite für diesen Spielbericht
+// return HTML-Link auf die Preview-Seite fÃ¼r diesen Spielbericht
 function getBilanzLinkFromCell(cell, gameType, label) {
     var bericht = cell.textContent;
     var gameTypeID = getGameTypeID(gameType);
     var ret = "";
 
     if (bericht != "Vorschau") {   // Nur falls Link nicht bereits vorhanden
-        if (gameTypeID > 1) {      // nicht möglich für "Friendly" bzw. "spielfrei"
+        if (gameTypeID > 1) {      // nicht mÃ¶glich fÃ¼r "Friendly" bzw. "spielfrei"
             var searchFun = "javascript:os_bericht(";
             var paarung = cell.innerHTML.substr(cell.innerHTML.indexOf(searchFun) + searchFun.length);
             paarung = paarung.substr(0, paarung.indexOf(")"));
@@ -215,22 +266,22 @@ function procSpielplan(sepMonths, shortKom, showStats) {
     var oscRunden = [ "Viertelfinale", "Halbfinale", "Finale" ];
     var oseRunden = [ "Runde 1", "Runde 2", "Runde 3", "Runde 4", "Achtelfinale", "Viertelfinale", "Halbfinale", "Finale" ];
     var hinrueck = [ " Hin", " Rück", "" ];
-    
+
     var table = document.getElementsByTagName("table")[2];
     var saisons = document.getElementsByTagName("option");
     var saison = getSaisonFromComboBox(saisons);
-    
+
     var anzZATperMonth = (saison < 2) ? 7 : 6;	// Erste Saison 7, danach 6...
-    
+
     var rowOffsetUpper = 1;
     var rowOffsetLower = 0;
-    
+
     var columnIndexArt = 1;
     var columnIndexErg = 3;
     var columnIndexBer = 4;
     var columnIndexZus = 5;
     var columnIndexKom = 6;
-    
+
     var ligaSpieltag = 0;
     var pokalRunde = 0;
     var euroRunde = -1;
@@ -238,23 +289,29 @@ function procSpielplan(sepMonths, shortKom, showStats) {
     var ZATrueck = 0;
     var ZATkorr = 0;
     var ZAT = 1;
-    
+
+    var zusatz;
+
+    var stats;
     var ligaStats;
     var euroStats;
-    
+
     var spielart;
     var ergebnis;
-    var kommentar;
-    var stats;
     var gameType;
     var gruppenPhase;
-    
+
     var i;
     var j;
-    
+
     ligaStats = emptyStats();
-    
+
     for (i = rowOffsetUpper; i < table.rows.length - rowOffsetLower; i++, ZAT++) {
+        if (shortKom) {
+            var kommentar = table.rows[i].cells[columnIndexKom].innerHTML;
+            kommentar = kommentar.replace("Vorbericht(e)", "V").replace("Kommentar(e)", "K").replace("&amp;", "/").replace("&", "/");
+            table.rows[i].cells[columnIndexKom].innerHTML = kommentar;
+        }
         if ((ZAT > 12) && (ZAT % 10 == 5)) {	// passt fuer alle Saisons: 12, 20, 30, 40, 48, 58, 68 / 3, 15, 27, 39, 51, 63, 69
             pokalRunde++;
         }
@@ -283,10 +340,6 @@ function procSpielplan(sepMonths, shortKom, showStats) {
                 }
             }
         }
-        if (shortKom) {
-            kommentar = table.rows[i].cells[columnIndexKom].innerHTML;
-            table.rows[i].cells[columnIndexKom].innerHTML = kommentar.replace("Vorbericht(e)", "V").replace("Kommentar(e)", "K").replace("&amp;", "/").replace("&", "/");
-        }
         stats = "";
         spielart = getSpielArtFromCell(table.rows[i].cells[columnIndexArt]);
         ergebnis = getErgebnisFromCell(table.rows[i].cells[columnIndexErg]);
@@ -294,7 +347,7 @@ function procSpielplan(sepMonths, shortKom, showStats) {
         if (table.rows[i].cells[columnIndexZus].textContent == "") {
             zusatz = "";
             gameType = spielart[0];
-            addBilanzLinkToCell(table.rows[i].cells[columnIndexBer], gameType, "B");
+            addBilanzLinkToCell(table.rows[i].cells[columnIndexBer], gameType, shortKom ? "B" : "Bilanz");
             if (gameType == "Liga") {
                 if (ZAT < 70) {
                     stats = addResultToStats(ligaStats, ergebnis);
