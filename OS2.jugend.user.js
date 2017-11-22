@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        OS2.jugendV4
 // @namespace   http://os.ongapo.com/
-// @version     0.42
+// @version     0.43
 // @copyright   2013+
 // @author      Andreas Eckes (Strindheim BK)
 // @author      Sven Loges (SLC)
@@ -1850,7 +1850,7 @@ function PlayerRecord(age, skills, isGoalie) {
         if (this.mwFormel === __MWFORMEL.alt) {
             return (when === __TIME.end) ? 18 : this.age;
         } else {  // Geburtstage ab Saison 10...
-            return (when === __TIME.end) ? 18.00 : (13.00 + this.getZatAge() / 72);
+            return (13.00 + this.getZatAge(when) / 72);
         }
     };
 
@@ -1915,7 +1915,7 @@ function PlayerRecord(age, skills, isGoalie) {
         const __AGE = this.getAge(when);
 
         if (this.mwFormel === __MWFORMEL.alt) {
-            return Math.round(Math.pow((1 + this.getSkill(when)/100) * (1 + this.getOpti(pos, when)/100)*  (2 - __AGE/100), 10) * 2);    // Alte Formel bis Saison 9
+            return Math.round(Math.pow((1 + this.getSkill(when)/100) * (1 + this.getOpti(pos, when)/100) * (2 - __AGE/100), 10) * 2);    // Alte Formel bis Saison 9
         } else {  // MW-Formel ab Saison 10...
             const __MW5TF = 1.00;  // Zwischen 0.97 und 1.03
 
@@ -2043,10 +2043,11 @@ function reverseString(string) {
 // Die Indizes gehen von 0 (SCH) bis 16 (EIN)
 function isTrainableSkill(idx) {
     const __TRAINABLESKILLS = [0, 1, 2, 3, 4, 5, 8, 9, 10, 11, 15];
+    const __IDX = parseInt(idx, 10);
     let result = false;
 
     for (let idxTrainable of __TRAINABLESKILLS) {
-        if (idx === idxTrainable) {
+        if (__IDX === idxTrainable) {
             result = true;
             break;
         }
