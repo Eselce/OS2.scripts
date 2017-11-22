@@ -19,15 +19,13 @@
 // @grant GM_registerMenuCommand
 // ==/UserScript==
 
-// Optionen (hier editieren):
-var sepMonths = GM_getValue("sepMonths", true);    // Im Spielplan Striche zwischen den Monaten
-var shortKom  = GM_getValue("shortKom",  true);    // Vorbericht(e) & Kommentar(e) nicht ausschreiben
-var showStats = GM_getValue("showStats", true);    // Ergebnisse aufaddieren und Stand anzeigen
-var longStats = GM_getValue("longStats", false);   // Detailliertere Ausgabe des Stands
+// Optionen (hier die Standardwerte editieren oder ueber das Benutzermenu setzen):
+var sepMonths = true;    // Im Spielplan Trennstriche zwischen den Monaten
+var shortKom  = true;    // "Vorbericht(e) & Kommentar(e)" nicht ausschreiben
+var showStats = true;    // Ergebnisse aufaddieren und Stand anzeigen
+var longStats = false;   // Detailliertere Ausgabe des Stands
 
-registerMenu();
-
-var borderString = "solid white 1px";              // Format der Trennlinie zwischen den Monaten
+var borderString = "solid white 1px";           // Format der Trennlinie zwischen den Monaten
 
 // Verarbeitet die URL der Seite und ermittelt die Nummer der gewuenschten Unterseite
 // url Adresse der Seite
@@ -75,6 +73,7 @@ function getSaisonFromComboBox(saisons) {
 function setOption(name, value) {
     GM_setValue(name, value);
     window.location.reload();
+
     return value;
 }
 
@@ -118,23 +117,31 @@ function registerMenuOption(opt, menuOn, funOn, keyOn, menuOff, funOff, keyOff) 
     }
 }
 
-// Baut das User-Menue auf
-function registerMenu() {
-    console.log("registerMenu()");
+// Baut das Benutzermenu für den Spielplan auf
+function registerSpielplanMenu() {
+    console.log("registerSpielplanMenu()");
     registerMenuOption(longStats, 'Lange Stats', setLongStats, 'L', 'Kurze Stats', setShortStats, 'K');
     registerMenuOption(showStats, 'Stats ein', setShowStats, 'S', 'Stats aus', setShowNoStats, 'S');
     registerMenuOption(shortKom, 'Kurze Texte', setShortKom, 'T', 'Lange Texte', setFullKom, 'T');
     registerMenuOption(sepMonths, 'Monate trennen', setSepMonths, 'M', 'Keine Monate', setNoSepMonths, 'M');
-    GM_registerMenuCommand("Standard-Optionen", resetOptions, 'O');
+    GM_registerMenuCommand("Standard-Optionen", resetSpielplanOptions, 'O');
 }
 
-// Setzt die Optionen auf Werkseinstellungen
-function resetOptions() {
+// Setzt die Optionen fuer Spielplan auf die "Werkseinstellungen" des Skripts
+function resetSpielplanOptions() {
     GM_deleteValue("longStats");
     GM_deleteValue("showStats");
     GM_deleteValue("shortKom");
     GM_deleteValue("sepMonths");
     window.location.reload();
+}
+
+// Laedt die permament (ueber Menu) gesetzten Optionen fuer Spielplan
+function loadSpielplanOptions() {
+    sepMonths = GM_getValue("sepMonths", sepMonths);   // Im Spielplan Trennstriche zwischen den Monaten
+    shortKom  = GM_getValue("shortKom",  shortKom);    // "Vorbericht(e) & Kommentar(e)" nicht ausschreiben
+    showStats = GM_getValue("showStats", showStats);   // Ergebnisse aufaddieren und Stand anzeigen
+    longStats = GM_getValue("longStats", longStats);   // Detailliertere Ausgabe des Stands
 }
 
 // Setzt das Stats-Format neu auf short
@@ -179,6 +186,12 @@ function setNoSepMonths() {
 
 // Liefert eine auf 0 zurueckgesetzte Ergebnissumme
 // stats Enthaelt die summierten Stats
+// 0: Siege
+// 1: Unentschieden
+// 2: Niederlagen
+// 3: Tore
+// 4: Gegentore
+// 5: Siegpunkte
 function emptyStats(stats) {
     return [ 0, 0, 0, 0, 0, 0 ];
 }
@@ -186,8 +199,9 @@ function emptyStats(stats) {
 // Liefert die Stats als String
 // stats Enthaelt die summierten Stats
 function getStats(stats) {
-    return (longStats ? "[" + stats[0] + " " + stats[1] + " " + stats[2] + "] " : "/ ") + stats[3] + ":" + stats[4] + " "
-    + ((stats[3] < stats[4]) ? "" : ((stats[3] > stats[4]) ? "+" : "")) + (stats[3] - stats[4]) + " (" + stats[5] + ")";
+    return (longStats ? "[" + stats[0] + " " + stats[1] + " " + stats[2] + "] " : "/ ")
+         + stats[3] + ":" + stats[4] + " " + ((stats[3] < stats[4]) ? "" : (stats[3] > stats[4]) ? "+" : "")
+         + (stats[3] - stats[4]) + " (" + stats[5] + ")";
 }
 
 // Summiert ein Ergebnis auf die Stats und liefert den neuen Text zurueck
@@ -198,14 +212,15 @@ function addResultToStats(stats, ergebnis) {
     var sgn;
     var gfor;
     var gagainst;
+ 
     if (ergebnis.length == 2) {
         gfor = parseInt(ergebnis[0], 10);
         gagainst = parseInt(ergebnis[1], 10);
-        sgn = (gfor > gagainst) ? 0 : (gfor == gagainst) ? 1 : 2;
+        sgn = ((gfor > gagainst) ? 0 : (gfor == gagainst) ? 1 : 2);
         stats[sgn]++;
         stats[3] += gfor;
         stats[4] += gagainst;
-        stats[5] += (sgn > 0) ? 2 - sgn : 3;
+        stats[5] += ((sgn > 0) ? 2 - sgn : 3);
 
         ret = getStats(stats);
     }
@@ -270,6 +285,7 @@ function getBilanzLinkFromCell(cell, gameType, label) {
         if (gameTypeID > 1) {      // nicht moeglich fuer "Friendly" bzw. "spielfrei"
             var searchFun = "javascript:os_bericht(";
             var paarung = cell.innerHTML.substr(cell.innerHTML.indexOf(searchFun) + searchFun.length);
+
             paarung = paarung.substr(0, paarung.indexOf(")"));
             paarung = paarung.substr(0, paarung.lastIndexOf(","));
             paarung = paarung.substr(0, paarung.lastIndexOf(","));
@@ -286,16 +302,14 @@ function getBilanzLinkFromCell(cell, gameType, label) {
 // label Anzuklickender Text des neuen Links
 function addBilanzLinkToCell(cell, gameType, label) {
     var bilanzLink = getBilanzLinkFromCell(cell, gameType, label);
+
     if (bilanzLink != "") {
         cell.innerHTML += bilanzLink;
     }
 }
 
 // Verarbeitet Ansicht "Saisonplan"
-// sepMonths Im Spielplan Striche zwischen den Monaten
-// shortKom Vorbericht(e) & Kommentar(e) nicht ausschreiben
-// showStats Ergebnisse aufaddieren?
-function procSpielplan(sepMonths, shortKom, showStats) {
+function procSpielplan() {
     var pokalRunden = [ "1. Runde", "2. Runde", "3. Runde", "Achtelfinale", "Viertelfinale", "Halbfinale", "Finale" ];
     var qualiRunden = [ "Quali 1", "Quali 2", "Quali 3" ];
     var oscRunden = [ "Viertelfinale", "Halbfinale", "Finale" ];
@@ -306,12 +320,13 @@ function procSpielplan(sepMonths, shortKom, showStats) {
     var saisons = document.getElementsByTagName("option");
     var saison = getSaisonFromComboBox(saisons);
 
-    var anzZATperMonth = (saison < 2) ? 7 : 6;	// Erste Saison 7, danach 6...
+    var anzZATperMonth = ((saison < 2) ? 7 : 6);    // Erste Saison 7, danach 6...
 
     var rowOffsetUpper = 1;
     var rowOffsetLower = 0;
 
     var columnIndexArt = 1;
+    var columnIndexGeg = 2;
     var columnIndexErg = 3;
     var columnIndexBer = 4;
     var columnIndexZus = 5;
@@ -339,15 +354,19 @@ function procSpielplan(sepMonths, shortKom, showStats) {
     var i;
     var j;
 
+    loadSpielplanOptions();
+    registerSpielplanMenu();
+
     ligaStats = emptyStats();
 
     for (i = rowOffsetUpper; i < table.rows.length - rowOffsetLower; i++, ZAT++) {
         if (shortKom) {
             var kommentar = table.rows[i].cells[columnIndexKom].innerHTML;
+
             kommentar = kommentar.replace("Vorbericht(e)", "V").replace("Kommentar(e)", "K").replace("&amp;", "/").replace("&", "/");
             table.rows[i].cells[columnIndexKom].innerHTML = kommentar;
         }
-        if ((ZAT > 12) && (ZAT % 10 == 5)) {	// passt fuer alle Saisons: 12, 20, 30, 40, 48, 58, 68 / 3, 15, 27, 39, 51, 63, 69
+        if ((ZAT > 12) && (ZAT % 10 == 5)) {    // passt fuer alle Saisons: 12, 20, 30, 40, 48, 58, 68 / 3, 15, 27, 39, 51, 63, 69
             pokalRunde++;
         }
         if ((ZAT + ZATkorr) % 6 == 4) {
@@ -356,13 +375,13 @@ function procSpielplan(sepMonths, shortKom, showStats) {
                 euroRunde++;
                 hinrueckspiel = 0;
             } else {
-                euroRunde = 10;	// Finale
+                euroRunde = 10;    // Finale
                 hinrueckspiel = 2;
             }
         }
         if (ZAT == ZATrueck) {
-            hinrueckspiel = 1;	// 5, 7; 11, 13;  (17, 19)  / 23,   25; 29, 31; 35,  37; 41,  43; 47, 49; 53,  55; 59,  61; 69
-            if (saison < 3) {	// 4, 6; 10, 14*; (16, 22*) / 24**, 26; 34, 36; 38*, 42; 44*, 50; 52, 54; 56*, 60; 62*, 66; 70
+            hinrueckspiel = 1;   // 5, 7; 11, 13;  (17, 19)  / 23,   25; 29, 31; 35,  37; 41,  43; 47, 49; 53,  55; 59,  61; 69
+            if (saison < 3) {    // 4, 6; 10, 14*; (16, 22*) / 24**, 26; 34, 36; 38*, 42; 44*, 50; 52, 54; 56*, 60; 62*, 66; 70
                 if (ZAT == 22) {
                     ZATkorr = 4;
                 } else if ((ZAT - 6) % 20 > 6) {
@@ -371,7 +390,7 @@ function procSpielplan(sepMonths, shortKom, showStats) {
                     ZATkorr = 0;
                 }
                 if ((ZAT == 22) || (ZAT == 30)) {
-                    euroRunde--;	// Frueher: 3. Quali-Rueckspiel erst knapp vor 1. Hauptrunde
+                    euroRunde--;    // Frueher: 3. Quali-Rueckspiel erst knapp vor 1. Hauptrunde
                 }
             }
         }
@@ -404,7 +423,7 @@ function procSpielplan(sepMonths, shortKom, showStats) {
                 }
                 stats = addResultToStats(euroStats, ergebnis);
                 if (euroRunde < 8) {
-                    gruppenPhase = (euroRunde < 5) ? "HR-Grp. " : "ZR-Grp. ";
+                    gruppenPhase = ((euroRunde < 5) ? "HR-Grp. " : "ZR-Grp. ");
                     zusatz = gruppenPhase + "Spiel " + (((euroRunde - 2) % 3) * 2 + 1 + hinrueckspiel);
                 } else {
                     zusatz = oscRunden[euroRunde - 8] + hinrueck[hinrueckspiel];
@@ -416,7 +435,7 @@ function procSpielplan(sepMonths, shortKom, showStats) {
                 stats = addResultToStats(euroStats, ergebnis);
                 zusatz = oseRunden[euroRunde - 3] + hinrueck[hinrueckspiel];
             } else if (gameType == "Friendly") {
-                zusatz = "";	// irgendwie besser lesbar!
+                zusatz = "";    // irgendwie besser lesbar!
             }
             if (showStats && (stats != "")) {
                 zusatz = zusatz + " " + stats;
@@ -445,7 +464,7 @@ function procSpielplan(sepMonths, shortKom, showStats) {
 
 // Verzweige in unterschiedliche Verarbeitungen je nach Wert von s:
 switch (getPageIdFromURL(window.location.href)) {
-    case 6: procSpielplan(sepMonths, shortKom, showStats); break;
+    case 6: procSpielplan(); break;
 }
 
 // *** EOF ***
