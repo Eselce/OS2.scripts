@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        OS2.spielplan
 // @namespace   http://os.ongapo.com/
-// @version     0.52
+// @version     0.53
 // @copyright   2013+
 // @author      Sven Loges (SLC)
 // @description Spielplan-Abschnitt aus dem Master-Script fuer Online Soccer 2.0
@@ -706,7 +706,7 @@ function procSpielplan() {
                 }
                 stats = addResultToStats(euroStats, longStats, __ZAT);
             } else if (__ZAT.gameType == "OSC") {
-                if ((__ZAT.hinRueck != 1) && ((__ZAT.euroRunde >= 8) || ((__ZAT.euroRunde - 2) % 3 === 0))) {
+                if ((__ZAT.hinRueck != 1) && ((__ZAT.euroRunde >= 9) || ((__ZAT.euroRunde % 3) === 0))) {
                     euroStats = emptyStats();
                 }
                 stats = addResultToStats(euroStats, longStats, __ZAT);
