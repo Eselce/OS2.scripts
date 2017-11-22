@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        OS2.haupt
 // @namespace   http://os.ongapo.com/
-// @version     0.22
+// @version     0.30
 // @copyright   2016+
 // @author      Sven Loges (SLC)
 // @description Managerbuero-Abschnitt aus dem Master-Script fuer Online Soccer 2.0
@@ -23,20 +23,77 @@
 /* jshint esnext: true */
 /* jshint moz: true */
 
-// Moegliche Optionen
-const __SAISONS     = [ 10, 9, 8, 7, 6, 5, 4, 3, 2, 1 ];
-const __LIGASIZES   = [ 10, 18, 20 ];
+// ==================== Konfigurations-Abschnitt fuer Optionen ====================
 
-// Optionen (hier die Standardwerte editieren oder ueber das Benutzermenu setzen):
-const __SAISON      = __SAISONS[0];
-const __LIGASIZE    = __LIGASIZES[0];
+// Options-Typen
+const __OPTTYPES = {
+    'MC' : "multiple choice",
+    'SW' : "switch",
+    'TF' : "true/false",
+    'SI' : "simple option"
+};
 
-// Optionen (mit Standardwerten initialisiert und per loadOptions() geladen):
-let saison   = __SAISON;
-let ligaSize = __LIGASIZE;
+// Moegliche Optionen (hier die Standardwerte editieren oder ueber das Benutzermenu setzen):
+const __OPTCONFIG = {
+    'saison' : {       // Laufende Saison
+                   'Name'      : "saison",
+                   'Type'      : __OPTTYPES.MC,
+                   'Choice'    : [ 10, 9, 8, 7, 6, 5, 4, 3, 2, 1 ],
+                   'Action'    : setNextSaison,
+                   'Label'     : "Saison: $",
+                   'Hotkey'    : 'S'
+               },
+    'ligaSize' : {     // Ligengroesse
+                   'Name'      : "ligaSize",
+                   'Type'      : __OPTTYPES.MC,
+                   'Choice'    : [ 10, 18, 20 ],
+                   'Action'    : setNextLigaSize,
+                   'Label'     : "Liga: $er",
+                   'Hotkey'    : 'L'
+               },
+    'reset' : {        // Optionen auf die "Werkseinstellungen" zuruecksetzen
+                   'Name'      : "reset",
+                   'Type'      : __OPTTYPES.SI,
+                   'Action'    : resetOptions,
+                   'Label'     : "Standard-Optionen",
+                   'Hotkey'    : 'O'
+               }
+};
 
-// Teamparameter fuer getrennte Speicherung der Optionen fuer Erst- und Zweitteam...
-let myTeam = { 'Team' : undefined, 'Liga' : undefined, 'Land' : undefined };
+// ==================== Invarianter Abschnitt fuer Optionen ====================
+
+// Initialisiert die gesetzten Optionen
+// optConfig: Konfiguration der Optionen
+// optSet: Platz für die gesetzten Optionen
+// return Gefuelltes Objekt mit den gesetzten Optionen
+function initOptions(optConfig, optSet = undefined) {
+    var value;
+
+    if (optSet === undefined) {
+        optSet = { };
+    }
+
+    for (let opt in optConfig) {
+        const __CONFIG = optConfig[opt];
+
+        switch (__CONFIG.Type) {
+        case __OPTTYPES.MC : value = __CONFIG.Choice[0];
+                             break;
+        case __OPTTYPES.SW : value = __CONFIG.Default;
+                             break;
+        case __OPTTYPES.TF : value = __CONFIG.Default;
+                             break;
+        case __OPTTYPES.SI : value = undefined;
+                             break;
+        }
+        optSet[opt] = {
+            'Config' : __CONFIG,
+            'Value'  : value
+        };
+    }
+
+    return optSet;
+}
 
 // Setzt eine Option dauerhaft und laedt die Seite neu
 // name: Name der Option als Speicherort
@@ -58,6 +115,23 @@ function setNextOption(arr, name, value) {
     const __POS = arr.indexOf(value) + 1;
 
     return setOption(name, arr[(__POS < arr.length) ? __POS : 0]);
+}
+
+// Setzt die naechste moegliche Option
+// opt: Config und Value der Option
+// value: Bei __OPTTYPES.TF zu setzender Wert
+function setNextOpt(opt, value = true) {
+    const __CONFIG = opt.Config;
+
+    switch (__CONFIG.Type) {
+    case __OPTTYPES.MC : opt.Value = setNextOption(__CONFIG.Choice, __CONFIG.Name, opt.Value);
+                         break;
+    case __OPTTYPES.SW : opt.Value = setOption(__CONFIG.Name, ! opt.Value);
+                         break;
+    case __OPTTYPES.TF : opt.Value = setOption(__CONFIG.Name, value);
+                         break;
+    case __OPTTYPES.SI : break;
+    }
 }
 
 // Zeigt den Eintrag im Menu einer Option
@@ -100,44 +174,128 @@ function registerNextMenuOption(opt, arr, menu, fun, key) {
     GM_registerMenuCommand(menu, fun, key);
 }
 
-// Baut das Benutzermenu auf
-function registerMenu() {
-    console.log("registerMenu()");
-    console.log(myTeam);
+// Zeigt den Eintrag im Menu einer Option
+// opt: Config und Value der Option
+function registerOption(opt) {
+    const __CONFIG = opt.Config;
 
-    registerNextMenuOption(saison, __SAISONS, "Saison: " + saison, setNextSaison, 'S');
-    registerNextMenuOption(ligaSize, __LIGASIZES, "Liga: " + ligaSize + "er", setNextLigaSize, 'L');
-
-    GM_registerMenuCommand("Standard-Optionen", resetOptions, 'O');
+    switch (__CONFIG.Type) {
+    case __OPTTYPES.MC : registerNextMenuOption(opt.Value, __CONFIG.Choice, __CONFIG.Label.replace('$', opt.Value),
+                                                __CONFIG.Action, __CONFIG.Hotkey);
+                         break;
+    case __OPTTYPES.SW : registerMenuOption(opt.Value, __CONFIG.Label, __CONFIG.Action, __CONFIG.Hotkey,
+                                                __CONFIG.AltLabel, __CONFIG.Action, __CONFIG.AltHotkey);
+                         break;
+    case __OPTTYPES.TF : registerMenuOption(opt.Value, __CONFIG.Label, __CONFIG.Action, __CONFIG.Hotkey,
+                                                __CONFIG.AltLabel, __CONFIG.AltAction, __CONFIG.AltHotkey);
+                         break;
+    case __OPTTYPES.SI : GM_registerMenuCommand(__CONFIG.Label, __CONFIG.Action, __CONFIG.Hotkey);
+                         break;
+    }
 }
+
+// Baut das Benutzermenu auf
+// optSet: Gesetzte Optionen
+function buildMenu(optSet) {
+    console.log("buildMenu()");
+
+    for (let opt in optSet) {
+        registerOption(optSet[opt]);
+    }
+}
+
+// Laedt die permament (ueber Menu) gesetzten Optionen
+// optSet: Gesetzte Optionen
+function loadOptions(optSet) {
+    for (let opt in optSet) {
+        const __OPT = optSet[opt];
+
+        __OPT.Value = GM_getValue(__OPT.Config.Name, __OPT.Value);
+    }
+}
+
+// ==================== Spezialisierter Abschnitt fuer Optionen ====================
+
+// Gesetzte Optionen (wird von initOptions() angelegt und von loadOptions() gefuellt):
+const __OPTSET = { };
 
 // Setzt die Optionen auf die "Werkseinstellungen" des Skripts
 function resetOptions() {
-    GM_deleteValue("saison");
-    GM_deleteValue(myTeam.Land + "ligaSize");
+    for (let opt in __OPTSET) {
+        GM_deleteValue(__OPTSET[opt].Config.Name);
+    }
 
     window.location.reload();
 }
 
-// Laedt die permament (ueber Menu) gesetzten Optionen
-// teamParams: Getrennte "ligaSize"-Option wird genutzt, hier: myTeam mit 'Land' des Erst- bzw. Zweitteams
-function loadOptions(teamParams) {
-    // Prefix fuer die Option "ligaSize"
-    myTeam = teamParams;
+// Teamparameter fuer getrennte Speicherung der Optionen fuer Erst- und Zweitteam...
+const __MYTEAM = { 'Team' : undefined, 'Liga' : undefined, 'Land' : undefined };
 
-    saison    = GM_getValue("saison", saison);
-    ligaSize  = GM_getValue(myTeam.Land + "ligaSize", ligaSize);
+// Behandelt die Optionen und laedt das Benutzermenu
+// optConfig: Konfiguration der Optionen
+// optSet: Platz für die gesetzten Optionen
+// optParams: Eventuell notwendige Parameter zur Initialisierung
+// 'teamParams': Getrennte "ligaSize"-Option wird genutzt, hier: __MYTEAM mit 'Land' des Erst- bzw. Zweitteams
+// return Gefuelltes Objekt mit den gesetzten Optionen
+function buildOptions(optConfig, optSet = undefined, optParams = { }) {
+    __MYTEAM.Team = optParams.teamParams.Team;
+    __MYTEAM.Liga = optParams.teamParams.Liga;
+    __MYTEAM.Land = optParams.teamParams.Land;
+    console.log(__MYTEAM);
+
+    optSet = initOptions(optConfig, optSet);
+
+    // Prefix fuer die Option "ligaSize"
+    optSet.ligaSize.Config.Name = __MYTEAM.Land + optSet.ligaSize.Config.Name;
+
+    loadOptions(optSet);
+    showOptions(optParams.menuAnchor);
+    buildMenu(optSet);
+
+    return optSet;
 }
+
+// ==================== Abschnitt mit Reaktionen auf Optionen ====================
 
 // Setzt die naechste moegliche Saison als Option
 function setNextSaison() {
-    saison = setNextOption(__SAISONS, "saison", saison);
+    setNextOpt(__OPTSET.saison);
 }
 
 // Setzt die naechste moegliche Ligagroesse als Option
 function setNextLigaSize() {
-    ligaSize = setNextOption(__LIGASIZES, myTeam.Land + "ligaSize", ligaSize);
+    setNextOpt(__OPTSET.ligaSize);
 }
+
+// ==================== Abschnitt fuer Optionen auf der Seite ====================
+
+// Startpunkt fuer das Optionsmenu auf der Seite (im Gegensatz zum Benutzermenu)
+var menuAnchor;
+let menuForm = "";
+
+// Zeigt die Optionen auf der Seite an
+// anchor: Element, das als Anker fuer die Anzeige dient
+function showOptions(anchor) {
+    const __FORM = '<input type="button" value="anzeigen" onclick="activateMenu()">';
+
+    menuAnchor = anchor;
+
+    showMenu(__FORM);
+}
+
+// Zeigt das Optionsmenu auf der Seite an (im Gegensatz zum Benutzermenu)
+// form: HTML-Form des Optionsmenu
+function showMenu(form) {
+    const __REST = menuAnchor.innerHTML.substring(0, menuAnchor.innerHTML.length - menuForm.length);
+
+    menuForm = form;
+
+//***    menuAnchor.innerHTML = __REST + menuForm;
+}
+
+// ==================== Ende Abschnitt fuer Optionen ====================
+
+// ==================== Abschnitt fuer Spielplan und ZATs ====================
 
 // Beschreibungstexte aller Runden
 const __POKALRUNDEN = [ "1. Runde", "2. Runde", "3. Runde", "Achtelfinale", "Viertelfinale", "Halbfinale", "Finale" ];
@@ -279,6 +437,7 @@ function getZusatz(currZAT) {
     } else if (currZAT.gameType == "OSC") {
         if (currZAT.euroRunde < 8) {
             const __GRUPPENPHASE = ((currZAT.euroRunde < 5) ? "HR-Grp. " : "ZR-Grp. ");
+
             zusatz = __GRUPPENPHASE + "Spiel " + (((currZAT.euroRunde - 2) % 3) * 2 + 1 + currZAT.hinRueck);
         } else {
             zusatz = __OSCRUNDEN[currZAT.euroRunde - 8] + __HINRUECK[currZAT.hinRueck];
@@ -291,6 +450,10 @@ function getZusatz(currZAT) {
 
     return zusatz;
 }
+
+// ==================== Abschnitt fuer Statistiken des Spielplans ====================
+
+// ==================== Abschnitt fuer Daten des Spielplans ====================
 
 // Ermittelt das Spiel-Ergebnis aus einer Tabellenzelle, etwa "2 : 1" und liefert zwei Werte zurueck
 // cell: Tabellenzelle mit Eintrag "2 : 1"
@@ -394,11 +557,13 @@ function addBilanzLinkToCell(cell, gameType, label) {
     }
 }
 
+// ==================== Abschnitt fuer sonstige Parameter des Spielplans ====================
+
 // Ermittelt, wie das eigene Team heißt und aus welchem Land bzw. Liga es kommt (zur Unterscheidung von Erst- und Zweitteam)
 // cell: Tabellenzelle mit den Parametern zum Team "<b>Willkommen im Managerb&uuml;ro von TEAM</b><br>LIGA LAND<a href=..."
 // return Im Beispiel { 'Team' : "TEAM", 'Liga' : "LIGA", 'Land' : "LAND" },
 //        z.B. { 'Team' : "Choromonets Odessa", 'Liga' : "1. Liga", 'Land' : "Ukraine" }
-function getMyTeamFromCell(cell) {
+function getTeamParamsFromCell(cell) {
     const __SEARCHSTART = " von ";
     const __SEARCHMIDDLE = "</b><br>";
     const __SEARCHLIGA = ". Liga ";
@@ -439,6 +604,8 @@ function getZATNrFromCell(cell) {
 
     return ZATNr;
 }
+
+// ==================== Ende Abschnitt fuer Spielplan und ZATs ====================
 
 // Fuegt eine Zelle ans Ende der uebergebenen Zeile hinzu und fuellt sie
 // row: Zeile, die verlaengert wird
@@ -482,16 +649,20 @@ function addZusatz(row, currZAT, anzZAT = 1, bilanz = false) {
     __CELLS[__COLUMNINDEX.Zus].className = __CELLS[__COLUMNINDEX.Art].className;
 }
 
+// ==================== Hauptprogramm ====================
+
 // Verarbeitet Ansicht "Haupt" (Managerbuero)
 function procHaupt() {
+    const __DTAGS = document.getElementsByTagName("div");
     const __TTAGS = document.getElementsByTagName("table");
-    const __MYTEAM = getMyTeamFromCell(__TTAGS[1].rows[0].cells[1]); // Link mit Team, Liga, Land...
+    const __TEAMPARAMS = getTeamParamsFromCell(__TTAGS[1].rows[0].cells[1]); // Link mit Team, Liga, Land...
 
-    loadOptions(__MYTEAM);
-    registerMenu();
+    buildOptions(__OPTCONFIG, __OPTSET, {
+                     'teamParams' : __TEAMPARAMS,
+                     'menuAnchor' : __DTAGS[1]
+                 });
 
-    const __ZAT = firstZAT(saison, ligaSize);
-
+    const __ZAT = firstZAT(__OPTSET.saison.Value, __OPTSET.ligaSize.Value);
     const __NEXTZAT = getZATNrFromCell(__TTAGS[0].rows[2].cells[0]); // "Der naechste ZAT ist ZAT xx und ..."
     const __CURRZAT = __NEXTZAT - 1;
 
