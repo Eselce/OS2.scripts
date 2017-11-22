@@ -2,7 +2,8 @@
 // @name        OS2.haupt
 // @namespace   http://os.ongapo.com/
 // @version     0.2
-// @copyright   2016+, Sven Loges (SLC)
+// @copyright   2016+
+// @author      Sven Loges (SLC)
 // @description Managerbuero-Abschnitt aus dem Master-Script fuer Online Soccer 2.0
 // @include     http://os.ongapo.com/haupt.php
 // @include     http://os.ongapo.com/haupt.php?changetosecond=*
@@ -314,19 +315,20 @@ function setSpielArtFromCell(currZAT, cell) {
 }
 
 const __GAMETYPES = {
-    "spielfrei" : 0,
-    "Friendly"  : 1,
-    "Liga"      : 2,
-    "LP"        : 3,
-    "OSEQ"      : 4,
-    "OSE"       : 5,
-    "OSCQ"      : 6,
-    "OSC"       : 7
+    "reserviert" : 0,
+    "spielfrei"  : 0,
+    "Friendly"   : 1,
+    "Liga"       : 2,
+    "LP"         : 3,
+    "OSEQ"       : 4,
+    "OSE"        : 5,
+    "OSCQ"       : 6,
+    "OSC"        : 7
 };
 
 // Gibt die ID fuer den Namen eines Wettbewerbs zurueck
 // gameType: Name des Wettbewerbs eines Spiels
-// return OS2-ID fuer den Spieltyp (1 bis 7), 0 fuer spielfrei, -1 fuer ungueltig
+// return OS2-ID fuer den Spieltyp (1 bis 7), 0 fuer spielfrei/reserviert, -1 fuer ungueltig
 function getGameTypeID(gameType) {
     const __ID = __GAMETYPES[gameType];
 
@@ -343,7 +345,7 @@ function getBilanzLinkFromCell(cell, gameType, label) {
     let ret = "";
 
     if (cell.textContent != "Vorschau") {   // Nur falls Link nicht bereits vorhanden
-        if (__GAMETYPEID > 1) {             // nicht moeglich fuer "Friendly" bzw. "spielfrei"
+        if (__GAMETYPEID > 1) {             // nicht moeglich fuer "Friendly" bzw. "spielfrei"/"reserviert"
             const __SEARCHFUN = ":os_bericht(";
             let paarung = cell.innerHTML.substr(cell.innerHTML.indexOf(__SEARCHFUN) + __SEARCHFUN.length);
 
@@ -437,7 +439,7 @@ function procHaupt() {
     const __TTAGS = document.getElementsByTagName("table");
     const __ZAT = firstZAT(saison, ligaSize);
 
-    const __NEXTZAT = getZATNrFromCell(__TTAGS[0].rows[2].cells[0]); // "Der nächste ZAT ist ZAT xx und ..."
+    const __NEXTZAT = getZATNrFromCell(__TTAGS[0].rows[2].cells[0]); // "Der naechste ZAT ist ZAT xx und ..."
     const __CURRZAT = __NEXTZAT - 1;
 
     addZusatz(__TTAGS[2].rows[0], __ZAT, __CURRZAT, true);           // "Dein letztes Spiel:" (+ __CURRZAT)
