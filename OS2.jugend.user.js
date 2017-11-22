@@ -1,12 +1,12 @@
 // ==UserScript==
 // @name         OS2.jugend
 // @namespace    http://os.ongapo.com/
-// @version      0.52
+// @version      0.53
 // @copyright    2013+
 // @author       Andreas Eckes (Strindheim BK) / Sven Loges (SLC)
 // @description  Jugendteam-Script fuer Online Soccer 2.0
-// @include      /^https?://(www\.|)(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/haupt\.php(\?changetosecond=\w+|)$/
-// @include      /^https?://(www\.|)(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/ju\.php(\?page=\d+|)$/
+// @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/haupt\.php(\?changetosecond=\w+(&\S+)*)?$/
+// @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/ju\.php(\?page=\d+(&\S+)*)?$/
 // @grant        GM_getValue
 // @grant        GM_setValue
 // @grant        GM_deleteValue
@@ -20,7 +20,7 @@
 
 // ==================== Konfigurations-Abschnitt fuer Optionen ====================
 
-const __LOGLEVEL = 3;
+const __LOGLEVEL = 6;
 
 // Options-Typen
 const __OPTTYPES = {
@@ -61,16 +61,50 @@ const __OPTMEM = {
 
 // Moegliche Optionen (hier die Standardwerte editieren oder ueber das Benutzermenu setzen):
 const __OPTCONFIG = {
-    'zeigeBalken' : {     // Spaltenauswahl fuer den Guetebalken des Talents (true = anzeigen, false = nicht anzeigen)
+    'ersetzeSkills' : {   // Auswahl fuer prognostizierte Einzelskills mit Ende 18 statt der aktuellen (true = Ende 18, false = aktuell)
+                   'Name'      : "substSkills",
+                   'Type'      : __OPTTYPES.SW,
+                   'Default'   : false,
+                   'Action'    : __OPTACTION.NXT,
+                   'Label'     : "Einzelwerte Ende",
+                   'Hotkey'    : 'E',
+                   'AltLabel'  : "Einzelwerte aktuell",
+                   'AltHotkey' : 'k',
+                   'FormLabel' : "Prognose Einzelwerte"
+               },
+    'zeigeBalken' : {     // Spaltenauswahl fuer den Qualitaetsbalken des Talents (true = anzeigen, false = nicht anzeigen)
                    'Name'      : "showRatioBar",
                    'Type'      : __OPTTYPES.SW,
                    'Default'   : true,
                    'Action'    : __OPTACTION.NXT,
-                   'Label'     : "Balken ein",
+                   'Label'     : "Balken Qualit\xE4t ein",
                    'Hotkey'    : 'B',
-                   'AltLabel'  : "Balken aus",
+                   'AltLabel'  : "Balken Qualit\xE4t aus",
                    'AltHotkey' : 'B',
-                   'FormLabel' : "Balken"
+                   'FormLabel' : "Balken Qualit\xE4t"
+               },
+    'absBalken' : {      // Spaltenauswahl fuer den Guetebalken des Talents absolut statt nach Foerderung (true = absolut, false = relativ nach Foerderung)
+                   'Name'      : "absBar",
+                   'Type'      : __OPTTYPES.SW,
+                   'Default'   : true,
+                   'Action'    : __OPTACTION.NXT,
+                   'Label'     : "Balken absolut",
+                   'Hotkey'    : 'u',
+                   'AltLabel'  : "Balken nach F\xF6rderung",
+                   'AltHotkey' : 'u',
+                   'FormLabel' : "Balken 100%"
+               },
+    'zeigeId' : {         // Spaltenauswahl fuer Identifizierungsmerkmale der Jugendspieler (true = anzeigen, false = nicht anzeigen)
+                   'Name'      : "showFingerprints",
+                   'Type'      : __OPTTYPES.SW,
+                   'Hidden'    : true,
+                   'Default'   : false,
+                   'Action'    : __OPTACTION.NXT,
+                   'Label'     : "Identifikation ein",
+                   'Hotkey'    : 'T',
+                   'AltLabel'  : "Identifikation aus",
+                   'AltHotkey' : 'T',
+                   'FormLabel' : "Identifikation"
                },
     'zeigeTal' : {        // Spaltenauswahl fuer Talente (true = anzeigen, false = nicht anzeigen)
                    'Name'      : "showTclasses",
@@ -148,6 +182,28 @@ const __OPTCONFIG = {
                    'AltLabel'  : "Aufwertungen lang",
                    'AltHotkey' : 'A',
                    'FormLabel' : "Kurze Aufwertungen"
+               },
+    'zeigeZatDone' : {    // Spaltenauswahl fuer die Anzahl der bisherigen Trainings-ZATs (true = anzeigen, false = nicht anzeigen)
+                   'Name'      : "showFixZatDone",
+                   'Type'      : __OPTTYPES.SW,
+                   'Default'   : false,
+                   'Action'    : __OPTACTION.NXT,
+                   'Label'     : "Trainings-ZATs ein",
+                   'Hotkey'    : 'Z',
+                   'AltLabel'  : "Trainings-ZATs aus",
+                   'AltHotkey' : 'Z',
+                   'FormLabel' : "Trainings-ZATs"
+               },
+    'zeigeZatLeft' : {    // Spaltenauswahl fuer die Anzahl der Rest-ZATs bis Ende 18 (true = anzeigen, false = nicht anzeigen)
+                   'Name'      : "showFixZatLeft",
+                   'Type'      : __OPTTYPES.SW,
+                   'Default'   : false,
+                   'Action'    : __OPTACTION.NXT,
+                   'Label'     : "Rest-ZATs ein",
+                   'Hotkey'    : 'R',
+                   'AltLabel'  : "Rest-ZATs aus",
+                   'AltHotkey' : 'R',
+                   'FormLabel' : "Rest-ZATs"
                },
     'zeigeFixSkills' : {  // Spaltenauswahl fuer die Summe der Fixskills (true = anzeigen, false = nicht anzeigen)
                    'Name'      : "showFixSkills",
@@ -251,17 +307,6 @@ const __OPTCONFIG = {
                    'Label'     : "MW: beste $",
                    'Hotkey'    : 'M',
                    'FormLabel' : "MW:|beste $"
-               },
-    'ersetzeSkills' : {   // Auswahl fuer prognostizierte Einzelskills mit Ende 18 statt der aktuellen (true = Ende 18, false = aktuell)
-                   'Name'      : "substSkills",
-                   'Type'      : __OPTTYPES.SW,
-                   'Default'   : false,
-                   'Action'    : __OPTACTION.NXT,
-                   'Label'     : "Skills Ende",
-                   'Hotkey'    : 'k',
-                   'AltLabel'  : "Skills aktuell",
-                   'AltHotkey' : 'k',
-                   'FormLabel' : "Einzelwerte ersetzen \u03A9"
                },
     'zeigeTrainiertEnde' : {  // Spaltenauswahl fuer die trainierten Skills mit Ende 18 (true = anzeigen, false = nicht anzeigen)
                    'Name'      : "showTrainiertEnde",
@@ -399,8 +444,8 @@ const __OPTCONFIG = {
                    'ValType'   : "Number",
                    'FreeValue' : true,
                    'SelValue'  : false,
-                   'Choice'    : [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ],
-                   'Default'   : 10,
+                   'Choice'    : [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19 ],
+                   'Default'   : 11,
                    'Action'    : __OPTACTION.NXT,
                    'Label'     : "Saison: $",
                    'Hotkey'    : 'a',
@@ -417,7 +462,8 @@ const __OPTCONFIG = {
                                   24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35,
                                   36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47,
                                   48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59,
-                                  60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71 ],
+                                  60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71,
+                                  72 ],
                    'Action'    : __OPTACTION.NXT,
                    'Label'     : "ZAT: $",
                    'Hotkey'    : 'Z',
@@ -439,6 +485,23 @@ const __OPTCONFIG = {
                    'Replace'   : null,
                    'Space'     : 0,
                    'Label'     : "Daten-ZAT:"
+               },
+    'oldDatenZat' : {     // Stand der Daten zum Team und ZAT
+                   'Name'      : "oldDataZAT",
+                   'Type'      : __OPTTYPES.SD,
+                   'ValType'   : "Number",
+                   'Hidden'    : true,
+                   'Serial'    : true,
+                   'AutoReset' : true,
+                   'Permanent' : true,
+                   'Default'   : undefined,
+                   'Action'    : __OPTACTION.SET,
+                   'Submit'    : undefined,
+                   'Cols'      : 1,
+                   'Rows'      : 1,
+                   'Replace'   : null,
+                   'Space'     : 0,
+                   'Label'     : "Vorheriger Daten-ZAT:"
                },
     'foerderung' : {      // Jugendfoerderung
                    'Name'      : "donation",
@@ -467,6 +530,21 @@ const __OPTCONFIG = {
                    'Replace'   : null,
                    'Space'     : 1,
                    'Label'     : "Verein:"
+               },
+    'fingerprints' : {    // Datenspeicher fuer Identifizierungsmerkmale der Jugendspieler
+                   'Name'      : "fingerprints",
+                   'Type'      : __OPTTYPES.SD,
+                   'Hidden'    : true,
+                   'Serial'    : true,
+                   'AutoReset' : true,
+                   'Permanent' : true,
+                   'Default'   : [],
+                   'Submit'    : undefined,
+                   'Cols'      : 36,
+                   'Rows'      : 6,
+                   'Replace'   : null,
+                   'Space'     : 0,
+                   'Label'     : "Identifikation:"
                },
     'birthdays' : {       // Datenspeicher fuer Geburtstage der Jugendspieler
                    'Name'      : "birthdays",
@@ -577,14 +655,14 @@ const __OPTCONFIG = {
                    'Shared'    : { /*'namespace' : "http://os.ongapo.com/",*/ 'module' : "OS2.haupt", 'item' : 'ligaSize' },
                    'Hidden'    : true,
                    'FormLabel' : "Liga:|$er (haupt)"
-              },
+               },
     'hauptZat' : {        // Option 'datenZat' aus Modul 'OS2.haupt', hier als 'hauptZat'
                    'Shared'    : { /*'namespace' : "http://os.ongapo.com/",*/ 'module' : "OS2.haupt", 'item' : 'datenZat' },
                    'Hidden'    : true,
                    'Cols'      : 36,
                    'Rows'      : 6,
                    'Label'     : "ZAT:"
-              },
+               },
     'haupt' : {           // Alle Optionen des Moduls 'OS2.haupt'
                    'Shared'    : { 'module' : "OS2.haupt", 'item' : '$' },
                    'Type'      : __OPTTYPES.SD,
@@ -595,7 +673,7 @@ const __OPTCONFIG = {
                    'Replace'   : null,
                    'Space'     : 4,
                    'Label'     : "Haupt:"
-              },
+               },
     'data' : {            // Optionen aller Module
                    'Shared'    : { 'module' : '$' },
                    'Type'      : __OPTTYPES.SD,
@@ -606,7 +684,7 @@ const __OPTCONFIG = {
                    'Replace'   : null,
                    'Space'     : 4,
                    'Label'     : "Data:"
-              },
+               },
     'reset' : {           // Optionen auf die "Werkseinstellungen" zuruecksetzen
                    'Name'      : "reset",
                    'Type'      : __OPTTYPES.SI,
@@ -649,15 +727,6 @@ const __OPTCONFIG = {
 
 // ==================== Invarianter Abschnitt fuer Optionen ====================
 
-// Kompatibilitaetsfunktion zur Ermittlung des Namens einer Funktion (falle <Function>.name nicht vorhanden ist)
-if (Function.prototype.name === undefined) {
-    Object.defineProperty(Function.prototype, 'name', {
-            get : function() {
-                      return /function ([^(\s]*)/.exec(this.toString())[1];
-                  }
-        });
-}
-
 // Ein Satz von Logfunktionen, die je nach Loglevel zur Verfuegung stehen. Aufruf: __LOG[level](text)
 const __LOG = {
                   'logFun'   : [
@@ -683,6 +752,37 @@ const __LOG = {
               };
 
 __LOG.init(window, __LOGLEVEL);
+
+// Kompatibilitaetsfunktion zur Ermittlung des Namens einer Funktion (falle <Function>.name nicht vorhanden ist)
+if (Function.prototype.name === undefined) {
+    Object.defineProperty(Function.prototype, 'name', {
+            get : function() {
+                      return /function ([^(\s]*)/.exec(this.toString())[1];
+                  }
+        });
+}
+
+// Ergaenzung fuer Strings: Links oder rechts auffuellen nach Vorlage
+// padStr: Vorlage, z.B. "00" fuer zweistellige Zahlen
+// padLeft: true = rechtsbuendig, false = linksbuendig
+// clip: Abschneiden, falls zu lang
+// return Rechts- oder linksbuendiger String, der so lang ist wie die Vorlage
+String.prototype.pad = function(padStr, padLeft = true, clip = false) {
+    const __LEN = ((clip || (padStr.length > this.length)) ? padStr.length : this.length);
+
+    return (padLeft ? String(padStr + this).slice(- __LEN) : String(this + padStr).slice(0, __LEN));
+};
+
+// Ersetzt in einem String {0}, {1}, ... durch die entsprechenden Parameter
+// arguments: Parameter, die fuer {0}, {1}, ... eingesetzt werden sollen
+// return Resultierender String
+String.prototype.format = function() {
+    const __ARGS = arguments;
+    return this.replace(/{(\d+)}/g, function(match, argIdx) {
+                                        const __ARG = __ARGS[argIdx];
+                                        return ((__ARG !== undefined) ? __ARG : match);
+                                    });
+};
 
 // Gibt eine Meldung in der Console aus und oeffnet ein Bestaetigungsfenster mit der Meldung
 // label: Eine Ueberschrift
@@ -729,7 +829,7 @@ function Class(className, baseClass, initFun) {
         }
 
         console.assert((__BASE === null) || ((typeof __BASE) === 'function'), "No function:", __BASE);
-        console.assert((typeof initFun) === 'function', "No function:", initFun);
+        console.assert((typeof initFun) === 'function', "Not a function:", initFun);
 
         this.init = initFun;
     } catch (ex) {
@@ -757,8 +857,8 @@ Object.setConst(Object.prototype, 'subclass', function(baseClass, members, initF
             const __MEMBERS = (members || { });
             const __CREATEPROTO = ((createProto === undefined) ? true : createProto);
 
-            console.assert((typeof this) === 'function');
-            console.assert((typeof __MEMBERS) === 'object');
+            console.assert((typeof this) === 'function', "Not a function:", this);
+            console.assert((typeof __MEMBERS) === 'object', "Not an object:", __MEMBERS);
 
             const __CLASS = new Class(this.name || __MEMBERS.__name, baseClass, initFun || __MEMBERS.__init);
             const __PROTO = (__CREATEPROTO ? Object.create(__CLASS.baseProto) : this.prototype);
@@ -1085,12 +1185,12 @@ Class.define(URI, Path, {
                                          const __ROOTDELIM = this.delims.root + this.delims.delim;
                                          const __NOSCHEME = this.stripSchemePrefix(path);
                                          const __INDEXHOST = (__NOSCHEME ? __NOSCHEME.indexOf(__HOSTDELIM) : -1);
-                                         const __PATH = (~ __INDEXHOST) ? __NOSCHEME.substring(__INDEXHOST + __HOSTDELIM.length) : __NOSCHEME;
+                                         const __PATH = ((~ __INDEXHOST) ? __NOSCHEME.substring(__INDEXHOST + __HOSTDELIM.length) : __NOSCHEME);
                                          const __INDEXHOSTPORT = (__PATH ? __PATH.indexOf(__ROOTDELIM) : -1);
-                                         const __HOSTPORT = (~ __INDEXHOSTPORT) ? __PATH.substring(0, __INDEXHOSTPORT) : undefined;
+                                         const __HOSTPORT = ((~ __INDEXHOSTPORT) ? __PATH.substring(0, __INDEXHOSTPORT) : undefined);
                                          const __INDEXPORT = (__HOSTPORT ? __HOSTPORT.indexOf(__PORTDELIM) : -1);
-                                         const __HOST = (~ __INDEXPORT) ? __HOSTPORT.substring(0, __INDEXPORT) : __HOSTPORT;
-                                         const __PORT = (~ __INDEXPORT) ? __HOSTPORT.substring(__INDEXPORT + __PORTDELIM.length) : undefined;
+                                         const __HOST = ((~ __INDEXPORT) ? __HOSTPORT.substring(0, __INDEXPORT) : __HOSTPORT);
+                                         const __PORT = ((~ __INDEXPORT) ? __HOSTPORT.substring(__INDEXPORT + __PORTDELIM.length) : undefined);
 
                                          return {
                                                     'host' : __HOST,
@@ -1101,47 +1201,47 @@ Class.define(URI, Path, {
                                          const __HOSTDELIM = this.delims.host;
                                          const __ROOTDELIM = this.delims.root + this.delims.delim;
                                          const __INDEXHOST = (path ? path.indexOf(__HOSTDELIM) : -1);
-                                         const __PATH = (~ __INDEXHOST) ? path.substring(__INDEXHOST + __HOSTDELIM.length) : path;
+                                         const __PATH = ((~ __INDEXHOST) ? path.substring(__INDEXHOST + __HOSTDELIM.length) : path);
                                          const __INDEXHOSTPORT = (__PATH ? __PATH.indexOf(__ROOTDELIM) : -1);
 
-                                         return (~ __INDEXHOSTPORT) ? __PATH.substring(__INDEXHOSTPORT) : __PATH;
+                                         return ((~ __INDEXHOSTPORT) ? __PATH.substring(__INDEXHOSTPORT) : __PATH);
                                      },
                'getSchemePrefix'   : function(path = undefined) {
                                          const __SCHEMEDELIM = this.delims.scheme;
                                          const __INDEXSCHEME = (path ? path.indexOf(__SCHEMEDELIM) : -1);
 
-                                         return (~ __INDEXSCHEME) ? path.substring(0, __INDEXSCHEME) : undefined;
+                                         return ((~ __INDEXSCHEME) ? path.substring(0, __INDEXSCHEME) : undefined);
                                      },
                'stripSchemePrefix' : function(path = undefined) {
                                          const __SCHEMEDELIM = this.delims.scheme;
                                          const __INDEXSCHEME = (path ? path.indexOf(__SCHEMEDELIM) : -1);
 
-                                         return (~ __INDEXSCHEME) ? path.substring(__INDEXSCHEME + __INDEXSCHEME.length) : path;
+                                         return ((~ __INDEXSCHEME) ? path.substring(__INDEXSCHEME + __INDEXSCHEME.length) : path);
                                      },
                'getNodeSuffix'     : function(path = undefined) {
                                          const __NODEDELIM = this.delims.node;
                                          const __INDEXNODE = (path ? path.lastIndexOf(__NODEDELIM) : -1);
 
-                                         return (~ __INDEXNODE) ? path.substring(__INDEXNODE + __NODEDELIM.length) : undefined;
+                                         return ((~ __INDEXNODE) ? path.substring(__INDEXNODE + __NODEDELIM.length) : undefined);
                                      },
                'stripNodeSuffix'   : function(path = undefined) {
                                          const __NODEDELIM = this.delims.node;
                                          const __INDEXNODE = (path ? path.lastIndexOf(__NODEDELIM) : -1);
 
-                                         return (~ __INDEXNODE) ? path.substring(0, __INDEXNODE) : path;
+                                         return ((~ __INDEXNODE) ? path.substring(0, __INDEXNODE) : path);
                                      },
                'getQueryString'    : function(path = undefined) {
                                          const __QUERYDELIM = this.delims.query;
                                          const __PATH = this.stripNodeSuffix(path);
                                          const __INDEXQUERY = (__PATH ? __PATH.indexOf(__QUERYDELIM) : -1);
 
-                                         return (~ __INDEXQUERY) ? __PATH.substring(__INDEXQUERY + __QUERYDELIM.length) : undefined;
+                                         return ((~ __INDEXQUERY) ? __PATH.substring(__INDEXQUERY + __QUERYDELIM.length) : undefined);
                                      },
                'stripQueryString'  : function(path = undefined) {
                                          const __QUERYDELIM = this.delims.query;
                                          const __INDEXQUERY = (path ? path.indexOf(__QUERYDELIM) : -1);
 
-                                         return (~ __INDEXQUERY) ? path.substring(0, __INDEXQUERY) : path;
+                                         return ((~ __INDEXQUERY) ? path.substring(0, __INDEXQUERY) : path);
                                      },
                'formatParams'      : function(params, formatFun, delim = ' ', assign = '=') {
                                          const __PARAMS = [];
@@ -1163,8 +1263,8 @@ Class.define(URI, Path, {
 
                                                  if (__PARAM) {
                                                      const __INDEX = __PARAM.indexOf(assign);
-                                                     const __KEY = (~ __INDEX) ? __PARAM.substring(0, __INDEX) : __PARAM;
-                                                     const __VAL = (~ __INDEX) ? parseFun(__PARAM.substring(__INDEX + assign.length)) : true;
+                                                     const __KEY = ((~ __INDEX) ? __PARAM.substring(0, __INDEX) : __PARAM);
+                                                     const __VAL = ((~ __INDEX) ? parseFun(__PARAM.substring(__INDEX + assign.length)) : true);
 
                                                      __RET[__KEY] = __VAL;
                                                  }
@@ -1369,15 +1469,22 @@ function getMulValue(valueA, valueB, digits = 0, defValue = NaN) {
     return parseFloat(product.toFixed(digits));
 }
 
+// Hilfsfunktion fuer Array.sort(): Vergleich zweier Zahlen
+// valueA: Erster Zahlenwert
+// valueB: Zweiter Zahlenwert
+// return -1 = kleiner, 0 = gleich, +1 = groesser
+function compareNumber(valueA, valueB) {
+    return +(valueA > valueB) || (+(valueA === valueB) - 1);
+}
+
 // Ueberprueft, ob ein Objekt einer bestimmten Klasse angehoert (ggfs. per Vererbung)
 // obj: Ein (generisches) Objekt
 // base: Eine Objektklasse (Konstruktor-Funktion)
 // return true, wenn der Prototyp rekursiv gefunden werden konnte
 function instanceOf(obj, base) {
     while (obj !== null) {
-        if (obj === base.prototype) {
+        if (obj === base.prototype)
             return true;
-        }
         if ((typeof obj) === 'xml') {  // Sonderfall mit Selbstbezug
             return (base.prototype === XML.prototype);
         }
@@ -1427,10 +1534,10 @@ function getAllProperties(obj) {
 function checkItem(item, inList = undefined, exList = undefined) {
     let active = true;
 
-    if (inList !== undefined) {
+    if (inList) {
         active = (inList[item] === true);  // gesetzt und true
     }
-    if (exList !== undefined) {
+    if (exList) {
         if (exList[item] === true) {  // gesetzt und true
             active = false;  // NICHT anzeigen
         }
@@ -1449,6 +1556,21 @@ function addProps(data, addData, addList = undefined, ignList = undefined) {
     for (let item in getValue(addData, { })) {
         if (checkItem(item, addList, ignList)) {
             data[item] = addData[item];
+        }
+    }
+
+    return data;
+}
+
+// Entfernt Properties in einem Objekt.
+// data: Objekt, deren Properties bearbeitet werden
+// delList: Checkliste der zu loeschenden Items (true fuer loeschen), falls angegeben
+// ignList: Checkliste der ignorierten Items (true fuer auslassen), falls angegeben
+// return Das veraenderte Objekt ohne die geloeschten Properties
+function delProps(data, delList = undefined, ignList = undefined) {
+    for (let item in getValue(data, { })) {
+        if (checkItem(item, delList, ignList)) {
+            delete data[item];
         }
     }
 
@@ -1530,12 +1652,77 @@ function serializer(replacer = undefined, cycleReplacer = undefined) {
         };
 }
 
+// Replacer fuer JSON.stringify() oder safeStringify(), der Arrays kompakter darstellt.
+// key: Der uebergebene Schluessel
+// value: Der uebergebene Wert
+// return Fuer Arrays eine kompakte Darstellung, sonst derselbe Wert
+function replaceArraySimple(key, value) {
+    if (Array.isArray(value)) {
+        return "[ " + value.join(", ") + " ]";
+    }
+
+    return value;
+}
+
+// Replacer fuer JSON.stringify() oder safeStringify(), der Arrays kompakter darstellt.
+// key: Der uebergebene Schluessel
+// value: Der uebergebene Wert
+// return Fuer Arrays eine kompakte Darstellung, sonst derselbe Wert
+function replaceArray(key, value) {
+    if (Array.isArray(value)) {
+        __RET = value.map(function(element) {
+                              return safeStringify(element, replaceArray, 0);
+                          });
+
+        return __RET;
+    }
+
+    return value;
+}
+
+// Fuegt in die uebergebene Zahl Tausender-Trennpunkte ein
+// Wandelt einen etwaig vorhandenen Dezimalpunkt in ein Komma um
+function getNumberString(numberString) {
+    if (numberString.lastIndexOf(".") !== -1) {
+        // Zahl enthaelt Dezimalpunkt
+        const __VORKOMMA = numberString.substring(0, numberString.lastIndexOf("."));
+        const __NACHKOMMA = numberString.substring(numberString.lastIndexOf(".") + 1, numberString.length);
+
+        return getNumberString(__VORKOMMA) + "," + __NACHKOMMA;
+    } else {
+        // Kein Dezimalpunkt, fuege Tausender-Trennpunkte ein:
+        // String umdrehen, nach jedem dritten Zeichen Punkt einfuegen, dann wieder umdrehen:
+        const __TEMP = reverseString(numberString);
+        let result = "";
+
+        for (let i = 0; i < __TEMP.length; i++) {
+            if ((i > 0) && (i % 3 === 0)) {
+                result += ".";
+            }
+            result += __TEMP.substr(i, 1);
+        }
+
+        return reverseString(result);
+    }
+}
+
+// Dreht den uebergebenen String um
+function reverseString(string) {
+    let result = "";
+
+    for (let i = string.length - 1; i >= 0; i--) {
+        result += string.substr(i, 1);
+    }
+
+    return result;
+}
+
 // Speichert einen beliebiegen (strukturierten) Wert unter einem Namen ab
 // name: GM_setValue-Name, unter dem die Daten gespeichert werden
 // value: Beliebiger (strukturierter) Wert
 // return String-Darstellung des Wertes
 function serialize(name, value) {
-    const __STREAM = (value !== undefined) ? safeStringify(value) : value;
+    const __STREAM = ((value !== undefined) ? safeStringify(value) : value);
 
     __LOG[4](name + " >> " + __STREAM);
 
@@ -1549,7 +1736,7 @@ function serialize(name, value) {
 // defValue: Default-Wert fuer den Fall, dass nichts gespeichert ist
 // return Objekt, das unter dem Namen gespeichert war
 function deserialize(name, defValue = undefined) {
-    const __STREAM = GM_getValue(name, defValue);
+    const __STREAM = GM_getValue(name);
 
     __LOG[4](name + " << " + __STREAM);
 
@@ -1561,7 +1748,7 @@ function deserialize(name, defValue = undefined) {
         }
     }
 
-    return undefined;
+    return defValue;
 }
 
 // Setzt eine Option dauerhaft und laedt die Seite neu
@@ -1877,7 +2064,7 @@ function getMemSize(memory = undefined) {
 
 // Gibt rekursiv und detailliert die Groesse des benutzten Speichers fuer ein Objekt aus
 // value: (Enumerierbares) Objekt oder Wert, dessen Groesse gemessen wird
-// out: Logfunktion, etwa console.log
+// out: Logfunktion, etwa __LOG[4]
 // depth: Gewuenschte Rekursionstiefe (0 = nur dieses Objekt, -1 = alle Ebenen)
 // name: Name des Objekts
 function getMemUsage(value = undefined, out = undefined, depth = -1, name = '$') {
@@ -1886,7 +2073,7 @@ function getMemUsage(value = undefined, out = undefined, depth = -1, name = '$')
     if ((typeof value) === 'string') {
         const __SIZE = value.length;
 
-        __OUT("USAGE: " + name + '\t' + __SIZE + '\t' + value.substr(0, 255));
+        __OUT("USAGE: " + name + '\t' + __SIZE + '\t' + value.slice(0, 255));
     } else if ((typeof value) === 'object') {
         if (depth === 0) {
             const __SIZE = safeStringify(value).length;
@@ -2249,14 +2436,14 @@ function getSharedConfig(optConfig, item = undefined) {
     if (__SHARED !== undefined) {
         const __OBJREF = getSharedRef(__SHARED, item);  // Gemeinsame Daten
 
-        if (getValue(__SHARED.item, '$') !== '$') {  // __REF ist ein Item
+        if (getValue(__SHARED.item, '$') !== '$') {  // __OBJREF ist ein Item
             const __REF = valueOf(__OBJREF);
 
             config = { };  // Neu aufbauen...
             addProps(config, getOptConfig(__REF));
             addProps(config, optConfig);
             config.setConst('SharedData', getOptValue(__REF));
-        } else {  // __REF enthaelt die Daten selbst
+        } else {  // __OBJREF enthaelt die Daten selbst
             if (! config.Name) {
                 config.Name = __OBJREF.getPath();
             }
@@ -2287,10 +2474,9 @@ function initOptions(optConfig, optSet = undefined, preInit = undefined) {
         if ((preInit === undefined) || (__PREINIT === preInit)) {
             const __CONFIG = getSharedConfig(__OPTCONFIG, opt);
             const __ALTACTION = getValue(__CONFIG.AltAction, __CONFIG.Action);
-            // Gab es vorher einen Aufruf, der einen Stub-Eintrag erzeugt hat? Wurde ggfs. bereits geaendert...
-            const __USESTUB = ((preInit === false) && __PREINIT);
-            const __LOADED = (__USESTUB && optSet[opt].Loaded);
-            const __VALUE = (__USESTUB ? optSet[opt].Value : undefined);
+            // Gab es vorher einen Aufruf, der einen Stub-Eintrag erzeugt hat, und wurden Daten geladen?
+            const __LOADED = ((preInit === false) && optSet[opt].Loaded);
+            const __VALUE = (__LOADED ? optSet[opt].Value : undefined);
 
             optSet[opt] = {
                 'Item'      : opt,
@@ -2349,7 +2535,7 @@ function startOptions(optConfig, optSet = undefined, classification = undefined)
     // Zwischengespeicherte Befehle auslesen...
     const __STOREDCMDS = getStoredCmds(myOptMem);
 
-    // ... ermittelte Befehle ausführen...
+    // ... ermittelte Befehle ausfuehren...
     const __LOADEDCMDS = runStoredCmds(__STOREDCMDS, optSet, true);  // BeforeLoad
 
     // Bisher noch nicht geladenene Optionen laden...
@@ -2368,7 +2554,7 @@ function startOptions(optConfig, optSet = undefined, classification = undefined)
         classification.renameOptions();
     }
 
-    // ... ermittelte Befehle ausführen...
+    // ... ermittelte Befehle ausfuehren...
     runStoredCmds(__LOADEDCMDS, optSet, false);  // Rest
 
     // Als globale Daten speichern...
@@ -2460,7 +2646,7 @@ function promptNextOpt(opt, value = undefined, reload = false, freeValue = false
             for (let index = 0; index < __CHOICE.length; index++) {
                 message += (index + 1) + ") " + __CHOICE[index] + '\n';
             }
-            message += "\nNummer eingeben:";
+            message += "\nNummer oder Wert eingeben:";
         } else {
             message = __CHOICE.join(" / ") + "\n\nWert eingeben:";
         }
@@ -2561,7 +2747,7 @@ function buildMenu(optSet) {
 // opt: Zu invalidierende Option
 // force: Invalidiert auch Optionen mit 'AutoReset'-Attribut
 function invalidateOpt(opt, force = false) {
-    if (! opt.ReadOnly) {
+    if (opt.Loaded && ! opt.ReadOnly) {
         const __CONFIG = getOptConfig(opt);
 
         // Wert "ungeladen"...
@@ -2582,9 +2768,7 @@ function invalidateOpts(optSet, force = false) {
     for (let opt in optSet) {
         const __OPT = optSet[opt];
 
-        if (__OPT.Loaded) {
-            invalidateOpt(__OPT, force);
-        }
+        invalidateOpt(__OPT, force);
     }
 
     return optSet;
@@ -2643,7 +2827,7 @@ function loadOptions(optSet, force = false) {
 // Entfernt eine (ueber Menu) gesetzte Option (falls nicht 'Permanent')
 // opt: Gesetzte Option
 // force: Entfernt auch Optionen mit 'Permanent'-Attribut
-// reset: Setzt bei Erfolg auf Initialwert der Option
+// reset: Setzt bei Erfolg auf Initialwert der Option (auch fuer nicht 'AutoReset')
 function deleteOption(opt, force = false, reset = true) {
     const __CONFIG = getOptConfig(opt);
 
@@ -2654,7 +2838,7 @@ function deleteOption(opt, force = false, reset = true) {
 
         GM_deleteValue(__NAME);
 
-        if (reset) {
+        if (reset || __CONFIG.AutoReset) {
             setOptValue(opt, initOptValue(__CONFIG));
         }
     }
@@ -2666,7 +2850,7 @@ function deleteOption(opt, force = false, reset = true) {
 // force: Entfernt auch Optionen mit 'Permanent'-Attribut
 // reset: Setzt bei Erfolg auf Initialwert der Option
 function deleteOptions(optSet, optSelect = undefined, force = false, reset = true) {
-    const __DELETEALL = (optSelect === undefined) || (optSelect === true);
+    const __DELETEALL = ((optSelect === undefined) || (optSelect === true));
     const __OPTSELECT = getValue(optSelect, { });
 
     for (let opt in optSet) {
@@ -2690,7 +2874,11 @@ function renameOption(opt, name, reload = false, force = false) {
 
         setOptName(opt, name);
 
+        invalidateOpt(opt, opt.Loaded);
+
         if (reload) {
+            opt.Loaded = false;
+
             loadOption(opt, force);
         }
     }
@@ -2858,8 +3046,8 @@ function removeDocEvent(id, type, callback, capture = false) {
 // doc: Dokument (document)
 // return Gesuchtes Element mit der lfd. Nummer index oder undefined (falls nicht gefunden)
 function getElement(name, index = 0, doc = document) {
-    const __TAGS = document.getElementsByName(name);
-    const __TABLE = (__TAGS === undefined) ? undefined : __TAGS[index];
+    const __TAGS = doc.getElementsByName(name);
+    const __TABLE = (__TAGS ? __TAGS[index] : undefined);
 
     return __TABLE;
 }
@@ -2870,10 +3058,22 @@ function getElement(name, index = 0, doc = document) {
 // doc: Dokument (document)
 // return Gesuchtes Element oder undefined (falls nicht gefunden)
 function getTable(index, tag = "table", doc = document) {
-    const __TAGS = document.getElementsByTagName(tag);
-    const __TABLE = (__TAGS === undefined) ? undefined : __TAGS[index];
+    const __TAGS = doc.getElementsByTagName(tag);
+    const __TABLE = (__TAGS ? __TAGS[index] : undefined);
 
     return __TABLE;
+}
+
+// Hilfsfunktion fuer die Ermittlung der Zeilen einer Tabelle
+// name: Name des Tabellen-Elements (siehe "name=")
+// index: Laufende Nummer des Tabellen-Elements (0-based), Default: 0
+// doc: Dokument (document)
+// return Gesuchte Zeilen oder undefined (falls nicht gefunden)
+function getElementRows(name, index = 0, doc = document) {
+    const __TABLE = getElement(name, index, doc);
+    const __ROWS = (__TABLE ? __TABLE.rows : undefined);
+
+    return __ROWS;
 }
 
 // Hilfsfunktion fuer die Ermittlung der Zeilen einer Tabelle
@@ -2882,7 +3082,18 @@ function getTable(index, tag = "table", doc = document) {
 // return Gesuchte Zeilen oder undefined (falls nicht gefunden)
 function getRows(index, doc = document) {
     const __TABLE = getTable(index, "table", doc);
-    const __ROWS = (__TABLE === undefined) ? undefined : __TABLE.rows;
+    const __ROWS = (__TABLE ? __TABLE.rows : undefined);
+
+    return __ROWS;
+}
+
+// Hilfsfunktion fuer die Ermittlung der Zeilen einer Tabelle
+// id: ID des Tabellen-Elements
+// doc: Dokument (document)
+// return Gesuchte Zeilen oder undefined (falls nicht gefunden)
+function getRowsById(id, doc = document) {
+    const __TABLE = doc.getElementById(id);
+    const __ROWS = (__TABLE ? __TABLE.rows : undefined);
 
     return __ROWS;
 }
@@ -3105,7 +3316,7 @@ function getForm(optSet, optParams = { }) {
     for (let opt in optSet) {
         if (checkItem(opt, __SHOWFORM, optParams.hideForm)) {
             const __ELEMENT = getOptionElement(optSet[opt]);
-            const __TDOPT = (~ __ELEMENT.indexOf('|')) ? "" : ' colspan="2"';
+            const __TDOPT = ((~ __ELEMENT.indexOf('|')) ? "" : ' colspan="2"');
 
             if (__ELEMENT) {
                 if (++count > __FORMBREAK) {
@@ -3200,8 +3411,10 @@ Class.define(Classification, Object, {
                                               renameOptions(this.optSet, this.optSelect, __PARAM, this.renameFun);
                                           }
                                       },
-                    'deleteOptions' : function() {
-                                          return deleteOptions(this.optSet, this.optSelect, true, true);
+                    'deleteOptions' : function(ignList) {
+                                          const __OPTSELECT = addProps([], this.optSelect, null, ignList);
+
+                                          return deleteOptions(this.optSet, __OPTSELECT, true, true);
                                       }
                 } );
 
@@ -3259,6 +3472,34 @@ Class.define(Team, Object, {
 
 // ==================== Ende Abschnitt fuer Klasse Team ====================
 
+// ==================== Abschnitt fuer Klasse Verein ====================
+
+// Klasse fuer Vereinsdaten
+function Verein(team, land, liga, id, manager, flags) {
+    'use strict';
+
+    Team.call(this, team, land, liga);
+
+    this.ID = id;
+    this.Manager = manager;
+    this.Flags = (flags || []);
+}
+
+Class.define(Verein, Team, {
+                    '__TEAMITEMS' : {   // Items, die in Verein als Teamdaten gesetzt werden...
+                                        'Team'    : true,
+                                        'Liga'    : true,
+                                        'Land'    : true,
+                                        'LdNr'    : true,
+                                        'LgNr'    : true,
+                                        'ID'      : true,
+                                        'Manager' : true,
+                                        'Flags'   : true
+                                    }
+                } );
+
+// ==================== Ende Abschnitt fuer Klasse Verein ====================
+
 // ==================== Spezialisierter Abschnitt fuer Optionen ====================
 
 // Gesetzte Optionen (wird von initOptions() angelegt und von loadOptions() gefuellt):
@@ -3269,14 +3510,17 @@ const __TEAMCLASS = new TeamClassification();
 
 // Optionen mit Daten, die ZAT- und Team-bezogen gemerkt werden...
 __TEAMCLASS.optSelect = {
-                       'datenZat'   : true,
-                       'birthdays'  : true,
-                       'tClasses'   : true,
-                       'progresses' : true,
-                       'zatAges'    : true,
-                       'trainiert'  : true,
-                       'positions'  : true,
-                       'skills'     : true
+                       'datenZat'     : true,
+                       'oldDatenZat'  : true,
+                       'fingerprints' : true,
+                       'birthdays'    : true,
+                       'tClasses'     : true,
+                       'progresses'   : true,
+                       'zatAges'      : true,
+                       'trainiert'    : true,
+                       'positions'    : true,
+                       'skills'       : true,
+                       'foerderung'   : true
                    };
 
 // Gibt die Teamdaten zurueck und aktualisiert sie ggfs. in der Option
@@ -3323,6 +3567,17 @@ function buildOptions(optConfig, optSet = undefined, optParams = { 'hideMenu' : 
 
     optSet = startOptions(optConfig, optSet, __TEAMCLASS);
 
+    if (optParams.getDonation) {
+        // Jugendfoerderung aus der Options-HTML-Seite ermitteln...
+        const __BOXDONATION = document.getElementsByTagName('option');
+        const __DONATION = getSelectionFromComboBox(__BOXDONATION, 10000, 'Number');
+
+        __LOG[3]("Jugendf\xF6rderung: " + __DONATION + " Euro");
+
+        // ... und abspeichern...
+        setOpt(optSet.foerderung, __DONATION, false);
+    }
+
     showOptions(optSet, optParams);
 
     return optSet;
@@ -3349,28 +3604,125 @@ function init(playerRows, optSet, colIdx, offsetUpper = 1, offsetLower = 0, relo
     const __TRAINIERT = getOptValue(optSet.trainiert, []);
     const __POSITIONS = getOptValue(optSet.positions, []);
     const __SKILLS = getOptValue(optSet.skills, []);
+    const __BASEDATA = [ __BIRTHDAYS, __TCLASSES, __PROGRESSES ];  // fuer initPlayer
+    const __DATA = (reloadData ? [ __BASEDATA, __SKILLS ] : [ __SKILLS, __BASEDATA ]);  // fuer initPlayer: [0] = von HTML-Seite, [1] = aus gespeicherten Daten
+    const __IDMAP = getPlayerIdMap(optSet);
+    const __CATIDS = __IDMAP.catIds;
     const __PLAYERS = [];
+
+    __LOG[5](__IDMAP);
 
     for (let i = offsetUpper, j = 0; i < playerRows.length - offsetLower; i++, j++) {
         const __CELLS = playerRows[i].cells;
+        const __LAND = getStringFromHTML(__CELLS, colIdx.Land);
         const __AGE = getIntFromHTML(__CELLS, colIdx.Age);
         const __ISGOALIE = isGoalieFromHTML(__CELLS, colIdx.Age);
-        const __NEWPLAYER = new PlayerRecord(__AGE, getValue(__SKILLS[j], []), __ISGOALIE);
+        const __NEWPLAYER = new PlayerRecord(__LAND, __AGE, __ISGOALIE, __SAISON, __CURRZAT, __DONATION);
 
-        __NEWPLAYER.initPlayer(__SAISON, __CURRZAT, __DONATION, __BIRTHDAYS[j], __TCLASSES[j], __PROGRESSES[j]);
+        __NEWPLAYER.initPlayer(__DATA[0], j, ! reloadData);
+
+        const __IDX = selectPlayerIndex(__NEWPLAYER, j, __CATIDS);
+
+        __NEWPLAYER.initPlayer(__DATA[1], __IDX, reloadData);
+
+        __NEWPLAYER.prognoseSkills();
 
         if (reloadData) {
-            __NEWPLAYER.setZusatz(__ZATAGES[j], __TRAINIERT[j], __POSITIONS[j]);
+            __NEWPLAYER.setZusatz(__ZATAGES[__IDX], __TRAINIERT[__IDX], __POSITIONS[__IDX]);
         }
 
         __PLAYERS[j] = __NEWPLAYER;
     }
 
-    if (! reloadData) {
+    if (reloadData) {
+        setPlayerData(__PLAYERS, optSet);
+    } else {
         calcPlayerData(__PLAYERS, optSet);
     }
 
+    storePlayerIds(__PLAYERS, optSet);
+
     return __PLAYERS;
+}
+
+// Berechnet die Identifikations-IDs (Fingerprints) der Spieler neu und speichert diese
+function getPlayerIdMap(optSet) {
+    const __FINGERPRINTS = getOptValue(optSet.fingerprints, []);
+    const __MAP = {
+                      'ids'    : { },
+                      'cats'   : [],
+                      'catIds' : { }
+                  };
+    const __IDS = __MAP.ids;
+    const __CATS = __MAP.cats;
+    const __CATIDS = __MAP.catIds;
+
+    for (let i = 0; i < __FINGERPRINTS.length; i++) {
+        const __ID = __FINGERPRINTS[i];
+        const __CAT = PlayerRecord.prototype.getCatFromFingerPrint(__ID);
+
+        if (__ID) {
+            if (! __CATIDS[__CAT]) {
+                __CATIDS[__CAT] = { };
+            }
+            __IDS[__ID] = i;
+            __CATS[i] = __CAT;
+            __CATIDS[__CAT][__ID] = i;
+        }
+    }
+
+    return __MAP;
+}
+
+// Berechnet die Identifikations-IDs (Fingerprints) der Spieler neu und speichert diese
+function storePlayerIds(players, optSet) {
+    const __FINGERPRINTS = [];
+
+    for (let i = 0; i < players.length; i++) {
+        const __PLAYER = players[i];
+
+        if ((__PLAYER.zatGeb !== undefined) && (__PLAYER.talent !== undefined) && (__PLAYER.positions !== undefined)) {
+            __FINGERPRINTS[i]  = __PLAYER.getFingerPrint();
+        }
+    }
+
+    setOpt(optSet.fingerprints, __FINGERPRINTS, false);
+}
+
+// Sucht fuer den Spieler den Eintrag aus catIds heraus und gibt den (geloeschten) Index zurueck
+function selectPlayerIndex(player, index, catIds) {
+    const __MYCAT = player.getCat();
+    const __CATS = catIds[__MYCAT];
+    const __ID = player.findInFingerPrints(__CATS);
+    let idx = index;
+
+    if (__ID !== undefined) {
+        idx = __CATS[__ID];
+        delete __CATS[__ID];
+    }
+
+    return idx;
+}
+
+// Speichtert die abgeleiteten Werte in den Spieler-Objekten
+function setPlayerData(players, optSet) {
+    const __ZATAGES = [];
+    const __TRAINIERT = [];
+    const __POSITIONS = [];
+
+    for (let i = 0; i < players.length; i++) {
+        const __ZUSATZ = players[i].calcZusatz();
+
+        if (__ZUSATZ.zatAge !== undefined) {  // braucht Geburtstag fuer gueltige Werte!
+            __ZATAGES[i]    = __ZUSATZ.zatAge;
+        }
+        __TRAINIERT[i]  = __ZUSATZ.trainiert;
+        __POSITIONS[i]  = __ZUSATZ.bestPos;
+    }
+
+    setOpt(optSet.zatAges, __ZATAGES, false);
+    setOpt(optSet.trainiert, __TRAINIERT, false);
+    setOpt(optSet.positions, __POSITIONS, false);
 }
 
 // Berechnet die abgeleiteten Werte in den Spieler-Objekten neu und speichert diese
@@ -3463,7 +3815,10 @@ function ColumnManager(optSet, colIdx, showCol) {
 
     this.colIdx = colIdx;
 
+    this.fpId = (__BIRTHDAYS && __TCLASSES && __POSITIONS && getValue(__SHOWCOL.zeigeId, __SHOWALL) && getOptValue(optSet.zeigeId));
     this.bar = (__PROJECTION && getValue(__SHOWCOL.zeigeBalken, __SHOWALL) && getOptValue(optSet.zeigeBalken));
+    this.barAbs = getOptValue(optSet.absBalken);
+    this.donor = getOptValue(optSet.foerderung);
     this.geb = (__BIRTHDAYS && getValue(__SHOWCOL.zeigeGeb, __SHOWALL) && getOptValue(optSet.zeigeGeb));
     this.tal = (__TCLASSES && getValue(__SHOWCOL.zeigeTal, __SHOWALL) && getOptValue(optSet.zeigeTal));
     this.quo = (__ZATAGES && __TRAINIERT && getValue(__SHOWCOL.zeigeQuote, __SHOWALL) && getOptValue(optSet.zeigeQuote));
@@ -3472,6 +3827,7 @@ function ColumnManager(optSet, colIdx, showCol) {
     this.alter = (__ZATAGES && getValue(__SHOWCOL.zeigeAlter, __SHOWALL) && getOptValue(optSet.zeigeAlter));
     this.fix = (__EINZELSKILLS && getValue(__SHOWCOL.zeigeFixSkills, __SHOWALL) && getOptValue(optSet.zeigeFixSkills));
     this.tr = (__EINZELSKILLS && __TRAINIERT && getValue(__SHOWCOL.zeigeTrainiert, __SHOWALL) && getOptValue(optSet.zeigeTrainiert));
+    this.zat = (__ZATAGES && getValue(__SHOWCOL.zeigeZatDone, __SHOWALL) && getOptValue(optSet.zeigeZatDone));
     this.antHpt = (__EINZELSKILLS && getValue(__SHOWCOL.zeigeAnteilPri, __SHOWALL) && getOptValue(optSet.zeigeAnteilPri));
     this.antNeb = (__EINZELSKILLS && getValue(__SHOWCOL.zeigeAnteilSec, __SHOWALL) && getOptValue(optSet.zeigeAnteilSec));
     this.pri = (__EINZELSKILLS && getValue(__SHOWCOL.zeigePrios, __SHOWALL) && getOptValue(optSet.zeigePrios));
@@ -3481,6 +3837,7 @@ function ColumnManager(optSet, colIdx, showCol) {
     this.anzMw =  ((__PROJECTION && getValue(__SHOWCOL.zeigeMW, __SHOWALL)) ? getOptValue(optSet.anzahlMW) : 0);
     this.substSkills = (__PROJECTION && getValue(__SHOWCOL.ersetzeSkills, __SHOWALL) && getOptValue(optSet.ersetzeSkills));
     this.trE = (__PROJECTION && __TRAINIERT && getValue(__SHOWCOL.zeigeTrainiertEnde, __SHOWALL) && getOptValue(optSet.zeigeTrainiertEnde));
+    this.zatE = (__ZATAGES && getValue(__SHOWCOL.zeigeZatLeft, __SHOWALL) && getOptValue(optSet.zeigeZatLeft));
     this.antHptE = (__PROJECTION && getValue(__SHOWCOL.zeigeAnteilPriEnde, __SHOWALL) && getOptValue(optSet.zeigeAnteilPriEnde));
     this.antNebE = (__PROJECTION && getValue(__SHOWCOL.zeigeAnteilSecEnde, __SHOWALL) && getOptValue(optSet.zeigeAnteilSecEnde));
     this.priE = (__PROJECTION && getValue(__SHOWCOL.zeigePriosEnde, __SHOWALL) && getOptValue(optSet.zeigePriosEnde));
@@ -3503,13 +3860,12 @@ Class.define(ColumnManager, Object, {
                                return result;
                            },
         'addCell'        : function(tableRow) {
-                               tableRow.insertCell(-1);
-                               return tableRow.cells.length - 1;
+                               return tableRow.insertCell(-1);
                            },
         'addAndFillCell' : function(tableRow, value, color, align, digits = 2) {
                                let text = value;
 
-                               if (value && isFinite(value) && (value !== true) && (value !== false)) {
+                               if ((value || (value === 0)) && isFinite(value) && (value !== true) && (value !== false)) {
                                    // Zahl einfuegen
                                    if (value < 1000) {
                                        // Mit Nachkommastellen darstellen
@@ -3521,32 +3877,46 @@ Class.define(ColumnManager, Object, {
                                }
 
                                // String, Boolean oder Zahl einfuegen...
-                               tableRow.cells[this.addCell(tableRow)].innerHTML = text;
+                               const __CELL = this.addCell(tableRow);
+
+                               __CELL.innerHTML = text;
                                if (color) {
-                                   tableRow.cells[tableRow.cells.length - 1].style.color = color;
+                                   __CELL.style.color = color;
                                }
                                if (align) {
-                                   tableRow.cells[tableRow.cells.length - 1].align = align;
+                                   __CELL.align = align;
                                }
+
+                               return __CELL;
                            },
-        'addAndBarCell'  : function(tableRow, value, scale = 100, offset = 0, width = 100, height = 10) {
-                               const __VALUE = ((scale && isFinite(value)) ? (value - offset) * 100 / scale : 0);
+        'addAndBarCell'  : function(tableRow, value, scale = 100, offset = 0, width = 100, height = 10, zoom = 100) {
+                               const __VALUE = ((scale && isFinite(value)) ? ((value - offset) / Math.max(1, scale - offset) * 100) : 0);
 
                                // HTML-Code fuer Anteilsbalken einfuegen...
-                               tableRow.cells[this.addCell(tableRow)].innerHTML = this.getBarImg(__VALUE, width, height);
-                               tableRow.cells[tableRow.cells.length - 1].align = 'left';
+                               const __CELL = this.addCell(tableRow);
+
+                               __CELL.innerHTML = this.getBarImg(__VALUE, width, height, zoom);
+                               __CELL.align = 'left';
+
+                               return __CELL;
                            },
-        'getBarImg'      : function(value, width = 100, height = 10) {
-                               const __VALUE = Math.max(0, Math.min(99, getMulValue(value, 1, 0, 0)));
+        'getBarImg'      : function(value, width = 100, height = 10, zoom = 100) {
+                               const __IMAGE = Math.min(99, Math.max(0, getMulValue(value, 1, 0, 0)));
+                               const __LENGTH = getMulValue(width / 100, getMulValue(zoom / 100, value, 0, 0), 0, 0);
+                               const __WIDTH = Math.min(width, __LENGTH);
+                               const __HEIGHT = Math.max(3, getMulValue(zoom / 100, height * (__LENGTH / __WIDTH), 0, 0));
 
                                // HTML-Code fuer Anteilsbalken...
-                               return '<img src="images/balken/' + __VALUE + '.GIF" width="' + (__VALUE * width / 100) + '" height=' + height + '>';
+                               return '<img src="images/balken/' + __IMAGE + '.GIF" width="' + __WIDTH + '" height=' + __HEIGHT + '>';
                            },
         'addTitles'      : function(headers, titleColor = "#FFFFFF") {
                                // Spaltentitel zentrieren
                                headers.align = "center";
 
                                // Titel fuer die aktuellen Werte
+                               if (this.fpId) {
+                                   this.addAndFillCell(headers, "Identifikation", titleColor);
+                               }
                                if (this.bar) {
                                    this.addAndFillCell(headers, "Qualit\xE4t", titleColor);
                                }
@@ -3570,6 +3940,9 @@ Class.define(ColumnManager, Object, {
                                }
                                if (this.tr) {
                                    this.addAndFillCell(headers, "tr.", titleColor);
+                               }
+                               if (this.zat) {
+                                   this.addAndFillCell(headers, "ZAT", titleColor);
                                }
                                if (this.antHpt) {
                                    this.addAndFillCell(headers, "%H", titleColor);
@@ -3599,6 +3972,9 @@ Class.define(ColumnManager, Object, {
                                if (this.trE) {
                                    this.addAndFillCell(headers, "tr." + this.kennzE, titleColor);
                                }
+                               if (this.zatE) {
+                                   this.addAndFillCell(headers, "ZAT" + this.kennzE, titleColor);
+                               }
                                if (this.antHptE) {
                                    this.addAndFillCell(headers, "%H" + this.kennzE, titleColor);
                                }
@@ -3621,13 +3997,23 @@ Class.define(ColumnManager, Object, {
                                }
                            },  // Ende addTitles()
         'addValues'      : function(player, playerRow, color = "#FFFFFF") {
+                               const __IDXPRI = getIdxPriSkills(player.getPos());
                                const __COLALERT = getColor('STU');  // rot
                                const __COLOR = ((player.zatLeft < 1) ? __COLALERT : player.isGoalie ? getColor('TOR') : color);
                                const __POS1COLOR = getColor((player.getPosPercent() > 99.99) ? 'LEI' : player.getPos());
+                               const __OSBLAU = getColor("");
 
                                // Aktuelle Werte
+                               if (this.fpId) {
+                                   this.addAndFillCell(playerRow, player.getFingerPrint(), __COLOR);
+                               }
                                if (this.bar) {
-                                   this.addAndBarCell(playerRow, player.getPrios(player.getPos(), player.__TIME.end), 100, 0, 100, 10);
+                                   const __VALUE = player.getPrios(player.getPos(), player.__TIME.end);
+                                   const __SCALE = (this.barAbs ? 100 : (this.donor / 125));
+                                   const __OFFSET = (this.barAbs ? 0 : Math.pow(__SCALE / 20, 2));
+                                   const __ZOOM = 50 + __SCALE / 2;
+
+                                   this.addAndBarCell(playerRow, __VALUE, __SCALE, __OFFSET, 100, 10, __ZOOM);
                                }
                                if (this.tal) {
                                    this.addAndFillCell(playerRow, player.getTalent(), __COLOR);
@@ -3661,6 +4047,9 @@ Class.define(ColumnManager, Object, {
                                }
                                if (this.tr) {
                                    this.addAndFillCell(playerRow, player.getTrainableSkills(), __COLOR, null, 0);
+                               }
+                               if (this.zat) {
+                                   this.addAndFillCell(playerRow, player.getZatDone(), __COLOR, null, 0);
                                }
                                if (this.antHpt) {
                                    this.addAndFillCell(playerRow, player.getPriPercent(player.getPos()), __COLOR, null, 0);
@@ -3703,18 +4092,25 @@ Class.define(ColumnManager, Object, {
 
                                // Werte mit Ende 18
                                if (this.substSkills) {
-                                   const __IDXPRI = getIdxPriSkills(player.getPos());
-                                   const __OSBLAU = getColor("");
-
                                    convertArrayFromHTML(playerRow.cells, this.colIdx.Einz, player.skillsEnd, function(value, cell, unused, index) {
                                                                                                                  if (~ __IDXPRI.indexOf(index)) {
                                                                                                                      formatCell(cell, true, __OSBLAU, __POS1COLOR);
                                                                                                                  }
                                                                                                                  return value;
                                                                                                              });
+                               } else if (this.colIdx.Einz) {
+                                   convertArrayFromHTML(playerRow.cells, this.colIdx.Einz, player.skills.length, function(value, cell, unused, index) {
+                                                                                                                     if (~ __IDXPRI.indexOf(index)) {
+                                                                                                                         formatCell(cell, true);
+                                                                                                                     }
+                                                                                                                     return value;
+                                                                                                                 });
                                }
                                if (this.trE) {
                                    this.addAndFillCell(playerRow, player.getTrainableSkills(player.__TIME.end), __COLOR, null, 1);
+                               }
+                               if (this.zatE) {
+                                   this.addAndFillCell(playerRow, player.getZatLeft(), __COLOR, null, 0);
                                }
                                if (this.antHptE) {
                                    this.addAndFillCell(playerRow, player.getPriPercent(player.getPos(), player.__TIME.end), __COLOR, null, 0);
@@ -3756,22 +4152,35 @@ Class.define(ColumnManager, Object, {
 
 // Klasse PlayerRecord ******************************************************************
 
-function PlayerRecord(age, skills, isGoalie) {
+function PlayerRecord(land, age, isGoalie, saison, currZAT, donation) {
     'use strict';
 
-    this.mwFormel = this.__MWFORMEL.S10;  // Neue Formel, genauer in initPlayer()
-
+    this.land = land;
     this.age = age;
-    this.skills = skills;
     this.isGoalie = isGoalie;
+
+    this.saison = saison;
+    this.currZAT = currZAT;
+    this.donation = donation;
+    this.mwFormel = ((this.saison < 10) ? this.__MWFORMEL.alt : this.__MWFORMEL.S10);
+
+    // in new PlayerRecord() definiert:
+    // this.land: TLA des Geburtslandes
+    // this.age: Ganzzahliges Alter des Spielers
+    // this.isGoalie: Angabe, ob es ein TOR ist
+    // this.mwFormel: Benutzte MW-Formel, siehe __MWFORMEL
+    // this.donation: Jugendfoerderungsbetrag in Euro
 
     // in this.initPlayer() definiert:
     // this.zatGeb: ZAT, an dem der Spieler Geburtstag hat, -1 fuer "noch nicht zugewiesen", also '?'
     // this.zatAge: Bisherige erfolgte Trainings-ZATs
+    // this.birth: Universell eindeutige Nummer des Geburtstags-ZATs des Spielers
     // this.talent: Talent als Zahl (-1=wenig, 0=normal, +1=hoch)
     // this.aufwert: Aufwertungsstring
-    // this.mwFormel: Benutzte MW-Formel, siehe __MWFORMEL
+
+    // in this.calcSkills() definiert:
     // this.positions[][]: Positionstexte und Optis; TOR-Index ist 5
+    // this.skills[]: Einzelskills
     // this.skillsEnd[]: Berechnet aus this.skills, this.age und aktuellerZat
     // this.zatLeft: ZATs bis zum Ende 18 (letzte Ziehmoeglichkeit)
     // this.restEnd: Korrekturterm zum Ausgleich von Rundungsfehlern mit Ende 18
@@ -3796,6 +4205,7 @@ Class.define(PlayerRecord, Object, {
                                       'alt' : 0,  // Marktwertformel bis Saison 9 inklusive
                                       'S10' : 1   // Marktwertformel MW5 ab Saison 10
                                   },
+        '__MAXPRISKILLS'        : 4 * 99,
         'toString'              : function() {  // Bisher nur die noetigsten Werte ausgegeben...
                                       let result = "Alter\t\t" + this.age + "\n\n";
                                       result += "Aktuelle Werte\n";
@@ -3820,13 +4230,20 @@ Class.define(PlayerRecord, Object, {
 
                                       return result;
                                   },  // Ende this.toString()
-        'initPlayer'            : function(saison, currZAT, donation, gebZAT, tclass, progresses) {
+        'initPlayer'            : function(data, index, skillData = false) {  // skillData: true = Skilldaten, false = Basiswerte (Geb., Talent, Aufwertungen)
+                                      if (data !== undefined) {
+                                          if (skillData) {
+                                              this.setSkills(data[index]);
+                                          } else {
+                                              this.setGeb(data[0][index]);
+                                              this.talent = data[1][index];
+                                              this.aufwert = data[2][index];
+                                          }
+                                      }
+                                  },  // Ende this.initPlayer()
+        'setSkills'             : function(skills) {
                                       // Berechnet die Opti-Werte, sortiert das Positionsfeld und berechnet die Einzelskills mit Ende 18
-                                      this.zatGeb = gebZAT;
-                                      this.zatAge = this.calcZatAge(currZAT);
-                                      this.talent = tclass;
-                                      this.aufwert = progresses;
-                                      this.mwFormel = ((saison < 10) ? this.__MWFORMEL.alt : this.__MWFORMEL.S10);
+                                     this.skills = skills;
 
                                       const __POSREIHEN = [ 'ABW', 'DMI', 'MIT', 'OMI', 'STU', 'TOR' ];
                                       this.positions = [];
@@ -3838,14 +4255,16 @@ Class.define(PlayerRecord, Object, {
 
                                       // Sortieren
                                       sortPositionArray(this.positions);
-
+                                  },  // Ende this.setSkills()
+        'prognoseSkills'        : function() {
                                       // Einzelskills mit Ende 18 berechnen
                                       this.skillsEnd = [];
 
                                       const __ZATDONE = this.getZatDone();
-                                      const __ZATTOGO = (this.zatLeft = this.getZatDone(this.__TIME.end) - __ZATDONE);
+                                      const __ZATTOGO = this.getZatLeft();
                                       const __ADDRATIO = (__ZATDONE ? __ZATTOGO / __ZATDONE : 0);
-                                      let addSkill = (__ADDRATIO ? __ADDRATIO * this.getTrainiert() : __ZATTOGO * (1 + this.talent / 3.6) * donation / 10000);
+
+                                      let addSkill = __ZATTOGO * this.getAufwertungsSchnitt();
 
                                       for (let i in this.skills) {
                                           const __SKILL = this.skills[i];
@@ -3862,10 +4281,12 @@ Class.define(PlayerRecord, Object, {
                                           this.skillsEnd[i] = progSkill;
                                       }
                                       this.restEnd = addSkill;
-                                  },  // Ende this.initPlayer()
+                                  },  // Ende this.prognoseSkills()
         'setZusatz'             : function(zatAge, trainiert, bestPos) {
                                       // Setzt Nebenwerte fuer den Spieler (geht ohne initPlayer())
-                                      this.zatAge = zatAge;
+                                      if (zatAge !== undefined) {
+                                          this.zatAge = zatAge;
+                                      }
                                       this.trainiert = trainiert;
                                       this.bestPos = bestPos;
                                   },
@@ -3884,11 +4305,16 @@ Class.define(PlayerRecord, Object, {
         'getGeb'                : function() {
                                       return (this.zatGeb < 0) ? '?' : this.zatGeb;
                                   },
+        'setGeb'                : function(gebZAT) {
+                                      this.zatGeb = gebZAT;
+                                      this.zatAge = this.calcZatAge(this.currZAT);
+                                      this.birth = (36 + this.saison) * 72 + this.currZAT - this.zatAge;
+                                  },
         'calcZatAge'            : function(currZAT) {
                                       let zatAge;
 
                                       if (this.zatGeb !== undefined) {
-                                          let ZATs = (this.age - ((currZAT < this.zatGeb) ? 12 : 13)) * 72;  // Basiszeit fuer die Jahre seit Jahrgang 13
+                                          let ZATs = 72 * (this.age - ((currZAT < this.zatGeb) ? 12 : 13));  // Basiszeit fuer die Jahre seit Jahrgang 13
 
                                           if (this.zatGeb < 0) {
                                               zatAge = ZATs + currZAT;  // Zaehlung begann Anfang der Saison (und der Geburtstag wird erst nach dem Ziehen bestimmt)
@@ -3909,6 +4335,13 @@ Class.define(PlayerRecord, Object, {
         'getZatDone'            : function(when = this.__TIME.now) {
                                       return Math.max(0, this.getZatAge(when));
                                   },
+        'getZatLeft'            : function(when = this.__TIME.now) {
+                                      if (this.zatLeft === undefined) {
+                                          this.zatLeft = this.getZatDone(this.__TIME.end) - this.getZatDone(when);
+                                      }
+
+                                      return this.zatLeft;
+                                  },
         'getAge'                : function(when = this.__TIME.now) {
                                       if (this.mwFormel === this.__MWFORMEL.alt) {
                                           return (when === this.__TIME.end) ? 18 : this.age;
@@ -3918,13 +4351,21 @@ Class.define(PlayerRecord, Object, {
                                   },
         'getTrainiert'          : function(recalc = false) {
                                       if (recalc || (this.trainiert === undefined)) {
-                                          return this.getTrainableSkills();
-                                      } else {
-                                          return this.trainiert;
+                                          this.trainiert = this.getTrainableSkills();
                                       }
+
+                                      return this.trainiert;
                                   },
         'getAufwertungsSchnitt' : function() {
-                                      return parseFloat(this.getTrainiert() / this.getZatDone());
+                                      const __ZATDONE = this.getZatDone();
+
+                                      if (__ZATDONE) {
+                                          return parseFloat(this.getTrainiert() / __ZATDONE);
+                                      } else {
+                                          // Je nach Talentklasse mittlerer Aufwertungsschnitt aller Talente der Klasse
+                                          // (gewichtet nach Verteilung der Talentstufen in dieser Talentklasse)
+                                          return (1 + (this.talent / 3.6)) * (this.donation / 10000);
+                                      }
                                   },
         'getPos'                : function(idx = 0) {
                                       const __IDXOFFSET = 1;
@@ -3981,10 +4422,12 @@ Class.define(PlayerRecord, Object, {
                                       }
 
                                       const __SKILLS = ((when === this.__TIME.end) ? this.skillsEnd : this.skills);
-                                      let sumSkills = (when === this.__TIME.end) ? (restRate / 15) * this.restEnd : 0;
+                                      let sumSkills = ((when === this.__TIME.end) ? (restRate / 15) * this.restEnd : 0);
 
-                                      for (let idx of idxSkills) {
-                                          sumSkills += __SKILLS[idx];
+                                      if (__SKILLS) {
+                                          for (let idx of idxSkills) {
+                                              sumSkills += __SKILLS[idx];
+                                          }
                                       }
 
                                       if (cachedItem !== undefined) {
@@ -3999,23 +4442,26 @@ Class.define(PlayerRecord, Object, {
         'getOpti'               : function(pos, when = this.__TIME.now) {
                                       const __SUMALLSKILLS = this.getSkillSum(when);
                                       const __SUMPRISKILLS = this.getSkillSum(when, getIdxPriSkills(pos), 2 * 4);
+                                      const __OVERFLOW = Math.max(0, __SUMPRISKILLS - this.__MAXPRISKILLS);
 
-                                      return (4 * __SUMPRISKILLS + __SUMALLSKILLS) / 27;
+                                      return (4 * (__SUMPRISKILLS - __OVERFLOW) + __SUMALLSKILLS) / 27;
                                   },
         'getPrios'              : function(pos, when = this.__TIME.now) {
-                                      return this.getSkillSum(when, getIdxPriSkills(pos), 2 * 4) / 4;
+                                      return Math.min(this.__MAXPRISKILLS, this.getSkillSum(when, getIdxPriSkills(pos), 2 * 4)) / 4;
                                   },
         'getPriPercent'         : function(pos, when = this.__TIME.now) {
                                       const __SUMPRISKILLS = this.getSkillSum(when, getIdxPriSkills(pos), 2 * 4);
                                       const __SUMSECSKILLS = this.getSkillSum(when, getIdxSecSkills(pos), 7);
+                                      const __OVERFLOW = Math.max(0, __SUMPRISKILLS - this.__MAXPRISKILLS);
 
-                                      return (100 * __SUMPRISKILLS) / (__SUMPRISKILLS + __SUMSECSKILLS);
+                                      return (100 * (__SUMPRISKILLS - __OVERFLOW)) / (__SUMPRISKILLS + __SUMSECSKILLS);
                                   },
         'getSecPercent'         : function(pos, when = this.__TIME.now) {
                                       const __SUMPRISKILLS = this.getSkillSum(when, getIdxPriSkills(pos), 2 * 4);
                                       const __SUMSECSKILLS = this.getSkillSum(when, getIdxSecSkills(pos), 7);
+                                      const __OVERFLOW = Math.max(0, __SUMPRISKILLS - this.__MAXPRISKILLS);
 
-                                      return (100 * __SUMSECSKILLS) / (__SUMPRISKILLS + __SUMSECSKILLS);
+                                      return (100 * (__SUMSECSKILLS + __OVERFLOW)) / (__SUMPRISKILLS + __SUMSECSKILLS);
                                   },
         'getTrainableSkills'    : function(when = this.__TIME.now) {
                                       return this.getSkillSum(when, getIdxTrainableSkills());
@@ -4033,6 +4479,77 @@ Class.define(PlayerRecord, Object, {
 
                                           return Math.round(Math.pow(1 + this.getSkill(when)/100, 5.65) * Math.pow(1 + this.getOpti(pos, when)/100, 8.1) * Math.pow(1 + (100 - __AGE)/49, 10) * __MW5TF);
                                       }
+                                  },
+        'getFingerPrint'        : function() {
+                                      // Jeweils gleichbreite Werte: (Alter/Geb.=>Monat), Land, Talent ('-', '=', '+')...
+                                      const __BASEPART = padNumber(this.birth / 6, 3) + padLeft(this.land, -3);
+                                      const __TALENT = '-=+'[this.talent + 1];
+
+                                      if (this.skills === undefined) {
+                                          return __BASEPART + getValue(__TALENT, "");
+                                      } else {
+                                          const __SKILLS = this.skills;
+                                          const __FIXSKILLS = getIdxFixSkills().slice(-4);  // ohne die Nullen aus FUQ und ERF
+                                          const __FIXSKILLSTR = __FIXSKILLS.map(function(idx) {
+                                                                                    return padNumber(__SKILLS[idx], -2);
+                                                                                }).join("");
+
+                                          // Jeweils gleichbreite Werte: Zusaetzlich vier der sechs Fixskills...
+                                          return (__BASEPART + getValue(__TALENT, '?') + __FIXSKILLSTR);
+                                      }
+                                  },
+        'isFingerPrint'         : function(fpA, fpB) {
+                                      if (fpA && fpB) {
+                                          if (fpA === fpB) {
+                                              return true;  // voellig identisch
+                                          } else if (this.isBaseFingerPrint(fpA, fpB)) {
+                                              return 1;  // schwaches true
+                                          }
+                                      }
+
+                                      return false;
+                                  },
+        'isBaseFingerPrint'     : function(fpA, fpB) {
+                                      if (fpA && fpB) {
+                                          if (this.getBaseFingerPrint(fpA) === this.getBaseFingerPrint(fpB)) {
+                                              // Base ist identisch...
+                                              if ((getValue(fpA[6], '?') === '?') || (getValue(fpB[6], '?') === '?') || (fpA[6] === fpB[6])) {
+                                                  // ... und auch das Talent-Zeichen ist leer oder '?'...
+                                                  return true;
+                                              }
+                                          }
+                                      }
+
+                                      return false;
+                                  },
+        'getBaseFingerPrint'    : function(fingerprint) {
+                                      return (fingerprint ? fingerprint.slice(0, 6) : undefined);
+                                  },
+        'getCatFromFingerPrint' : function(fingerprint) {
+                                      return (fingerprint ? floorValue((fingerprint.slice(0, 3) - 1) / 12) : undefined);
+                                  },
+        'getCat'                : function() {
+                                      return (this.birth ? floorValue((this.birth - 1) / 72) : undefined);
+                                  },
+        'findInFingerPrints'    : function(fingerprints) {
+                                      const __MYFINGERPRINT = this.getFingerPrint();  // ggfs. unvollstaendiger Fingerprint
+                                      const __MYCAT = this.getCat();
+                                      const __RET = [];
+
+                                      if (__MYCAT !== undefined) {
+                                          for (let id in fingerprints) {
+                                              const __CAT = this.getCatFromFingerPrint(id);
+
+                                              if (__CAT === __MYCAT) {
+                                                  if (this.isFingerPrint(id, __MYFINGERPRINT)) {
+                                                      __RET.push(id);
+                                                      break;  // erster Treffer zaehlt
+                                                  }
+                                              }
+                                          }
+                                      }
+
+                                      return ((__RET.length === 1) ? __RET[0] : undefined);
                                   }
     } );
 
@@ -4087,6 +4604,35 @@ function getStringFromHTML(cells, colIdxStr) {
     const __TEXT = __CELL.textContent;
 
     return getValue(__TEXT.toString(), "");
+}
+
+// Ermittelt den ausgewaehlten Wert eines Selects (Combo-Box) und gibt diesen zurueck
+// element: "select"-Element oder dessen Name auf der HTML-Seite mit 'option'-Eintraegen der Combo-Box
+// defValue: Default-Wert, falls nichts selektiert ist
+// return Ausgewaehlter Wert
+function getSelection(element, defValue = undefined, valType = 'String') {
+    const __ELEMENT = ((typeof element) === 'string' ? document.getElementsByName(element) : element);
+    const __ENTRY = (__ELEMENT ? __ELEMENT.selectedOptions[0] : undefined);
+
+    return this[valType](getValue(__ENTRY, defValue, __ENTRY.textContent));
+}
+
+// Ermittelt den ausgewaehlten Wert einer Combo-Box und gibt diesen zurueck
+// comboBox: Alle 'option'-Eintraege der Combo-Box
+// defValue: Default-Wert, falls nichts selektiert ist
+// return Ausgewaehlter Wert
+function getSelectionFromComboBox(comboBox, defValue = undefined, valType = 'String') {
+    let selection;
+
+    for (let i = 0; i < comboBox.length; i++) {
+        const __ENTRY = comboBox[i];
+
+        if (__ENTRY.outerHTML.match(/selected/)) {
+            selection = __ENTRY.textContent;
+        }
+    }
+
+    return this[valType](getValue(selection, defValue));
 }
 
 // Liest die Talentklasse ("wenig", "normal", "hoch") aus der Spalte einer Zeile der Tabelle aus
@@ -4254,10 +4800,49 @@ function sameValue(value) {
 // value: Eine uebergebene Dezimalzahl
 // return Der ganzzeilige Anteil dieser Zahl
 function floorValue(value, dot = '.') {
-    const __VALUE = value.toString();
-    const __INDEXDOT = (__VALUE ? __VALUE.indexOf(dot) : -1);
+    if ((value === 0) || (value && isFinite(value))) {
+        const __VALUE = value.toString();
+        const __INDEXDOT = (__VALUE ? __VALUE.indexOf(dot) : -1);
 
-    return Number((~ __INDEXDOT) ? __VALUE.substring(0, __INDEXDOT) : __VALUE);
+        return Number((~ __INDEXDOT) ? __VALUE.substring(0, __INDEXDOT) : __VALUE);
+    } else {
+        return value;
+    }
+}
+
+// Liefert einen rechtsbuendigen Text zurueck, der links aufgefuellt wird
+// value: Ein uebergebener Wert
+// size: Zielbreite (clipping fuer < 0: Abschneiden, falls zu lang)
+// char: Zeichen zum Auffuellen
+// return Ein String, der mindestens |size| lang ist (oder genau, falls size < 0, also clipping)
+function padLeft(value, size = 4, char = ' ') {
+    const __SIZE = Math.abs(size);
+    const __CLIP = (size < 0);
+    const __VALUE = (value ? value.toString() : "");
+    let i = __VALUE.length;
+    let str = "";
+
+    while (i < __SIZE) {
+        str += char;
+        i += char.length;
+    }
+    str = ((i > __SIZE) ? str.slice(0, __SIZE - __VALUE.length - 1) : str) + __VALUE;
+
+    return (__CLIP ? str.slice(size) : str);
+}
+
+// Liefert eine rechtsbuendigen Zahl zurueck, der links (mit Nullen) aufgefuellt wird
+// value: Eine uebergebene Zahl
+// size: Zielbreite (Default: 2)
+// char: Zeichen zum Auffuellen (Default: '0')
+// forceClip: Abschneiden erzwingen, falls zu lang?
+// return Eine Zahl als String, der mindestens 'size' lang ist (oder genau, falls size < 0, also clipping)
+function padNumber(value, size = 2, char = '0') {
+    if ((value === 0) || (value && isFinite(value))) {
+        return padLeft(value, size, char);
+    } else {
+        return value;
+    }
 }
 
 // Hilfsfunktionen **********************************************************************
@@ -4573,9 +5158,9 @@ function getTeamParamsFromTable(table, teamSearch = undefined) {
     const __INDEXLIGA = teamParams.indexOf(__SEARCHLIGA);
     const __INDEXMIDDLE = teamParams.indexOf(__SEARCHMIDDLE);
 
-    let land = (~ __INDEXLIGA) ? teamParams.substring(__INDEXLIGA + __SEARCHLIGA.length) : undefined;
-    const __TEAMNAME = (~ __INDEXMIDDLE) ? teamParams.substring(0, __INDEXMIDDLE) : undefined;
-    let liga = ((~ __INDEXLIGA) && (~ __INDEXMIDDLE)) ? teamParams.substring(__INDEXMIDDLE + __SEARCHMIDDLE.length) : undefined;
+    let land = ((~ __INDEXLIGA) ? teamParams.substring(__INDEXLIGA + __SEARCHLIGA.length) : undefined);
+    const __TEAMNAME = ((~ __INDEXMIDDLE) ? teamParams.substring(0, __INDEXMIDDLE) : undefined);
+    let liga = (((~ __INDEXLIGA) && (~ __INDEXMIDDLE)) ? teamParams.substring(__INDEXMIDDLE + __SEARCHMIDDLE.length) : undefined);
 
     if (land !== undefined) {
         if (land.charAt(2) === ' ') {    // Land z.B. hinter "2. Liga A " statt "1. Liga "
@@ -4651,6 +5236,9 @@ function procHaupt() {
     const __CURRZAT = __NEXTZAT - 1;
     const __DATAZAT = getOptValue(__OPTSET.datenZat);
 
+    // Stand der alten Daten merken...
+    setOpt(__OPTSET.oldDatenZat, __DATAZAT, false);
+
     if (__CURRZAT >= 0) {
         __LOG[2]("Aktueller ZAT: " + __CURRZAT);
 
@@ -4660,13 +5248,31 @@ function procHaupt() {
         if (__CURRZAT !== __DATAZAT) {
             __LOG[2](__LOG.changed(__DATAZAT, __CURRZAT));
 
-            // ... und ZAT-bezogene Daten als veraltet markieren
-            __TEAMCLASS.deleteOptions();
+            // ... und ZAT-bezogene Daten als veraltet markieren (ausser 'skills' und 'positions')
+            __TEAMCLASS.deleteOptions({
+                                          'skills'      : true,
+                                          'positions'   : true,
+                                          'datenZat'    : true,
+                                          'oldDatenZat' : true
+                                      });
 
             // Neuen Daten-ZAT speichern...
             setOpt(__OPTSET.datenZat, __CURRZAT, false);
         }
     }
+}
+
+// Verarbeitet Ansicht "Optionen" zur Ermittlung der Jugendfoerderung
+function procOptionen() {
+    buildOptions(__OPTCONFIG, __OPTSET, {
+                     'menuAnchor'  : getTable(0, "div"),
+                     'hideMenu'    : true,
+                     'getDonation' : true,
+                     'showForm'    : {
+                                         'foerderung'    : true,
+                                         'showForm'      : true
+                                     }
+                 });
 }
 
 // Verarbeitet Ansicht "Teamuebersicht"
@@ -4705,10 +5311,14 @@ function procTeamuebersicht() {
                                             'foerderung'         : true,
                                             'team'               : true,
                                             'zeigeBalken'        : true,
+                                            'absBalken'          : true,
+                                            'zeigeId'            : true,
                                             'ersetzeAlter'       : true,
                                             'zeigeAlter'         : true,
                                             'zeigeQuote'         : true,
                                             'zeigePosition'      : true,
+                                            'zeigeZatDone'       : true,
+                                            'zeigeZatLeft'       : true,
                                             'zeigeFixSkills'     : true,
                                             'zeigeTrainiert'     : true,
                                             'zeigeAnteilPri'     : true,
@@ -4838,6 +5448,7 @@ try {
     // page=0: Managerbuero
     // page=1: Teamuebersicht
     // page=2: Spielereinzelwerte
+    // page=3: Optionen
 
     // Verzweige in unterschiedliche Verarbeitungen je nach Wert von page:
     switch (getPageIdFromURL(window.location.href, {
@@ -4847,6 +5458,7 @@ try {
         case 0  : procHaupt(); break;
         case 1  : procTeamuebersicht(); break;
         case 2  : procSpielereinzelwerte(); break;
+        case 3  : procOptionen(); break;
         default : break;
     }
 } catch (ex) {
