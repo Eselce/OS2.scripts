@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        OS2.spielplan
 // @namespace   http://os.ongapo.com/
-// @version     0.51
+// @version     0.52
 // @copyright   2013+
 // @author      Sven Loges (SLC)
 // @description Spielplan-Abschnitt aus dem Master-Script fuer Online Soccer 2.0
@@ -24,7 +24,7 @@
 /* jshint moz: true */
 
 // Moegliche Optionen
-//const __SAISONS     = [ 10, 9, 8, 7, 6, 5, 4, 3, 2, 1 ];
+const __SAISONS     = [ 10, 9, 8, 7, 6, 5, 4, 3, 2, 1 ];
 const __LIGASIZES   = [ 10, 18, 20 ];
 
 // Trennlinie zwischen den Monaten
@@ -45,7 +45,7 @@ const __SEPSTYLE  = __BORDERSTYLE[0];           // Stil der Trennlinie
 const __SEPCOLOR  = __BORDERCOLOR[0];           // Farbe der Trennlinie
 const __SEPWIDTH  = __BORDERWIDTH[0];           // Dicke der Trennlinie
 
-//const __SAISON      = __SAISONS[0];
+const __SAISON      = __SAISONS[0];
 const __LIGASIZE    = __LIGASIZES[0];
 
 // Verarbeitet die URL der Seite und ermittelt die Nummer der gewuenschten Unterseite
@@ -103,7 +103,7 @@ let sepStyle  = __SEPSTYLE;     // Stil der Trennlinie
 let sepColor  = __SEPCOLOR;     // Farbe der Trennlinie
 let sepWidth  = __SEPWIDTH;     // Dicke der Trennlinie
 
-//let saison   = __SAISON;
+let saison   = __SAISON;
 let ligaSize = __LIGASIZE;
 
 // Setzt eine Option dauerhaft und laedt die Seite neu
@@ -200,7 +200,7 @@ function registerSpielplanMenu() {
     registerNextMenuOption(sepColor, __BORDERCOLOR, "Farbe: " + sepColor, setNextSepColor, 'F');
     registerNextMenuOption(sepWidth, __BORDERWIDTH, "Dicke: " + sepWidth, setNextSepWidth, 'D');
 
-//    registerNextMenuOption(saison, __SAISONS, "Saison: " + saison, setNextSaison, 'a');
+    registerNextMenuOption(saison, __SAISONS, "Saison: " + saison, setNextSaison, 'a');
     registerNextMenuOption(ligaSize, __LIGASIZES, "Liga: " + ligaSize + "er", setNextLigaSize, 'i');
 
     GM_registerMenuCommand("Standard-Optionen", resetSpielplanOptions, 'O');
@@ -234,7 +234,7 @@ function loadSpielplanOptions() {
     sepColor  = GM_getValue("sepColor",  sepColor);    // Farbe der Trennlinie
     sepWidth  = GM_getValue("sepWidth",  sepWidth);    // Dicke der Trennlinie
 
-//    saison    = GM_getValue("saison",   saison);
+    saison    = GM_getValue("saison",   saison);
     ligaSize  = GM_getValue("ligaSize", ligaSize);
 }
 
@@ -295,7 +295,7 @@ function setNextSepWidth() {
 
 // Setzt die naechste moegliche Saison als Option
 function setNextSaison() {
-//    saison = setNextOption(__SAISONS, "saison", saison);
+    saison = setNextOption(__SAISONS, "saison", saison);
 }
 
 // Setzt die naechste moegliche Ligagroesse als Option
@@ -313,7 +313,7 @@ const __HINRUECK    = [ " Hin", " R\xFCck", "" ];
 // Liefert einen vor den ersten ZAT zurueckgesetzten Spielplanzeiger
 // saison: Enthaelt die Nummer der laufenden Saison
 // ligaSize: Anzahl der Teams in dieser Liga (Gegner + 1)
-// - ZAT pro Abrechnungsmonat
+// - ZATs pro Abrechnungsmonat
 // - Saison
 // - ZAT
 // - GameType
@@ -360,13 +360,24 @@ function getZAT(currZAT, longStats) {
            'S' + currZAT.saison + "-Z" + ((currZAT.ZAT < 10) ? '0' : "") + currZAT.ZAT;
 }
 
-// Spult die Daten um anzZAT ZAT vor und schreibt Parameter
+// Liefert die ZATs der Sonderspieltage fuer 10er- (2) und 20er-Ligen (4)
+// saison: Enthaelt die Nummer der laufenden Saison
+// return [ 10erHin, 10erRueck, 20erHin, 20erRueck ], ZAT-Nummern der Zusatzspieltage
+function getLigaExtra(saison) {
+    if (saison < 3) {
+        return [ 8, 64, 32, 46 ];
+    } else {
+        return [ 9, 65, 33, 57 ];
+    }
+}
+
+// Spult die Daten um anzZAT ZATs vor und schreibt Parameter
 // anhand des Spielplans fort. Also Spieltag, Runde, etc.
 // currZAT: Enthaelt den Spielplanzeiger auf den aktuellen ZAT
 // anzZAT: Anzahl der ZAT, um die vorgespult wird
 function incZAT(currZAT, anzZAT = 1) {
-    const __LIGAFIRST = (currZAT.saison < 3) ? 3 : 2;
-    const __LIGAEXTRA = (currZAT.saison < 3) ? [ 8, 64, 32, 46 ] : [ 9, 65, 33, 57 ];
+    const __LIGAEXTRA = getLigaExtra(currZAT.saison);
+    const __LIGAFIRST = 3 - (__LIGAEXTRA[0] % 2);
     let zusatz = "";
 
     for (let i = anzZAT; i > 0; i--) {
@@ -545,7 +556,7 @@ function setSpielArtFromCell(currZAT, cell) {
     currZAT.heim     = (__SPIELART.length < 2) || (__SPIELART[1] === "Heim");
 }
 
-const __GAMETYPES = {
+const __GAMETYPES = {    // "Blind FSS gesucht!"
     "reserviert" : 0,
     "Frei"       : 0,
     "spielfrei"  : 0,
@@ -603,11 +614,30 @@ function addBilanzLinkToCell(cell, gameType, label) {
     }
 }
 
+// Ermittelt aus dem Spielplan die Ligengroesse ueber die Sonderspieltage
+// rows: Tabellenzeilen mit dem Spielplan
+// startIdx: Index der Zeile mit dem ersten ZAT
+// colArtIdx: Index der Spalte der Tabellenzelle mit der Spielart (z.B. "Liga : Heim")
+// saison: Enthaelt die Nummer der laufenden Saison
+// return 10 bei 36 Spielen, 18 bei 34 Spielen, 20 bei 38 Spielen
+function getLigaSizeFromSpielplan(rows, startIdx, colArtIdx, saison) {
+    const __LIGAEXTRA = getLigaExtra(saison);
+    const __TEST10ER = getSpielArtFromCell(rows[startIdx + __LIGAEXTRA[0] - 1].cells[colArtIdx]);
+    const __TEST20ER = getSpielArtFromCell(rows[startIdx + __LIGAEXTRA[2] - 1].cells[colArtIdx]);
+
+    if (__TEST20ER[0] == "Liga") {
+        return 20;
+    } else if (__TEST10ER[0] == "Liga") {
+        return 10;
+    } else {
+        return 18;
+    }
+}
+
 // Verarbeitet Ansicht "Saisonplan"
 function procSpielplan() {
     const __TABLE = document.getElementsByTagName("table")[2];
-    const __SAISONS = document.getElementsByTagName("option");
-    const __SAISON = getSaisonFromComboBox(__SAISONS);
+    const __BOXSAISONS = document.getElementsByTagName("option");
 
     const __ROWOFFSETUPPER = 1;
     const __ROWOFFSETLOWER = 0;
@@ -623,7 +653,10 @@ function procSpielplan() {
 
     loadSpielplanOptions();
 
-    const __ZAT = firstZAT(__SAISON, ligaSize);
+    saison = getSaisonFromComboBox(__BOXSAISONS);
+    ligaSize = getLigaSizeFromSpielplan(__TABLE.rows, __ROWOFFSETUPPER, __COLUMNINDEX.Art, saison);
+
+    const __ZAT = firstZAT(saison, ligaSize);
 
     let ligaStats = emptyStats();
     let euroStats = emptyStats();
