@@ -1,12 +1,18 @@
 // ==UserScript==
 // @name         OS2.jugend
 // @namespace    http://os.ongapo.com/
-// @version      0.53
+// @version      0.54+WE+
 // @copyright    2013+
-// @author       Andreas Eckes (Strindheim BK) / Sven Loges (SLC)
+// @author       Sven Loges (SLC) / Andreas Eckes (Strindheim BK)
 // @description  Jugendteam-Script fuer Online Soccer 2.0
 // @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/haupt\.php(\?changetosecond=\w+(&\S+)*)?$/
 // @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/ju\.php(\?page=\d+(&\S+)*)?$/
+// @grant        GM.getValue
+// @grant        GM.setValue
+// @grant        GM.deleteValue
+// @grant        GM.registerMenuCommand
+// @grant        GM.info
+// @require      https://greasemonkey.github.io/gm4-polyfill/gm4-polyfill.js
 // @grant        GM_getValue
 // @grant        GM_setValue
 // @grant        GM_deleteValue
@@ -14,13 +20,13 @@
 // @grant        GM_info
 // ==/UserScript==
 
-// ECMAScript 6: Erlaubt 'const', 'let', ...
+// ECMAScript 6:
 /* jshint esnext: true */
 /* jshint moz: true */
 
 // ==================== Konfigurations-Abschnitt fuer Optionen ====================
 
-const __LOGLEVEL = 6;
+const __LOGLEVEL = 3;
 
 // Options-Typen
 const __OPTTYPES = {
@@ -286,7 +292,7 @@ const __OPTCONFIG = {
                           // Bei Torhuetern wird immer nur der TOR-Opti angezeigt / Werte < 1 oder > 6 schalten die Anzeige aus
                    'Name'      : "anzOpti",
                    'Type'      : __OPTTYPES.MC,
-                   'ValType'   : "Number",
+                   'ValType'   : 'Number',
                    'SelValue'  : false,
                    'Choice'    : [ 0, 1, 2, 3, 4, 5, 6 ],
                    'Default'   : 1,
@@ -299,7 +305,7 @@ const __OPTCONFIG = {
                           // Bei Torhuetern wird immer nur der TOR-MW angezeigt / Werte < 1 oder > 6 schalten die Anzeige aus
                    'Name'      : "anzMW",
                    'Type'      : __OPTTYPES.MC,
-                   'ValType'   : "Number",
+                   'ValType'   : 'Number',
                    'SelValue'  : false,
                    'Choice'    : [ 0, 1, 2, 3, 4, 5, 6 ],
                    'Default'   : 1,
@@ -368,7 +374,7 @@ const __OPTCONFIG = {
                           // Bei Torhuetern wird immer nur der TOR-Opti angezeigt / Werte < 1 oder > 6 schalten die Anzeige aus
                    'Name'      : "anzOptiEnde",
                    'Type'      : __OPTTYPES.MC,
-                   'ValType'   : "Number",
+                   'ValType'   : 'Number',
                    'SelValue'  : false,
                    'Choice'    : [ 0, 1, 2, 3, 4, 5, 6 ],
                    'Default'   : 1,
@@ -382,7 +388,7 @@ const __OPTCONFIG = {
                           // Bei Torhuetern wird immer nur der TOR-MW angezeigt / Werte < 1 oder > 6 schalten die Anzeige aus
                    'Name'      : "anzMWEnde",
                    'Type'      : __OPTTYPES.MC,
-                   'ValType'   : "Number",
+                   'ValType'   : 'Number',
                    'SelValue'  : false,
                    'Choice'    : [ 0, 1, 2, 3, 4, 5, 6 ],
                    'Default'   : 1,
@@ -394,7 +400,7 @@ const __OPTCONFIG = {
     'kennzeichenEnde' : {  // Markierung fuer Ende 18
                    'Name'      : "charEnde",
                    'Type'      : __OPTTYPES.MC,
-                   'ValType'   : "String",
+                   'ValType'   : 'String',
                    'FreeValue' : true,
                    'MinChoice' : 0,
                    'Choice'    : [ " \u03A9", " 18" ],
@@ -406,9 +412,9 @@ const __OPTCONFIG = {
     'sepStyle' : {        // Stil der Trennlinie
                    'Name'      : "sepStyle",
                    'Type'      : __OPTTYPES.MC,
-                   'ValType'   : "String",
-                   'Choice'    : [ "solid", "hidden", "dotted", "dashed", "double", "groove", "ridge",
-                                   "inset", "outset", "none" ],
+                   'ValType'   : 'String',
+                   'Choice'    : [ 'solid', 'hidden', 'dotted', 'dashed', 'double', 'groove', 'ridge',
+                                   'inset', 'outset', 'none' ],
                    'Action'    : __OPTACTION.NXT,
                    'Label'     : "Stil: $",
                    'Hotkey'    : 'l',
@@ -417,11 +423,11 @@ const __OPTCONFIG = {
     'sepColor' : {        // Farbe der Trennlinie
                    'Name'      : "sepColor",
                    'Type'      : __OPTTYPES.MC,
-                   'ValType'   : "String",
+                   'ValType'   : 'String',
                    'FreeValue' : true,
-                   'Choice'    : [ "white", "yellow", "black", "blue", "cyan", "gold", "grey", "green",
-                                   "lime", "magenta", "maroon", "navy", "olive", "orange", "purple",
-                                   "red", "teal", "transparent" ],
+                   'Choice'    : [ 'white', 'yellow', 'black', 'blue', 'cyan', 'gold', 'grey', 'green',
+                                   'lime', 'magenta', 'maroon', 'navy', 'olive', 'orange', 'purple',
+                                   'red', 'teal', 'transparent' ],
                    'Action'    : __OPTACTION.NXT,
                    'Label'     : "Farbe: $",
                    'Hotkey'    : 'F',
@@ -430,9 +436,9 @@ const __OPTCONFIG = {
     'sepWidth' : {        // Dicke der Trennlinie
                    'Name'      : "sepWidth",
                    'Type'      : __OPTTYPES.MC,
-                   'ValType'   : "String",
+                   'ValType'   : 'String',
                    'FreeValue' : true,
-                   'Choice'    : [ "thin", "medium", "thick" ],
+                   'Choice'    : [ 'thin', 'medium', 'thick' ],
                    'Action'    : __OPTACTION.NXT,
                    'Label'     : "Dicke: $",
                    'Hotkey'    : 'D',
@@ -441,11 +447,11 @@ const __OPTCONFIG = {
     'saison' : {          // Laufende Saison
                    'Name'      : "saison",
                    'Type'      : __OPTTYPES.MC,
-                   'ValType'   : "Number",
+                   'ValType'   : 'Number',
                    'FreeValue' : true,
                    'SelValue'  : false,
                    'Choice'    : [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19 ],
-                   'Default'   : 11,
+                   'Default'   : 12,
                    'Action'    : __OPTACTION.NXT,
                    'Label'     : "Saison: $",
                    'Hotkey'    : 'a',
@@ -454,7 +460,7 @@ const __OPTCONFIG = {
     'aktuellerZat' : {    // Laufender ZAT
                    'Name'      : "currZAT",
                    'Type'      : __OPTTYPES.MC,
-                   'ValType'   : "Number",
+                   'ValType'   : 'Number',
                    'Permanent' : true,
                    'SelValue'  : false,
                    'Choice'    : [ 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11,
@@ -472,7 +478,7 @@ const __OPTCONFIG = {
     'datenZat' : {        // Stand der Daten zum Team und ZAT
                    'Name'      : "dataZAT",
                    'Type'      : __OPTTYPES.SD,
-                   'ValType'   : "Number",
+                   'ValType'   : 'Number',
                    'Hidden'    : true,
                    'Serial'    : true,
                    'AutoReset' : true,
@@ -489,7 +495,7 @@ const __OPTCONFIG = {
     'oldDatenZat' : {     // Stand der Daten zum Team und ZAT
                    'Name'      : "oldDataZAT",
                    'Type'      : __OPTTYPES.SD,
-                   'ValType'   : "Number",
+                   'ValType'   : 'Number',
                    'Hidden'    : true,
                    'Serial'    : true,
                    'AutoReset' : true,
@@ -506,7 +512,7 @@ const __OPTCONFIG = {
     'foerderung' : {      // Jugendfoerderung
                    'Name'      : "donation",
                    'Type'      : __OPTTYPES.MC,
-                   'ValType'   : "Number",
+                   'ValType'   : 'Number',
                    'Permanent' : true,
                    'SelValue'  : false,
                    'Choice'    : [ 500, 1000, 1500, 2000, 2500, 3000, 3500, 4000, 4500, 5000,
@@ -686,6 +692,7 @@ const __OPTCONFIG = {
                    'Label'     : "Data:"
                },
     'reset' : {           // Optionen auf die "Werkseinstellungen" zuruecksetzen
+                   'FormPrio'  : undefined,
                    'Name'      : "reset",
                    'Type'      : __OPTTYPES.SI,
                    'Action'    : __OPTACTION.RST,
@@ -694,9 +701,10 @@ const __OPTCONFIG = {
                    'FormLabel' : ""
                },
     'storage' : {         // Browserspeicher fuer die Klicks auf Optionen
+                   'FormPrio'  : undefined,
                    'Name'      : "storage",
                    'Type'      : __OPTTYPES.MC,
-                   'ValType'   : "String",
+                   'ValType'   : 'String',
                    'Choice'    : Object.keys(__OPTMEM),
                    'Action'    : __OPTACTION.NXT,
                    'Label'     : "Speicher: $",
@@ -704,6 +712,7 @@ const __OPTCONFIG = {
                    'FormLabel' : "Speicher:|$"
                },
     'oldStorage' : {      // Vorheriger Browserspeicher fuer die Klicks auf Optionen
+                   'FormPrio'  : undefined,
                    'Name'      : "oldStorage",
                    'Type'      : __OPTTYPES.SD,
                    'PreInit'   : true,
@@ -711,14 +720,17 @@ const __OPTCONFIG = {
                    'Hidden'    : true
                },
     'showForm' : {        // Optionen auf der Webseite (true = anzeigen, false = nicht anzeigen)
+                   'FormPrio'  : 1,
                    'Name'      : "showForm",
                    'Type'      : __OPTTYPES.SW,
                    'FormType'  : __OPTTYPES.SI,
                    'Permanent' : true,
                    'Default'   : false,
+                   'Title'     : "$V Optionen",
                    'Action'    : __OPTACTION.NXT,
                    'Label'     : "Optionen anzeigen",
                    'Hotkey'    : 'O',
+                   'AltTitle'  : "$V schlie\xDFen",
                    'AltLabel'  : "Optionen verbergen",
                    'AltHotkey' : 'O',
                    'FormLabel' : ""
@@ -729,26 +741,28 @@ const __OPTCONFIG = {
 
 // Ein Satz von Logfunktionen, die je nach Loglevel zur Verfuegung stehen. Aufruf: __LOG[level](text)
 const __LOG = {
-                  'logFun'   : [
-                                   console.error,  // [0] Alert
-                                   console.error,  // [1] Error
-                                   console.log,    // [2] Log: Release
-                                   console.log,    // [3] Log: Info
-                                   console.log,    // [4] Log: Debug
-                                   console.log,    // [5] Log: Verbose
-                                   console.log     // [6] Log: Very verbose
-                               ],
-                  'init'     : function(win, logLevel = 1) {
-                                   for (level = 0; level < this.logFun.length; level++) {
-                                       this[level] = ((level > logLevel) ? function() { } : this.logFun[level]);
-                                   }
-                               },
-                  'changed'  : function(oldVal, newVal) {
-                                   const __OLDVAL = safeStringify(oldVal);
-                                   const __NEWVAL = safeStringify(newVal);
+                  'logFun'    : [
+                                    console.error,  // [0] Alert
+                                    console.error,  // [1] Error
+                                    console.log,    // [2] Log: Release
+                                    console.log,    // [3] Log: Info
+                                    console.log,    // [4] Log: Debug
+                                    console.log,    // [5] Log: Verbose
+                                    console.log,    // [6] Log: Very verbose
+                                    console.log     // [7] Log: Testing
+                                ],
+                  'init'      : function(win, logLevel = 1) {
+                                    for (let level = 0; level < this.logFun.length; level++) {
+                                        this[level] = ((level > logLevel) ? function() { } : this.logFun[level]);
+                                    }
+                                },
+                  'stringify' : safeStringify,      // JSON.stringify
+                  'changed'   : function(oldVal, newVal) {
+                                    const __OLDVAL = this.stringify(oldVal);
+                                    const __NEWVAL = this.stringify(newVal);
 
-                                   return ((__OLDVAL !== __NEWVAL) ? __OLDVAL + " => " : "") + __NEWVAL;
-                               }
+                                    return ((__OLDVAL !== __NEWVAL) ? __OLDVAL + " => " : "") + __NEWVAL;
+                                }
               };
 
 __LOG.init(window, __LOGLEVEL);
@@ -788,14 +802,48 @@ String.prototype.format = function() {
 // label: Eine Ueberschrift
 // message: Der Meldungs-Text
 // data: Ein Wert. Ist er angegeben, wird er in der Console ausgegeben
+// return Liefert die Parameter zurueck
 function showAlert(label, message, data = undefined) {
-    __LOG[1](label + ": " + message);
+    __LOG[0](label + ": " + message);
 
     if (data !== undefined) {
         __LOG[2](data);
     }
 
     alert(label + "\n\n" + message);
+
+    return arguments;
+}
+
+// Gibt eine Meldung in der Console aus und oeffnet ein Bestaetigungsfenster
+// mit der Meldung zu einer Exception oder einer Fehlermeldung
+// label: Eine Ueberschrift
+// ex: Exception oder sonstiges Fehlerobjekt
+// return Liefert die showAlert()-Parameter zurueck
+function showException(label, ex) {
+    if (ex && ex.message) {  // Exception
+        showAlert(label, ex.message, ex);
+    } else {  // sonstiger Fehler
+        showAlert(label, ex);
+    }
+}
+
+// Standard-Callback-Funktion fuer onRejected, also abgefangener Fehler
+// in einer Promise bei Exceptions oder Fehler bzw. Rejections
+// error: Parameter von reject() im Promise-Objekt, der von Promise.catch() erhalten wurde
+// return Liefert die showAlert()-Parameter zurueck
+function defaultCatch(error) {
+    try {
+        const __LABEL = `[${error.lineNumber}] ${__DBMOD.Name}`;
+
+        if (error && error.message) {  // Exception
+            return showException(__LABEL, error.message, error);
+        } else {
+            return showException(__LABEL, error);
+        }
+    } catch (ex) {
+        return showException(`[${ex.lineNumber}] ${__DBMOD.Name}`, ex.message, ex);
+    }
 }
 
 // ==================== Abschnitt fuer Klasse Class ====================
@@ -901,7 +949,7 @@ Class.define(Class, Object, {
                     'getName'      : function() {
                                          return this.className;
                                      }
-                } );
+                });
 
 // ==================== Ende Abschnitt fuer Klasse Class ====================
 
@@ -948,7 +996,7 @@ Class.define(Delims, Object, {
               'setHome'        : function(home = undefined) {
                                      this.home = home;
                                  }
-          } );
+          });
 
 // ==================== Ende Abschnitt fuer Klasse Delims ====================
 
@@ -1027,7 +1075,7 @@ Class.define(UriDelims, Delims, {
               'setNode'        : function(node = undefined) {
                                      this.node = node;
                                  }
-          } );
+          });
 
 // ==================== Ende Abschnitt fuer Klasse UriDelims ====================
 
@@ -1126,7 +1174,7 @@ Class.define(Path, Object, {
 
                                          return __DIRS.slice(1);
                                      }
-                } );
+                });
 
 // ==================== Ende Abschnitt fuer Klasse Path ====================
 
@@ -1284,8 +1332,8 @@ Class.define(URI, Path, {
                                          } else {
                                              const __LOWER = (value ? value.toLowerCase() : undefined);
 
-                                             if ((__LOWER === "true") || (__LOWER === "false")) {
-                                                 return (value === "true");
+                                             if ((__LOWER === 'true') || (__LOWER === 'false')) {
+                                                 return (value === 'true');
                                              }
                                          }
 
@@ -1337,7 +1385,7 @@ Class.define(URI, Path, {
 
                                          return Path.prototype.getDirs.call(this, __PATH);
                                      }
-           } );
+           });
 
 // ==================== Ende Abschnitt fuer Klasse URI ====================
 
@@ -1377,7 +1425,7 @@ Class.define(Directory, Path, {
                     'pwd'   : function() {
                                   return this.getPath();
                               }
-                } );
+                });
 
 // ==================== Ende Abschnitt fuer Klasse Directory ====================
 
@@ -1405,7 +1453,7 @@ Class.define(ObjRef, Directory, {
 
                                     return ret;
                                 }
-                } );
+                });
 
 // ==================== Ende Abschnitt fuer Klasse ObjRef ====================
 
@@ -1450,8 +1498,8 @@ function getNextValue(arr, value) {
 }
 
 // Gibt ein Produkt zurueck. Ist einer der Multiplikanten nicht definiert, wird ein Alternativwert geliefert
-// valueA: Ein Multipliksnt. Ist dieser undefined, wird als Produkt defValue zurueckgeliefert
-// valueB: Ein Multipliksnt. Ist dieser undefined, wird als Produkt defValue zurueckgeliefert
+// valueA: Ein Multiplikant. Ist dieser undefined, wird als Produkt defValue zurueckgeliefert
+// valueB: Ein Multiplikant. Ist dieser undefined, wird als Produkt defValue zurueckgeliefert
 // digits: Anzahl der Stellen nach dem Komma fuer das Produkt (Default: 0)
 // defValue: Default-Wert fuer den Fall, dass ein Multiplikant nicht gesetzt ist (Default: NaN)
 // return Das Produkt auf digits Stellen genau. Ist dieses nicht definiert, dann defValue
@@ -1469,6 +1517,14 @@ function getMulValue(valueA, valueB, digits = 0, defValue = NaN) {
     return parseFloat(product.toFixed(digits));
 }
 
+// Gibt eine Ordinalzahl zur uebergebenen Zahl zurueck
+// value: Eine ganze Zahl
+// defValue: Default-Wert fuer den Fall, dass der Wert nicht gesetzt ist (Default: '*')
+// return Die Ordinalzahl als String der Form "n." oder defValue, falls nicht angegeben
+function getOrdinal(value, defValue = '*') {
+    return getValue(value, defValue, value + '.');
+}
+
 // Hilfsfunktion fuer Array.sort(): Vergleich zweier Zahlen
 // valueA: Erster Zahlenwert
 // valueB: Zweiter Zahlenwert
@@ -1483,8 +1539,9 @@ function compareNumber(valueA, valueB) {
 // return true, wenn der Prototyp rekursiv gefunden werden konnte
 function instanceOf(obj, base) {
     while (obj !== null) {
-        if (obj === base.prototype)
+        if (obj === base.prototype) {
             return true;
+        }
         if ((typeof obj) === 'xml') {  // Sonderfall mit Selbstbezug
             return (base.prototype === XML.prototype);
         }
@@ -1562,7 +1619,7 @@ function addProps(data, addData, addList = undefined, ignList = undefined) {
     return data;
 }
 
-// Entfernt Properties in einem Objekt.
+// Entfernt Properties in einem Objekt
 // data: Objekt, deren Properties bearbeitet werden
 // delList: Checkliste der zu loeschenden Items (true fuer loeschen), falls angegeben
 // ignList: Checkliste der ignorierten Items (true fuer auslassen), falls angegeben
@@ -1652,7 +1709,7 @@ function serializer(replacer = undefined, cycleReplacer = undefined) {
         };
 }
 
-// Replacer fuer JSON.stringify() oder safeStringify(), der Arrays kompakter darstellt.
+// Replacer fuer JSON.stringify() oder safeStringify(), der Arrays kompakter darstellt
 // key: Der uebergebene Schluessel
 // value: Der uebergebene Wert
 // return Fuer Arrays eine kompakte Darstellung, sonst derselbe Wert
@@ -1664,7 +1721,7 @@ function replaceArraySimple(key, value) {
     return value;
 }
 
-// Replacer fuer JSON.stringify() oder safeStringify(), der Arrays kompakter darstellt.
+// Replacer fuer JSON.stringify() oder safeStringify(), der Arrays kompakter darstellt
 // key: Der uebergebene Schluessel
 // value: Der uebergebene Wert
 // return Fuer Arrays eine kompakte Darstellung, sonst derselbe Wert
@@ -1680,15 +1737,44 @@ function replaceArray(key, value) {
     return value;
 }
 
+// Moegliche einfache Ersetzungen mit '$'...
+let textSubst;
+
+// Substituiert '$'-Parameter in einem Text
+// text: Urspruenglicher Text mit '$'-Befehlen
+// par1: Der (erste) uebergebene Parameter
+// return Fuer Arrays eine kompakte Darstellung, sonst derselbe Wert
+function substParam(text, par1) {
+    let ret = getValue(text, "");
+
+    if (! textSubst) {
+        textSubst  = {
+                'n' : __DBMOD.name,
+                'v' : __DBMOD.version,
+                'V' : __DBMOD.Name
+            };
+    }
+
+    for (let ch in textSubst) {
+        const __SUBST = textSubst[ch];
+
+        ret = ret.replace('$' + ch, __SUBST);
+    }
+
+    return ret.replace('$', par1);
+}
+
 // Fuegt in die uebergebene Zahl Tausender-Trennpunkte ein
 // Wandelt einen etwaig vorhandenen Dezimalpunkt in ein Komma um
+// numberString: Dezimalzahl als String
+// return Diese Dezimalzahl als String mit Tausender-Trennpunkten und Komma statt Dezimalpunkt
 function getNumberString(numberString) {
-    if (numberString.lastIndexOf(".") !== -1) {
+    if (numberString.lastIndexOf('.') !== -1) {
         // Zahl enthaelt Dezimalpunkt
-        const __VORKOMMA = numberString.substring(0, numberString.lastIndexOf("."));
-        const __NACHKOMMA = numberString.substring(numberString.lastIndexOf(".") + 1, numberString.length);
+        const __VORKOMMA = numberString.substring(0, numberString.lastIndexOf('.'));
+        const __NACHKOMMA = numberString.substring(numberString.lastIndexOf('.') + 1, numberString.length);
 
-        return getNumberString(__VORKOMMA) + "," + __NACHKOMMA;
+        return getNumberString(__VORKOMMA) + ',' + __NACHKOMMA;
     } else {
         // Kein Dezimalpunkt, fuege Tausender-Trennpunkte ein:
         // String umdrehen, nach jedem dritten Zeichen Punkt einfuegen, dann wieder umdrehen:
@@ -1697,7 +1783,7 @@ function getNumberString(numberString) {
 
         for (let i = 0; i < __TEMP.length; i++) {
             if ((i > 0) && (i % 3 === 0)) {
-                result += ".";
+                result += '.';
             }
             result += __TEMP.substr(i, 1);
         }
@@ -1707,6 +1793,8 @@ function getNumberString(numberString) {
 }
 
 // Dreht den uebergebenen String um
+// string: Eine Zeichenkette
+// return Dieselbe Zeichenkette rueckwaerts
 function reverseString(string) {
     let result = "";
 
@@ -1717,55 +1805,85 @@ function reverseString(string) {
     return result;
 }
 
+// Speichert einen String/Integer/Boolean-Wert unter einem Namen ab
+// name: GM.setValue()-Name, unter dem die Daten gespeichert werden
+// value: Zu speichernder String/Integer/Boolean-Wert
+// return Promise auf ein Objekt, das 'name' und 'value' der Operation enthaelt
+function storeValue(name, value) {
+    __LOG[4](name + " >> " + value);
+
+    return GM.setValue(name, value).then(voidValue => {
+            __LOG[5]("OK " + name + " >> " + value);
+
+            return Promise.resolve({
+                    'name'  : name,
+                    'value' : value
+                });
+        }, defaultCatch);
+}
+
+// Holt einen String/Integer/Boolean-Wert unter einem Namen zurueck
+// name: GM.getValue()-Name, unter dem die Daten gespeichert wurden
+// defValue: Default-Wert fuer den Fall, dass nichts gespeichert ist
+// return Promise fuer den String/Integer/Boolean-Wert, der unter dem Namen gespeichert war
+function summonValue(name, defValue = undefined) {
+    return GM.getValue(name, defValue).then(value => {
+            __LOG[4](name + " << " + value);
+
+            return Promise.resolve(value);
+        }, ex => {
+            __LOG[0](name + ": " + ex.message);
+
+            return Promise.reject(ex);
+        }, defaultCatch);
+}
+
 // Speichert einen beliebiegen (strukturierten) Wert unter einem Namen ab
-// name: GM_setValue-Name, unter dem die Daten gespeichert werden
+// name: GM.setValue()-Name, unter dem die Daten gespeichert werden
 // value: Beliebiger (strukturierter) Wert
-// return String-Darstellung des Wertes
+// return Promise auf ein Objekt, das 'name' und 'value' in der String-Darstellung des Wertes enthaelt
 function serialize(name, value) {
     const __STREAM = ((value !== undefined) ? safeStringify(value) : value);
 
-    __LOG[4](name + " >> " + __STREAM);
-
-    GM_setValue(name, __STREAM);
-
-    return __STREAM;
+    return storeValue(name, __STREAM);
 }
 
 // Holt einen beliebiegen (strukturierter) Wert unter einem Namen zurueck
-// name: GM_setValue-Name, unter dem die Daten gespeichert werden
+// name: GM.getValue()-Name, unter dem die Daten gespeichert wurden
 // defValue: Default-Wert fuer den Fall, dass nichts gespeichert ist
-// return Objekt, das unter dem Namen gespeichert war
+// return Promise fuer das Objekt, das unter dem Namen gespeichert war
 function deserialize(name, defValue = undefined) {
-    const __STREAM = GM_getValue(name);
+    return summonValue(name).then(stream => {
+            if (stream && stream.length) {
+                return JSON.parse(stream);
+            } else {
+                return defValue;
+            }
+        });
+}
 
-    __LOG[4](name + " << " + __STREAM);
-
-    if ((__STREAM !== undefined) && __STREAM.length) {
-        try {
-            return JSON.parse(__STREAM);
-        } catch (ex) {
-            __LOG[1](name + ": " + ex.message);
-        }
+// Setzt die Seite gemaess der Aenderungen zurueck...
+// reload: Seite wird ganz neu geladen
+function refreshPage(reload = true) {
+    if (reload) {
+        __LOG[2]("Seite wird neu geladen...");
+        window.location.reload();
     }
-
-    return defValue;
 }
 
 // Setzt eine Option dauerhaft und laedt die Seite neu
 // name: Name der Option als Speicherort
 // value: Zu setzender Wert
 // reload: Seite mit neuem Wert neu laden
+// serial: Serialization fuer komplexe Daten
+// onFulfilled: Reaktion auf Speicherung im resolve-Fall (1. Promise.then()-Parameter)
+// onRejected: Reaktion auf Speicherung im reject-Fall (2. Promise.then()-Parameter)
 // return Gespeicherter Wert fuer setOptValue()
-function setStored(name, value, reload = false, serial = false) {
-    if (serial) {
-        serialize(name, value);
-    } else {
-        GM_setValue(name, value);
-    }
-
-    if (reload) {
-        window.location.reload();
-    }
+function setStored(name, value, reload = false, serial = false, onFulfilled = undefined, onRejected = undefined) {
+    (serial ? serialize(name, value)
+            : storeValue(name, value))
+                .then(onFulfilled, onRejected)
+                .then(() => refreshPage(reload), defaultCatch);  // Ende der Kette...
 
     return value;
 }
@@ -1775,9 +1893,12 @@ function setStored(name, value, reload = false, serial = false) {
 // name: Name der Option als Speicherort
 // value: Vorher gesetzter Wert
 // reload: Seite mit neuem Wert neu laden
+// serial: Serialization fuer komplexe Daten
+// onFulfilled: Reaktion auf Speicherung im resolve-Fall (1. Promise.then()-Parameter)
+// onRejected: Reaktion auf Speicherung im reject-Fall (2. Promise.then()-Parameter)
 // return Gespeicherter Wert fuer setOptValue()
-function setNextStored(arr, name, value, reload = false, serial = false) {
-    return setStored(name, getNextValue(arr, value), reload, serial);
+function setNextStored(arr, name, value, reload = false, serial = false, onFulfilled = undefined, onRejected = undefined) {
+    return setStored(name, getNextValue(arr, value), reload, serial, onFulfilled, onRejected);
 }
 
 // Fuehrt die in einem Storage gespeicherte Operation aus
@@ -1805,7 +1926,7 @@ function getStoredCmds(memory = undefined) {
             try {
                 value = JSON.parse(value);
             } catch (ex) {
-                __LOG[1]("getStoredCmds(): " + __CMD + " '" + __KEY + "' hat illegalen Wert '" + value + "'");
+                __LOG[0]("getStoredCmds(): " + __CMD + " '" + __KEY + "' hat illegalen Wert '" + value + "'");
                 // ... meist kann man den String selber aber speichern, daher kein "return"...
             }
 
@@ -1826,11 +1947,12 @@ function getStoredCmds(memory = undefined) {
 
 // Fuehrt die in einem Storage gespeicherte Operation aus
 // storedCmds: Array von Objekten mit 'cmd' / 'key' / 'val' (siehe getStoredCmds())
-// optSet: Set mit den Optionen
+// optSet: Object mit den Optionen
 // beforeLoad: Angabe, ob nach der Speicherung noch loadOptions() aufgerufen wird
-// memory: __OPTMEM.normal = unbegrenzt gespeichert (localStorage), __OPTMEM.begrenzt = bis Browserende gespeichert (sessionStorage), __OPTMEM.inaktiv
-// return Array von Operationen (wie storedCmds), die fuer die naechste Phase uebrig bleiben
-function runStoredCmds(storedCmds, optSet = undefined, beforeLoad = undefined) {
+// onFulfilled: Reaktion auf Speicherung im resolve-Fall (1. Promise.then()-Parameter)
+// onRejected: Reaktion auf Speicherung im reject-Fall (2. Promise.then()-Parameter)
+// return Promise auf ein Array von Operationen (wie storedCmds), die fuer die naechste Phase uebrig bleiben
+async function runStoredCmds(storedCmds, optSet = undefined, beforeLoad = undefined, onFulfilled = undefined, onRejected = undefined) {
     const __BEFORELOAD = getValue(beforeLoad, true);
     const __STOREDCMDS = getValue(storedCmds, []);
     const __LOADEDCMDS = [];
@@ -1844,16 +1966,16 @@ function runStoredCmds(storedCmds, optSet = undefined, beforeLoad = undefined) {
 
         if (__BEFORELOAD) {
             if (__STOREDCMDS.length) {
-                invalidateOpts(optSet);  // alle Optionen invalidieren
+                await invalidateOpts(optSet);  // alle Optionen invalidieren
                 invalidated = true;
             }
             switch (__OPTACTION[__CMD]) {
             case __OPTACTION.SET : __LOG[4]("SET '" + __KEY + "' " + __VAL);
-                                   setStored(__KEY, __VAL, false, false);
+                                   setStored(__KEY, __VAL, false, false, onFulfilled, onRejected);
                                    break;
             case __OPTACTION.NXT : __LOG[4]("SETNEXT '" + __KEY + "' " + __VAL);
-                                   //setNextStored(__CONFIG.Choice, __KEY, __VAL, false, false);
-                                   setStored(__KEY, __VAL, false, false);
+                                   //setNextStored(__CONFIG.Choice, __KEY, __VAL, false, false, onFulfilled, onRejected);
+                                   setStored(__KEY, __VAL, false, false, onFulfilled, onRejected);
                                    break;
             case __OPTACTION.RST : __LOG[4]("RESET (delayed)");
                                    __LOADEDCMDS.push(__STORED);
@@ -1866,8 +1988,8 @@ function runStoredCmds(storedCmds, optSet = undefined, beforeLoad = undefined) {
             case __OPTACTION.NXT : __LOG[2]("SET/SETNEXT (undefined)");
                                    break;
             case __OPTACTION.RST : __LOG[4]("RESET");
-                                   resetOptions(optSet, false);
-                                   loadOptions(optSet);  // Reset auf umbenannte Optionen anwenden!
+                                   await resetOptions(optSet, false);
+                                   await loadOptions(optSet);  // Reset auf umbenannte Optionen anwenden!
                                    break;
             default :              break;
             }
@@ -1969,12 +2091,17 @@ function setOptValue(opt, value) {
 // load: Laedt die Option per loadOption(), falls noetig
 // force: Laedt auch Optionen mit 'AutoReset'-Attribut
 // return Gesetzter Wert
-function getOptValue(opt, defValue = undefined, load = true, force = false) {
+function getOptValue(opt, defValue = undefined, load = true, asyncLoad = false, force = false) {
     let value;
 
     if (opt !== undefined) {
         if (load && ! opt.Loaded) {
-            value = loadOption(opt, force);
+            if (! opt.Promise) {
+                loadOption(opt, force);
+            }
+            if (! asyncLoad) {
+                __LOG[0]("Warnung: getOptValue(" + getOptName(opt) + ") fordert zum Nachladen auf, daher nur Default-Wert!");
+            }
         } else {
             value = opt.Value;
         }
@@ -2095,10 +2222,10 @@ function getMemUsage(value = undefined, out = undefined, depth = -1, name = '$')
 
 // Restauriert den vorherigen Speicher (der in einer Option definiert ist)
 // opt: Option zur Wahl des Speichers
-// return Gesuchter Speicher oder Null-Speicher ('inaktiv')
-function restoreMemoryByOpt(opt) {
+// return Promise auf gesuchten Speicher oder Null-Speicher ('inaktiv')
+async function restoreMemoryByOpt(opt) {
     // Memory Storage fuer vorherige Speicherung...
-    const __STORAGE = getOptValue(opt, __MEMNORMAL, true, true);
+    const __STORAGE = await getOptValue(opt, __MEMNORMAL, true, true, true);
 
     return __OPTMEM[__STORAGE];
 }
@@ -2106,8 +2233,10 @@ function restoreMemoryByOpt(opt) {
 // Initialisiert den Speicher (der in einer Option definiert ist) und merkt sich diesen ggfs.
 // opt: Option zur Wahl des Speichers
 // saveOpt: Option zur Speicherung der Wahl des Speichers (fuer restoreMemoryByOpt)
+// onFulfilled: Reaktion auf Speicherung im resolve-Fall (1. Promise.then()-Parameter)
+// onRejected: Reaktion auf Speicherung im reject-Fall (2. Promise.then()-Parameter)
 // return Gesuchter Speicher oder Null-Speicher ('inaktiv'), falls speichern nicht moeglich ist
-function startMemoryByOpt(opt, saveOpt = undefined) {
+function startMemoryByOpt(opt, saveOpt = undefined, onFulfilled = undefined, onRejected = undefined) {
     // Memory Storage fuer naechste Speicherung...
     let storage = getOptValue(opt, __MEMNORMAL);
     let optMem = __OPTMEM[storage];
@@ -2120,7 +2249,7 @@ function startMemoryByOpt(opt, saveOpt = undefined) {
     }
 
     if (saveOpt !== undefined) {
-        setOpt(saveOpt, storage, false);
+        setOpt(saveOpt, storage, false, onFulfilled, onRejected);
     }
 
     return optMem;
@@ -2131,12 +2260,12 @@ function startMemoryByOpt(opt, saveOpt = undefined) {
 // ==================== Abschnitt fuer die Scriptdatenbank ====================
 
 // Initialisiert das Script-Modul und ermittelt die beschreibenden Daten
-// meta: Metadaten des Scripts (Default: GM_info.script)
+// meta: Metadaten des Scripts (Default: GM.info.script)
 // return Beschreibende Daten fuer __DBMOD
 function ScriptModule(meta) {
     'use strict';
 
-    const __META = getValue(meta, GM_info.script);
+    const __META = getValue(meta, GM.info.script);
     const __PROPS = {
                 'name'        : true,
                 'version'     : true,
@@ -2242,6 +2371,7 @@ function scriptDB(module, initValue = undefined) {
 // menuOff: Text zum Ausschalten im Menu
 // funOff: Funktion zum Ausschalten
 // keyOff: Hotkey zum Ausschalten im Menu
+// return Promise von GM.registerMenuCommand()
 function registerMenuOption(val, menuOn, funOn, keyOn, menuOff, funOff, keyOff) {
     const __ON  = (val ? '*' : "");
     const __OFF = (val ? "" : '*');
@@ -2249,9 +2379,9 @@ function registerMenuOption(val, menuOn, funOn, keyOn, menuOff, funOff, keyOff) 
     __LOG[3]("OPTION " + __ON + menuOn + __ON + " / " + __OFF + menuOff + __OFF);
 
     if (val) {
-        GM_registerMenuCommand(menuOff, funOff, keyOff);
+        return GM.registerMenuCommand(menuOff, funOff, keyOff).then(result => menuOn);
     } else {
-        GM_registerMenuCommand(menuOn, funOn, keyOn);
+        return GM.registerMenuCommand(menuOn, funOn, keyOn).then(result => menuOff);
     }
 }
 
@@ -2261,8 +2391,9 @@ function registerMenuOption(val, menuOn, funOn, keyOn, menuOff, funOff, keyOff) 
 // menu: Text zum Setzen im Menu ($ wird durch gesetzten Wert ersetzt)
 // fun: Funktion zum Setzen des naechsten Wertes
 // key: Hotkey zum Setzen des naechsten Wertes im Menu
+// return Promise von GM.registerMenuCommand()
 function registerNextMenuOption(val, arr, menu, fun, key) {
-    const __MENU = menu.replace('$', val);
+    const __MENU = substParam(menu, val);
     let options = "OPTION " + __MENU;
 
     for (let value of arr) {
@@ -2274,7 +2405,7 @@ function registerNextMenuOption(val, arr, menu, fun, key) {
     }
     __LOG[3](options);
 
-    GM_registerMenuCommand(__MENU, fun, key);
+    return GM.registerMenuCommand(__MENU, fun, key).then(result => __MENU);
 }
 
 // Zeigt den Eintrag im Menu einer Option, falls nicht hidden
@@ -2284,21 +2415,25 @@ function registerNextMenuOption(val, arr, menu, fun, key) {
 // key: Hotkey zum Setzen des naechsten Wertes im Menu
 // hidden: Angabe, ob Menupunkt nicht sichtbar sein soll (Default: sichtbar)
 // serial: Serialization fuer komplexe Daten
+// return Promise von GM.registerMenuCommand() (oder String-Version des Wertes)
 function registerDataOption(val, menu, fun, key, hidden = false, serial = true) {
     const __VALUE = ((serial && (val !== undefined)) ? safeStringify(val) : val);
-    const __MENU = getValue(menu, "").replace('$', __VALUE);
+    const __MENU = substParam(menu, __VALUE);
     const __OPTIONS = (hidden ? "HIDDEN " : "") + "OPTION " + __MENU +
                       getValue(__VALUE, "", " = " + __VALUE);
 
     __LOG[hidden ? 4 : 3](__OPTIONS);
 
-    if (! hidden) {
-        GM_registerMenuCommand(__MENU, fun, key);
+    if (hidden) {
+        return Promise.resolve(__VALUE);
+    } else {
+        return GM.registerMenuCommand(__MENU, fun, key).then(result => __MENU);
     }
 }
 
 // Zeigt den Eintrag im Menu einer Option
 // opt: Config und Value der Option
+// return Promise von GM.registerMenuCommand() (oder String-Version des Wertes)
 function registerOption(opt) {
     const __CONFIG = getOptConfig(opt);
     const __VALUE = getOptValue(opt);
@@ -2310,23 +2445,18 @@ function registerOption(opt) {
 
     if (! __CONFIG.HiddenMenu) {
         switch (__CONFIG.Type) {
-        case __OPTTYPES.MC : registerNextMenuOption(__VALUE, __CONFIG.Choice, __LABEL, __ACTION, __HOTKEY);
-                             break;
-        case __OPTTYPES.SW : registerMenuOption(__VALUE, __LABEL, __ACTION, __HOTKEY,
-                                                __CONFIG.AltLabel, __ACTION, __CONFIG.AltHotkey);
-                             break;
-        case __OPTTYPES.TF : registerMenuOption(__VALUE, __LABEL, __ACTION, __HOTKEY,
-                                                __CONFIG.AltLabel, opt.AltAction, __CONFIG.AltHotkey);
-                             break;
-        case __OPTTYPES.SD : registerDataOption(__VALUE, __LABEL, __ACTION, __HOTKEY, __HIDDEN, __SERIAL);
-                             break;
-        case __OPTTYPES.SI : registerDataOption(__VALUE, __LABEL, __ACTION, __HOTKEY, __HIDDEN, __SERIAL);
-                             break;
-        default :            break;
+        case __OPTTYPES.MC : return registerNextMenuOption(__VALUE, __CONFIG.Choice, __LABEL, __ACTION, __HOTKEY);
+        case __OPTTYPES.SW : return registerMenuOption(__VALUE, __LABEL, __ACTION, __HOTKEY,
+                                                       __CONFIG.AltLabel, __ACTION, __CONFIG.AltHotkey);
+        case __OPTTYPES.TF : return registerMenuOption(__VALUE, __LABEL, __ACTION, __HOTKEY,
+                                                       __CONFIG.AltLabel, opt.AltAction, __CONFIG.AltHotkey);
+        case __OPTTYPES.SD : return registerDataOption(__VALUE, __LABEL, __ACTION, __HOTKEY, __HIDDEN, __SERIAL);
+        case __OPTTYPES.SI : return registerDataOption(__VALUE, __LABEL, __ACTION, __HOTKEY, __HIDDEN, __SERIAL);
+        default :            return Promise.resolve(__VALUE);
         }
     } else {
         // Nur Anzeige im Log...
-        registerDataOption(__VALUE, __LABEL, __ACTION, __HOTKEY, __HIDDEN, __SERIAL);
+        return registerDataOption(__VALUE, __LABEL, __ACTION, __HOTKEY, __HIDDEN, __SERIAL);
     }
 }
 
@@ -2378,16 +2508,18 @@ function initOptAction(optAction, item = undefined, optSet = undefined, optConfi
 
         switch (optAction) {
         case __OPTACTION.SET : fun = function() {
-                                       return setOptByName(optSet, item, __CONFIG.SetValue, __RELOAD);
+                                       return setOptByName(optSet, item, __CONFIG.SetValue, __RELOAD).catch(defaultCatch);
                                    };
                                break;
         case __OPTACTION.NXT : fun = function() {
                                        return promptNextOptByName(optSet, item, __CONFIG.SetValue, __RELOAD,
-                                                  __CONFIG.FreeValue, __CONFIG.SelValue, __CONFIG.MinChoice);
+                                                  __CONFIG.FreeValue, __CONFIG.SelValue, __CONFIG.MinChoice).catch(defaultCatch);
                                    };
                                break;
         case __OPTACTION.RST : fun = function() {
-                                       return resetOptions(optSet, __RELOAD);
+                                       return resetOptions(optSet, __RELOAD).then(
+                                               result => __LOG[3]("RESETTING (" + result + ")..."),
+                                               defaultCatch);
                                    };
                                break;
         default :              break;
@@ -2442,7 +2574,7 @@ function getSharedConfig(optConfig, item = undefined) {
             config = { };  // Neu aufbauen...
             addProps(config, getOptConfig(__REF));
             addProps(config, optConfig);
-            config.setConst('SharedData', getOptValue(__REF));
+            config.setConst('SharedData', getOptValue(__REF), false);   // Wert muss schon da sein, NICHT nachladen, sonst ggfs. Promise
         } else {  // __OBJREF enthaelt die Daten selbst
             if (! config.Name) {
                 config.Name = __OBJREF.getPath();
@@ -2476,12 +2608,14 @@ function initOptions(optConfig, optSet = undefined, preInit = undefined) {
             const __ALTACTION = getValue(__CONFIG.AltAction, __CONFIG.Action);
             // Gab es vorher einen Aufruf, der einen Stub-Eintrag erzeugt hat, und wurden Daten geladen?
             const __LOADED = ((preInit === false) && optSet[opt].Loaded);
+            const __PROMISE = ((__LOADED || ! optSet[opt]) ? undefined : optSet[opt].Promise);
             const __VALUE = (__LOADED ? optSet[opt].Value : undefined);
 
             optSet[opt] = {
                 'Item'      : opt,
                 'Config'    : __CONFIG,
                 'Loaded'    : (__ISSHARED || __LOADED),
+                'Promise'   : __PROMISE,
                 'Value'     : initOptValue(__CONFIG, __VALUE),
                 'SetValue'  : __CONFIG.SetValue,
                 'ReadOnly'  : (__ISSHARED || __CONFIG.ReadOnly),
@@ -2493,6 +2627,7 @@ function initOptions(optConfig, optSet = undefined, preInit = undefined) {
                 'Item'      : opt,
                 'Config'    : __OPTCONFIG,
                 'Loaded'    : false,
+                'Promise'   : undefined,
                 'Value'     : initOptValue(__OPTCONFIG),
                 'ReadOnly'  : (__ISSHARED || __OPTCONFIG.ReadOnly)
             };
@@ -2525,21 +2660,21 @@ function initOptions(optConfig, optSet = undefined, preInit = undefined) {
 // Initialisiert die gesetzten Optionen und den Speicher und laedt die Optionen zum Start
 // optConfig: Konfiguration der Optionen
 // optSet: Platz fuer die gesetzten Optionen
-// return Gefuelltes Objekt mit den gesetzten Optionen
-function startOptions(optConfig, optSet = undefined, classification = undefined) {
+// return Promise auf gefuelltes Objekt mit den gesetzten Optionen
+async function startOptions(optConfig, optSet = undefined, classification = undefined) {
     optSet = initOptions(optConfig, optSet, true);  // PreInit
 
     // Memory Storage fuer vorherige Speicherung...
-    myOptMemSize = getMemSize(myOptMem = restoreMemoryByOpt(optSet.oldStorage));
+    myOptMemSize = getMemSize(myOptMem = await restoreMemoryByOpt(optSet.oldStorage));
 
     // Zwischengespeicherte Befehle auslesen...
     const __STOREDCMDS = getStoredCmds(myOptMem);
 
     // ... ermittelte Befehle ausfuehren...
-    const __LOADEDCMDS = runStoredCmds(__STOREDCMDS, optSet, true);  // BeforeLoad
+    const __LOADEDCMDS = await runStoredCmds(__STOREDCMDS, optSet, true);  // BeforeLoad
 
     // Bisher noch nicht geladenene Optionen laden...
-    loadOptions(optSet);
+    await loadOptions(optSet);
 
     // Memory Storage fuer naechste Speicherung...
     myOptMemSize = getMemSize(myOptMem = startMemoryByOpt(optSet.storage, optSet.oldStorage));
@@ -2551,11 +2686,11 @@ function startOptions(optConfig, optSet = undefined, classification = undefined)
 
     if (classification !== undefined) {
         // Umbenennungen durchfuehren...
-        classification.renameOptions();
+        await classification.renameOptions();
     }
 
     // ... ermittelte Befehle ausfuehren...
-    runStoredCmds(__LOADEDCMDS, optSet, false);  // Rest
+    await runStoredCmds(__LOADEDCMDS, optSet, false);  // Rest
 
     // Als globale Daten speichern...
     updateScriptDB(optSet);
@@ -2572,14 +2707,17 @@ function startOptions(optConfig, optSet = undefined, classification = undefined)
 // 'hideForm': Checkliste der auf der Seite unsichtbaren Optionen (true fuer unsichtbar)
 // 'formWidth': Anzahl der Elemente pro Zeile
 // 'formBreak': Elementnummer des ersten Zeilenumbruchs
+// return Liefert die gesetzten Optionen zurueck
 function showOptions(optSet = undefined, optParams = { 'hideMenu' : false }) {
     if (! optParams.hideMenu) {
-        buildMenu(optSet);
+        buildMenu(optSet).then(() => __LOG[3]("Menu OK"));
     }
 
     if ((optParams.menuAnchor !== undefined) && (myOptMem !== __OPTMEMINAKTIVE)) {
         buildForm(optParams.menuAnchor, optSet, optParams);
     }
+
+    return optSet;
 }
 
 // Setzt eine Option auf einen vorgegebenen Wert
@@ -2587,9 +2725,11 @@ function showOptions(optSet = undefined, optParams = { 'hideMenu' : false }) {
 // opt: Config und vorheriger Value der Option
 // value: (Bei allen Typen) Zu setzender Wert
 // reload: Seite mit neuem Wert neu laden
+// onFulfilled: Reaktion auf Speicherung im resolve-Fall (1. Promise.then()-Parameter)
+// onRejected: Reaktion auf Speicherung im reject-Fall (2. Promise.then()-Parameter)
 // return Gesetzter Wert
-function setOpt(opt, value, reload = false) {
-    return setOptValue(opt, setStored(getOptName(opt), value, reload, getOptConfig(opt).Serial));
+function setOpt(opt, value, reload = false, onFulfilled = undefined, onRejected = undefined) {
+    return setOptValue(opt, setStored(getOptName(opt), value, reload, getOptConfig(opt).Serial, onFulfilled, onRejected));
 }
 
 // Ermittelt die naechste moegliche Option
@@ -2616,9 +2756,11 @@ function getNextOpt(opt, value = undefined) {
 // opt: Config und Value der Option
 // value: Default fuer ggfs. zu setzenden Wert
 // reload: Seite mit neuem Wert neu laden
+// onFulfilled: Reaktion auf Speicherung im resolve-Fall (1. Promise.then()-Parameter)
+// onRejected: Reaktion auf Speicherung im reject-Fall (2. Promise.then()-Parameter)
 // return Gesetzter Wert
-function setNextOpt(opt, value = undefined, reload = false) {
-    return setOpt(opt, getNextOpt(opt, value), reload);
+function setNextOpt(opt, value = undefined, reload = false, onFulfilled = undefined, onRejected = undefined) {
+    return setOpt(opt, getNextOpt(opt, value), reload, onFulfilled, onRejected);
 }
 
 // Setzt die naechste moegliche Option oder fragt ab einer gewissen Anzahl interaktiv ab
@@ -2627,13 +2769,15 @@ function setNextOpt(opt, value = undefined, reload = false) {
 // reload: Seite mit neuem Wert neu laden
 // freeValue: Angabe, ob Freitext zugelassen ist (Default: false)
 // minChoice: Ab wievielen Auswahlmoeglichkeiten soll abgefragt werden? (Default: 3)
+// onFulfilled: Reaktion auf Speicherung im resolve-Fall (1. Promise.then()-Parameter)
+// onRejected: Reaktion auf Speicherung im reject-Fall (2. Promise.then()-Parameter)
 // return Gesetzter Wert
-function promptNextOpt(opt, value = undefined, reload = false, freeValue = false, selValue = true, minChoice = 3) {
+function promptNextOpt(opt, value = undefined, reload = false, freeValue = false, selValue = true, minChoice = 3, onFulfilled = undefined, onRejected = undefined) {
     const __CONFIG = getOptConfig(opt);
     const __CHOICE = __CONFIG.Choice;
 
     if (value || (! __CHOICE) || (__CHOICE.length < minChoice)) {
-        return setNextOpt(opt, value, reload);
+        return setNextOpt(opt, value, reload, onFulfilled, onRejected);
     }
 
     const __VALUE = getOptValue(opt, value);
@@ -2668,16 +2812,16 @@ function promptNextOpt(opt, value = undefined, reload = false, freeValue = false
 
             if (nextVal !== __VALUE) {
                 if (nextVal) {
-                    return setOpt(opt, nextVal, reload);
+                    return setOpt(opt, nextVal, reload, onFulfilled, onRejected);
                 }
 
-                const __LABEL = __CONFIG.Label.replace('$', __VALUE);
+                const __LABEL = substParam(__CONFIG.Label, __VALUE);
 
                 showAlert(__LABEL, "Ung\xFCltige Eingabe: " + __ANSWER);
             }
         }
     } catch (ex) {
-        __LOG[1]("promptNextOpt: " + ex.message);
+        __LOG[0]("promptNextOpt: " + ex.message);
     }
 
     return __VALUE;
@@ -2689,11 +2833,13 @@ function promptNextOpt(opt, value = undefined, reload = false, freeValue = false
 // item: Key der Option
 // value: (Bei allen Typen) Zu setzender Wert
 // reload: Seite mit neuem Wert neu laden
+// onFulfilled: Reaktion auf Speicherung im resolve-Fall (1. Promise.then()-Parameter)
+// onRejected: Reaktion auf Speicherung im reject-Fall (2. Promise.then()-Parameter)
 // return Gesetzter Wert
-function setOptByName(optSet, item, value, reload = false) {
+function setOptByName(optSet, item, value, reload = false, onFulfilled = undefined, onRejected = undefined) {
     const __OPT = getOptByName(optSet, item);
 
-    return setOpt(__OPT, value, reload);
+    return setOpt(__OPT, value, reload, onFulfilled, onRejected);
 }
 
 // Ermittelt die naechste moegliche Option (Version mit Key)
@@ -2712,11 +2858,13 @@ function getNextOptByName(optSet, item, value = undefined) {
 // item: Key der Option
 // value: Default fuer ggfs. zu setzenden Wert
 // reload: Seite mit neuem Wert neu laden
+// onFulfilled: Reaktion auf Speicherung im resolve-Fall (1. Promise.then()-Parameter)
+// onRejected: Reaktion auf Speicherung im reject-Fall (2. Promise.then()-Parameter)
 // return Gesetzter Wert
-function setNextOptByName(optSet, item, value = undefined, reload = false) {
+function setNextOptByName(optSet, item, value = undefined, reload = false, onFulfilled = undefined, onRejected = undefined) {
     const __OPT = getOptByName(optSet, item);
 
-    return setNextOpt(__OPT, value, reload);
+    return setNextOpt(__OPT, value, reload, onFulfilled, onRejected);
 }
 
 // Setzt die naechste moegliche Option oder fragt ab einer gewissen Anzahl interaktiv ab (Version mit Key)
@@ -2726,49 +2874,59 @@ function setNextOptByName(optSet, item, value = undefined, reload = false) {
 // reload: Seite mit neuem Wert neu laden
 // freeValue: Angabe, ob Freitext zugelassen ist (Default: false)
 // minChoice: Ab wievielen Auswahlmoeglichkeiten soll abgefragt werden? (Default: 3)
+// onFulfilled: Reaktion auf Speicherung im resolve-Fall (1. Promise.then()-Parameter)
+// onRejected: Reaktion auf Speicherung im reject-Fall (2. Promise.then()-Parameter)
 // return Gesetzter Wert
-function promptNextOptByName(optSet, item, value = undefined, reload = false, freeValue = false, selValue = true, minChoice = 3) {
+function promptNextOptByName(optSet, item, value = undefined, reload = false, freeValue = false, selValue = true, minChoice = 3, onFulfilled = undefined, onRejected = undefined) {
     const __OPT = getOptByName(optSet, item);
 
-    return promptNextOpt(__OPT, value, reload, freeValue, selValue, minChoice);
+    return promptNextOpt(__OPT, value, reload, freeValue, selValue, minChoice, onFulfilled, onRejected);
 }
 
-// Baut das Benutzermenu auf
+// Baut das Benutzermenu auf (asynchron im Hintergrund)
 // optSet: Gesetzte Optionen
-function buildMenu(optSet) {
+// return Promise auf void
+async function buildMenu(optSet) {
     __LOG[3]("buildMenu()");
 
     for (let opt in optSet) {
-        registerOption(optSet[opt]);
+        await registerOption(optSet[opt]).then(
+                result => __LOG[6](`REGISTEROPTION[${opt}] = ${result}`),
+                defaultCatch);
     }
 }
 
 // Invalidiert eine (ueber Menu) gesetzte Option
 // opt: Zu invalidierende Option
 // force: Invalidiert auch Optionen mit 'AutoReset'-Attribut
+// return Promise auf resultierenden Wert
 function invalidateOpt(opt, force = false) {
-    if (opt.Loaded && ! opt.ReadOnly) {
-        const __CONFIG = getOptConfig(opt);
+    return Promise.resolve(opt.Promise).then(value => {
+            if (opt.Loaded && ! opt.ReadOnly) {
+                const __CONFIG = getOptConfig(opt);
 
-        // Wert "ungeladen"...
-        opt.Loaded = (force || ! __CONFIG.AutoReset);
+                // Wert "ungeladen"...
+                opt.Loaded = (force || ! __CONFIG.AutoReset);
 
-        if (opt.Loaded && __CONFIG.AutoReset) {
-            // Nur zuruecksetzen, gilt als geladen...
-            setOptValue(opt, initOptValue(__CONFIG));
-        }
-    }
+                if (opt.Loaded && __CONFIG.AutoReset) {
+                    // Nur zuruecksetzen, gilt als geladen...
+                    setOptValue(opt, initOptValue(__CONFIG));
+                }
+            }
+
+            return getOptValue(opt);
+        }, defaultCatch);
 }
 
 // Invalidiert die (ueber Menu) gesetzten Optionen
-// optSet: Set mit den Optionen
+// optSet: Object mit den Optionen
 // force: Invalidiert auch Optionen mit 'AutoReset'-Attribut
-// return Set mit den geladenen Optionen
-function invalidateOpts(optSet, force = false) {
+// return Promise auf Object mit den geladenen Optionen
+async function invalidateOpts(optSet, force = false) {
     for (let opt in optSet) {
         const __OPT = optSet[opt];
 
-        invalidateOpt(__OPT, force);
+        await invalidateOpt(__OPT, force);
     }
 
     return optSet;
@@ -2777,57 +2935,86 @@ function invalidateOpts(optSet, force = false) {
 // Laedt eine (ueber Menu) gesetzte Option
 // opt: Zu ladende Option
 // force: Laedt auch Optionen mit 'AutoReset'-Attribut
-// return Gesetzter Wert der gelandenen Option
+// return Promise auf gesetzten Wert der gelandenen Option
 function loadOption(opt, force = false) {
-    const __CONFIG = getOptConfig(opt);
-    const __ISSHARED = getValue(__CONFIG.Shared, false, true);
-    const __NAME = getOptName(opt);
-    const __DEFAULT = getOptValue(opt, undefined, false, false);
-    let value;
+    if (! opt.Promise) {
+        const __CONFIG = getOptConfig(opt);
+        const __ISSHARED = getValue(__CONFIG.Shared, false, true);
+        const __NAME = getOptName(opt);
+        const __DEFAULT = getOptValue(opt, undefined, false, false, false);
+        let value;
 
-    if (opt.Loaded && ! __ISSHARED) {
-        __LOG[1]("Error: Oprion '" + __NAME + "' bereits geladen!");
+        if (opt.Loaded && ! __ISSHARED) {
+            const __ERROR = "Error: Oprion '" + __NAME + "' bereits geladen!";
+
+            __LOG[0](__MESSAGE);
+
+            return Promise.reject(__MESSAGE);
+        }
+
+        if (opt.ReadOnly || __ISSHARED) {
+            value = __DEFAULT;
+        } else if (! force && __CONFIG.AutoReset) {
+            value = initOptValue(__CONFIG);
+        } else {
+            value = (__CONFIG.Serial ?
+                            deserialize(__NAME, __DEFAULT) :
+                            GM.getValue(__NAME, __DEFAULT));
+        }
+
+        opt.Promise = Promise.resolve(value).then(value => {
+                // Paranoide Sicherheitsabfrage (das sollte nie passieren!)...
+                if (opt.Loaded || ! opt.Promise) {
+                    showAlert("Error", "Unerwarteter Widerspruch zwischen opt.Loaded und opt.Promise", safeStringify(opt));
+                }
+                __LOG[5]("LOAD " + __NAME + ": " + __LOG.changed(__DEFAULT, value));
+
+                // Wert intern setzen...
+                const __VAL = setOptValue(opt, value);
+
+                // Wert als geladen markieren...
+                opt.Promise = undefined;
+                opt.Loaded = true;
+
+                return __VAL;
+            }, defaultCatch);
     }
 
-    if (opt.ReadOnly || __ISSHARED) {
-        value = __DEFAULT;
-    } else if (! force && __CONFIG.AutoReset) {
-        value = initOptValue(__CONFIG);
-    } else {
-        value = (__CONFIG.Serial ?
-                        deserialize(__NAME, __DEFAULT) :
-                        GM_getValue(__NAME, __DEFAULT));
-    }
-
-    __LOG[5]("LOAD " + __NAME + ": " + __LOG.changed(__DEFAULT, value));
-
-    // Wert als geladen markieren...
-    opt.Loaded = true;
-
-    // Wert intern setzen...
-    return setOptValue(opt, value);
+    return opt.Promise;
 }
 
 // Laedt die (ueber Menu) gesetzten Optionen
-// optSet: Set mit den Optionen
+// optSet: Object mit den Optionen
 // force: Laedt auch Optionen mit 'AutoReset'-Attribut
-// return Set mit den geladenen Optionen
+// return Array mit Promises neuer Ladevorgaenge (fuer Objekte mit 'name' und 'value')
 function loadOptions(optSet, force = false) {
+    const __PROMISES = [];
+
     for (let opt in optSet) {
         const __OPT = optSet[opt];
 
         if (! __OPT.Loaded) {
-            loadOption(__OPT, force);
+            const __PROMISE = loadOption(__OPT, force).then(value => {
+                    __LOG[5]("LOADED " + opt + " << " + value);
+
+                    return Promise.resolve({
+                            'name'  : opt,
+                            'value' : value
+                        });
+                }, defaultCatch);
+
+            __PROMISES.push(__PROMISE);
         }
     }
 
-    return optSet;
+    return Promise.all(__PROMISES);
 }
 
 // Entfernt eine (ueber Menu) gesetzte Option (falls nicht 'Permanent')
 // opt: Gesetzte Option
 // force: Entfernt auch Optionen mit 'Permanent'-Attribut
 // reset: Setzt bei Erfolg auf Initialwert der Option (auch fuer nicht 'AutoReset')
+// return Promise von GM.deleteValue() (oder void)
 function deleteOption(opt, force = false, reset = true) {
     const __CONFIG = getOptConfig(opt);
 
@@ -2836,12 +3023,14 @@ function deleteOption(opt, force = false, reset = true) {
 
         __LOG[4]("DELETE " + __NAME);
 
-        GM_deleteValue(__NAME);
-
-        if (reset || __CONFIG.AutoReset) {
-            setOptValue(opt, initOptValue(__CONFIG));
-        }
+        return GM.deleteValue(__NAME).then(voidValue => {
+                if (reset || __CONFIG.AutoReset) {
+                    setOptValue(opt, initOptValue(__CONFIG));
+                }
+            }, defaultCatch);
     }
+
+    return Promise.resolve();
 }
 
 // Entfernt die (ueber Menu) gesetzten Optionen (falls nicht 'Permanent')
@@ -2849,15 +3038,18 @@ function deleteOption(opt, force = false, reset = true) {
 // optSelect: Liste von ausgewaehlten Optionen, true = entfernen, false = nicht entfernen
 // force: Entfernt auch Optionen mit 'Permanent'-Attribut
 // reset: Setzt bei Erfolg auf Initialwert der Option
-function deleteOptions(optSet, optSelect = undefined, force = false, reset = true) {
+// return Promise auf diesen Vorgang
+async function deleteOptions(optSet, optSelect = undefined, force = false, reset = true) {
     const __DELETEALL = ((optSelect === undefined) || (optSelect === true));
     const __OPTSELECT = getValue(optSelect, { });
 
     for (let opt in optSet) {
         if (getValue(__OPTSELECT[opt], __DELETEALL)) {
-            deleteOption(optSet[opt], force, reset);
+            await deleteOption(optSet[opt], force, reset);
         }
     }
+
+    return Promise.resolve();
 }
 
 // Benennt eine Option um und laedt sie ggfs. nach
@@ -2865,25 +3057,25 @@ function deleteOptions(optSet, optSelect = undefined, force = false, reset = tru
 // name: Neu zu setzender Name (Speicheradresse)
 // reload: Wert nachladen statt beizubehalten
 // force: Laedt auch Optionen mit 'AutoReset'-Attribut
-// return Umbenannte Option
-function renameOption(opt, name, reload = false, force = false) {
+// return Promise auf umbenannte Option
+async function renameOption(opt, name, reload = false, force = false) {
     const __NAME = getOptName(opt);
 
     if (__NAME !== name) {
-        deleteOption(opt, true, ! reload);
+        await deleteOption(opt, true, ! reload);
 
         setOptName(opt, name);
 
-        invalidateOpt(opt, opt.Loaded);
+        await invalidateOpt(opt, opt.Loaded);
 
         if (reload) {
             opt.Loaded = false;
 
-            loadOption(opt, force);
+            await loadOption(opt, force);
         }
     }
 
-    return opt;
+    return Promise.resolve(opt);
 }
 
 // Ermittelt einen neuen Namen mit einem Prefix. Parameter fuer renameOptions()
@@ -2911,16 +3103,17 @@ function postfixName(name, postfix) {
 // renameFun: function(name, param) zur Ermittlung des neuen Namens
 // - name: Neu zu setzender Name (Speicheradresse)
 // - param: Parameter "renameParam" von oben, z.B. Prefix oder Postfix
-function renameOptions(optSet, optSelect, renameParam = undefined, renameFun = prefixName) {
+// return Promise auf diesen Vorgang
+async function renameOptions(optSet, optSelect, renameParam = undefined, renameFun = prefixName) {
     if (renameFun === undefined) {
-        __LOG[1]("RENAME: Illegale Funktion!");
+        __LOG[0]("RENAME: Illegale Funktion!");
     }
     for (let opt in optSelect) {
         const __OPTPARAMS = optSelect[opt];
         const __OPT = optSet[opt];
 
         if (__OPT === undefined) {
-            __LOG[1]("RENAME: Option '" + opt + "' nicht gefunden!");
+            __LOG[0]("RENAME: Option '" + opt + "' nicht gefunden!");
         } else {
             const __NAME = getOptName(__OPT);
             const __NEWNAME = renameFun(__NAME, renameParam);
@@ -2930,7 +3123,7 @@ function renameOptions(optSet, optSelect, renameParam = undefined, renameFun = p
             // Laedt auch Optionen mit 'AutoReset'-Attribut?
             const __FORCE = (__ISSCALAR ? true : __OPTPARAMS.force);
 
-            renameOption(__OPT, __NEWNAME, __RELOAD, __FORCE);
+            await renameOption(__OPT, __NEWNAME, __RELOAD, __FORCE);
         }
     }
 }
@@ -2938,14 +3131,13 @@ function renameOptions(optSet, optSelect, renameParam = undefined, renameFun = p
 // Setzt die Optionen in optSet auf die "Werkseinstellungen" des Skripts
 // optSet: Gesetzte Optionen
 // reload: Seite mit "Werkseinstellungen" neu laden
-function resetOptions(optSet, reload = true) {
+// return Promise auf diesen Vorgang
+async function resetOptions(optSet, reload = true) {
     // Alle (nicht 'Permanent') gesetzten Optionen entfernen...
-    deleteOptions(optSet, true, false, ! reload);
+    await deleteOptions(optSet, true, false, ! reload);
 
-    if (reload) {
-        // ... und Seite neu laden (mit "Werkseinstellungen")...
-        window.location.reload();
-    }
+    // ... und ggfs. Seite neu laden (mit "Werkseinstellungen")...
+    refreshPage(reload);
 }
 
 // ==================== Abschnitt fuer diverse Utilities ====================
@@ -2955,11 +3147,11 @@ function resetOptions(optSet, reload = true) {
 // props: Map von name:value-Paaren
 // type: Typ der Input-Felder (Default: unsichtbare Daten)
 // return Ergaenztes Form-Konstrukt
-function addInputField(form, props, type = "hidden") {
+function addInputField(form, props, type = 'hidden') {
     for (let fieldName in props) {
         let field = form[fieldName];
         if (! field) {
-            field = document.createElement("input");
+            field = document.createElement('input');
             field.type = type;
             field.name = fieldName;
             form.appendChild(field);
@@ -2975,7 +3167,7 @@ function addInputField(form, props, type = "hidden") {
 // props: Map von name:value-Paaren
 // return Ergaenztes Form-Konstrukt
 function addHiddenField(form, props) {
-    return addInputField(form, props, "hidden");
+    return addInputField(form, props, 'hidden');
 }
 
 // Hilfsfunktion fuer alle Browser: Fuegt fuer ein Event eine Reaktion ein
@@ -2988,9 +3180,9 @@ function addEvent(obj, type, callback, capture = false) {
     if (obj.addEventListener) {
         return obj.addEventListener(type, callback, capture);
     } else if (obj.attachEvent) {
-        return obj.attachEvent("on" + type, callback);
+        return obj.attachEvent('on' + type, callback);
     } else {
-        __LOG[1]("Could not add " + type + " event:");
+        __LOG[0]("Could not add " + type + " event:");
         __LOG[2](callback);
 
         return false;
@@ -3007,9 +3199,9 @@ function removeEvent(obj, type, callback, capture = false) {
     if (obj.removeEventListener) {
         return obj.removeEventListener(type, callback, capture);
     } else if (obj.detachEvent) {
-        return obj.detachEvent("on" + type, callback);
+        return obj.detachEvent('on' + type, callback);
     } else {
-        __LOG[1]("Could not remove " + type + " event:");
+        __LOG[0]("Could not remove " + type + " event:");
         __LOG[2](callback);
 
         return false;
@@ -3057,7 +3249,7 @@ function getElement(name, index = 0, doc = document) {
 // tag: Tag des Elements ("table")
 // doc: Dokument (document)
 // return Gesuchtes Element oder undefined (falls nicht gefunden)
-function getTable(index, tag = "table", doc = document) {
+function getTable(index, tag = 'table', doc = document) {
     const __TAGS = doc.getElementsByTagName(tag);
     const __TABLE = (__TAGS ? __TAGS[index] : undefined);
 
@@ -3081,7 +3273,7 @@ function getElementRows(name, index = 0, doc = document) {
 // doc: Dokument (document)
 // return Gesuchte Zeilen oder undefined (falls nicht gefunden)
 function getRows(index, doc = document) {
-    const __TABLE = getTable(index, "table", doc);
+    const __TABLE = getTable(index, 'table', doc);
     const __ROWS = (__TABLE ? __TABLE.rows : undefined);
 
     return __ROWS;
@@ -3124,7 +3316,7 @@ function getFormAction(opt, isAlt = false, value = undefined, serial = undefined
                           };
         const __CONFIG = getOptConfig(opt);
         const __SERIAL = getValue(serial, getValue(__CONFIG.Serial, false));
-        const __THISVAL = ((__CONFIG.ValType === "String") ? "'\\x22' + this.value + '\\x22'" : "this.value");
+        const __THISVAL = ((__CONFIG.ValType === 'String') ? "'\\x22' + this.value + '\\x22'" : "this.value");
         const __TVALUE = getValue(__CONFIG.ValType, __THISVAL, "new " + __CONFIG.ValType + '(' + __THISVAL + ')');
         const __VALSTR = ((value !== undefined) ? safeStringify(value) : __SERIAL ? "JSON.stringify(" + __TVALUE + ')' : __TVALUE);
         const __ACTION = (isAlt ? getValue(__CONFIG.AltAction, __CONFIG.Action) : __CONFIG.Action);
@@ -3153,10 +3345,54 @@ function getFormAction(opt, isAlt = false, value = undefined, serial = undefined
 // serial: Serialization fuer String-Werte (Select, Textarea)
 // memory: __OPTMEM.normal = unbegrenzt gespeichert (localStorage), __OPTMEM.begrenzt = bis Browserende gespeichert (sessionStorage), __OPTMEM.inaktiv
 // return String mit dem (reinen) Funktionsaufruf
-function getFormActionEvent(opt, isAlt = false, value = undefined, type = "click", serial = undefined, memory = undefined) {
+function getFormActionEvent(opt, isAlt = false, value = undefined, type = 'click', serial = undefined, memory = undefined) {
     const __ACTION = getFormAction(opt, isAlt, value, serial, memory);
 
     return getValue(__ACTION, "", ' on' + type + '="' + __ACTION + '"');
+}
+
+// Hilfsfunktion: Wendet eine Konvertierung auf jede "Zeile" innerhalb eines Textes an
+// text: Urspruenglicher Text
+// convFun: function(line, index, arr): Konvertiert line in "Zeile" line des Arrays arr
+// separator: Zeilentrenner im Text (Default: '\n')
+// thisArg: optionaler this-Parameter fuer die Konvertierung
+// limit: optionale Begrenzung der Zeilen
+// return String mit dem neuen Text
+function eachLine(text, convFun, separator = '\n', thisArg = undefined, limit = undefined) {
+    const __ARR = text.split(separator, limit);
+    const __RES = __ARR.map(convFun, thisArg);
+
+    return __RES.join(separator);
+}
+
+// Hilfsfunktion: Ergaenzt einen HTML-Code um einen Titel (ToolTip)
+// html: Urspruenglicher HTML-Code (z.B. ein HTML-Element oder Text)
+// title: Im ToolTip angezeigter Text
+// separator: Zeilentrenner im Text (Default: '|')
+// limit: optionale Begrenzung der Zeilen
+// return String mit dem neuen HTML-Code
+function withTitle(html, title, separator = '|', limit = undefined) {
+    if (title && title.length) {
+        return eachLine(html, line => '<abbr title="' + title + '">' + line + '</abbr>', separator, undefined, limit);
+    } else {
+        return html;
+    }
+}
+
+// Hilfsfunktion: Ermittelt einen Label- oder FormLabel-Eintrag (Default)
+// label: Config-Eintrag fuer Label oder FormLabel
+// defLabel: Ersatzwert, falls label nicht angegeben
+// isSelect: Angabe, ob ein Parameter angezeigt wird (Default: false)
+// isForm: Angabe, ob ein FormLabel gesucht ist (Default: true)
+// return Vollstaendiger Label- oder FormLabel-Eintrag
+function formatLabel(label, defLabel = undefined, isSelect = false, isForm = true) {
+    const __LABEL = getValue(label, defLabel);
+
+    if (isSelect && __LABEL && (substParam(__LABEL, '_') === __LABEL)) {
+        return __LABEL + (isForm ? "|$" : " $");
+    } else {
+        return __LABEL;
+    }
 }
 
 // Zeigt eine Option auf der Seite als Auswahlbox an
@@ -3166,8 +3402,9 @@ function getOptionSelect(opt) {
     const __CONFIG = getOptConfig(opt);
     const __NAME = getOptName(opt);
     const __VALUE = getOptValue(opt);
-    const __ACTION = getFormActionEvent(opt, false, undefined, "change", undefined);
-    const __FORMLABEL = getValue(__CONFIG.FormLabel, __CONFIG.Label);
+    const __ACTION = getFormActionEvent(opt, false, undefined, 'change', undefined);
+    const __FORMLABEL = formatLabel(__CONFIG.FormLabel, __CONFIG.Label, true);
+    const __TITLE = substParam(getValue(__CONFIG.Title, __CONFIG.Label), __VALUE);
     const __LABEL = '<label for="' + __NAME + '">' + __FORMLABEL + '</label>';
     let element = '<select name="' + __NAME + '" id="' + __NAME + '"' + __ACTION + '>';
 
@@ -3181,7 +3418,7 @@ function getOptionSelect(opt) {
     }
     element += '\n</select>';
 
-    return __LABEL.replace('$', element);
+    return withTitle(substParam(__LABEL, element), __TITLE);
 }
 
 // Zeigt eine Option auf der Seite als Radiobutton an
@@ -3191,8 +3428,12 @@ function getOptionRadio(opt) {
     const __CONFIG = getOptConfig(opt);
     const __NAME = getOptName(opt);
     const __VALUE = getOptValue(opt, false);
-    const __ACTION = getFormActionEvent(opt, false, true, "click", false);
-    const __ALTACTION = getFormActionEvent(opt, true, false, "click", false);
+    const __ACTION = getFormActionEvent(opt, false, true, 'click', false);
+    const __ALTACTION = getFormActionEvent(opt, true, false, 'click', false);
+    const __FORMLABEL = formatLabel(__CONFIG.FormLabel); // nur nutzen, falls angegeben
+    const __TITLE = getValue(__CONFIG.Title, '$');
+    const __TITLEON = substParam(__TITLE, __CONFIG.Label);
+    const __TITLEOFF = substParam(getValue(__CONFIG.AltTitle, __TITLE), __CONFIG.AltLabel);
     const __ELEMENTON  = '<input type="radio" name="' + __NAME +
                          '" id="' + __NAME + 'ON" value="1"' +
                          (__VALUE ? ' CHECKED' : __ACTION) +
@@ -3203,8 +3444,13 @@ function getOptionRadio(opt) {
                          (__VALUE ? __ALTACTION : ' CHECKED') +
                          ' /><label for="' + __NAME + 'OFF">' +
                          __CONFIG.AltLabel + '</label>';
+    const __ELEMENT = [
+                          withTitle(__FORMLABEL, __VALUE ? __TITLEON : __TITLEOFF),
+                          withTitle(__ELEMENTON, __TITLEON),
+                          withTitle(__ELEMENTOFF, __TITLEOFF)
+                      ];
 
-    return [ __ELEMENTON, __ELEMENTOFF ];
+    return ((__FORMLABEL && __FORMLABEL.length) ? __ELEMENT : __ELEMENT.slice(1, 3));
 }
 
 // Zeigt eine Option auf der Seite als Checkbox an
@@ -3214,13 +3460,15 @@ function getOptionCheckbox(opt) {
     const __CONFIG = getOptConfig(opt);
     const __NAME = getOptName(opt);
     const __VALUE = getOptValue(opt, false);
-    const __ACTION = getFormActionEvent(opt, __VALUE, ! __VALUE, "click", false);
-    const __FORMLABEL = getValue(__CONFIG.FormLabel, __CONFIG.Label);
+    const __ACTION = getFormActionEvent(opt, __VALUE, ! __VALUE, 'click', false);
+    const __VALUELABEL = (__VALUE ? __CONFIG.Label : getValue(__CONFIG.AltLabel, __CONFIG.Label));
+    const __FORMLABEL = formatLabel(__CONFIG.FormLabel, __CONFIG.Label);
+    const __TITLE = substParam(getValue(__VALUE ? __CONFIG.Title : getValue(__CONFIG.AltTitle, __CONFIG.Title), '$'), __VALUELABEL);
 
-    return '<input type="checkbox" name="' + __NAME +
-           '" id="' + __NAME + '" value="' + __VALUE + '"' +
-           (__VALUE ? ' CHECKED' : "") + __ACTION + ' /><label for="' +
-           __NAME + '">' + __FORMLABEL + '</label>';
+    return withTitle('<input type="checkbox" name="' + __NAME +
+                     '" id="' + __NAME + '" value="' + __VALUE + '"' +
+                     (__VALUE ? ' CHECKED' : "") + __ACTION + ' /><label for="' +
+                     __NAME + '">' + __FORMLABEL + '</label>', __TITLE);
 }
 
 // Zeigt eine Option auf der Seite als Daten-Textfeld an
@@ -3230,17 +3478,18 @@ function getOptionTextarea(opt) {
     const __CONFIG = getOptConfig(opt);
     const __NAME = getOptName(opt);
     const __VALUE = getOptValue(opt);
-    const __ACTION = getFormActionEvent(opt, false, undefined, "submit", undefined);
+    const __ACTION = getFormActionEvent(opt, false, undefined, 'submit', undefined);
     const __SUBMIT = getValue(__CONFIG.Submit, "");
     //const __ONSUBMIT = (__SUBMIT.length ? ' onKeyDown="' + __SUBMIT + '"': "");
     const __ONSUBMIT = (__SUBMIT ? ' onKeyDown="' + __SUBMIT + '"': "");
-    const __FORMLABEL = getValue(__CONFIG.FormLabel, __CONFIG.Label);
+    const __FORMLABEL = formatLabel(__CONFIG.FormLabel, __CONFIG.Label);
+    const __TITLE = substParam(getValue(__CONFIG.Title, '$'), __FORMLABEL);
     const __ELEMENTLABEL = '<label for="' + __NAME + '">' + __FORMLABEL + '</label>';
     const __ELEMENTTEXT = '<textarea name="' + __NAME + '" id="' + __NAME + '" cols="' + __CONFIG.Cols +
                            '" rows="' + __CONFIG.Rows + '"' + __ONSUBMIT + __ACTION + '>' +
                            safeStringify(__VALUE, __CONFIG.Replace, __CONFIG.Space) + '</textarea>';
 
-    return [ __ELEMENTLABEL, __ELEMENTTEXT ];
+    return [ withTitle(__ELEMENTLABEL, __TITLE), __ELEMENTTEXT ];
 }
 
 // Zeigt eine Option auf der Seite als Button an
@@ -3250,14 +3499,15 @@ function getOptionButton(opt) {
     const __CONFIG = getOptConfig(opt);
     const __NAME = getOptName(opt);
     const __VALUE = getOptValue(opt, false);
-    const __ACTION = getFormActionEvent(opt, __VALUE, ! __VALUE, "click", false);
-    const __BUTTONLABEL = (__VALUE ? __CONFIG.AltLabel : __CONFIG.Label);
-    const __FORMLABEL = getValue(__CONFIG.FormLabel, __CONFIG.Label);
+    const __ACTION = getFormActionEvent(opt, __VALUE, ! __VALUE, 'click', false);
+    const __BUTTONLABEL = (__VALUE ? getValue(__CONFIG.AltLabel, __CONFIG.Label) : __CONFIG.Label);
+    const __FORMLABEL = formatLabel(__CONFIG.FormLabel, __BUTTONLABEL);
+    const __BUTTONTITLE = substParam(getValue(__VALUE ? getValue(__CONFIG.AltTitle, __CONFIG.Title) : __CONFIG.Title, '$'), __BUTTONLABEL);
 
-    return '<label for="' + __NAME + '">' + __FORMLABEL +
-           '</label><input type="button" name="' + __NAME +
-           '" id="' + __NAME + '" value="' + __BUTTONLABEL + '"' +
-           __ACTION + '/>';
+    return '<label for="' + __NAME + '">' + __FORMLABEL + '</label>' +
+           withTitle('<input type="button" name="" + ' + __NAME +
+                     '" id="' + __NAME + '" value="' + __BUTTONLABEL +
+                     '"' + __ACTION + '/>', __BUTTONTITLE);
 }
 
 // Zeigt eine Option auf der Seite an (je nach Typ)
@@ -3287,12 +3537,33 @@ function getOptionElement(opt) {
         default :            break;
         }
 
-        if (element.length === 2) {
-            element = '<div>' + element[0] + '<br />' + element[1] + '</div>';
+        if ((typeof element) !== 'string') {
+            element = '<div>' + Array.from(element).join('<br />') + '</div>';
         }
     }
 
     return element;
+}
+
+// Gruppiert die Daten eines Objects nach einem Kriterium
+// data: Object mit Daten
+// byFun: function(val), die das Kriterium ermittelt. Default: value
+// filterFun: function(key, index, arr), die das Kriterium key im Array arr an der Stelle index vergleicht. Default: Wert identisch
+// sortFun: function(a, b), nach der die Kriterien sortiert werden. Default: Array.sort()
+// return Neues Object mit Eintraegen der Form <Kriterium> : [ <alle Keys zu diesem Kriterium> ]
+function groupData(data, byFun, filterFun, sortFun) {
+    const __BYFUN = (byFun || (val => val));
+    const __FILTERFUN = (filterFun || ((key, index, arr) => (arr[index] === key)));
+    const __KEYS = Object.keys(data);
+    const __VALS = Object.values(data);
+    const __BYKEYS = __VALS.map(__BYFUN);
+    const __BYKEYSET = new Set(__BYKEYS);
+    const __BYKEYARRAY = [...__BYKEYSET];
+    const __SORTEDKEYS = __BYKEYARRAY.sort(sortFun);
+    const __GROUPEDKEYS = __SORTEDKEYS.map(byVal => __KEYS.filter((key, index, arr) => __FILTERFUN(byVal, index, __BYKEYS)));
+    const __ASSIGN = ((keyArr, valArr) => Object.assign({ }, ...keyArr.map((key, index) => ({ [key] : valArr[index] }))));
+
+    return __ASSIGN(__SORTEDKEYS, __GROUPEDKEYS);
 }
 
 // Baut das Benutzermenu auf der Seite auf
@@ -3309,25 +3580,28 @@ function getForm(optSet, optParams = { }) {
     const __FORMWIDTH = getValue(optParams.formWidth, 3);
     const __FORMBREAK = getValue(optParams.formBreak, __FORMWIDTH);
     const __SHOWFORM = getOptValue(optSet.showForm, true) ? optParams.showForm : { 'showForm' : true };
+    const __PRIOOPTS = groupData(optSet, opt => getOptConfig(opt).FormPrio);
     let form = __FORM;
     let count = 0;   // Bisher angezeigte Optionen
     let column = 0;  // Spalte der letzten Option (1-basierend)
 
-    for (let opt in optSet) {
-        if (checkItem(opt, __SHOWFORM, optParams.hideForm)) {
-            const __ELEMENT = getOptionElement(optSet[opt]);
-            const __TDOPT = ((~ __ELEMENT.indexOf('|')) ? "" : ' colspan="2"');
+    for (let optKeys of Object.values(__PRIOOPTS)) {
+        for (let optKey of optKeys) {
+            if (checkItem(optKey, __SHOWFORM, optParams.hideForm)) {
+                const __ELEMENT = getOptionElement(optSet[optKey]);
+                const __TDOPT = ((~ __ELEMENT.indexOf('|')) ? "" : ' colspan="2"');
 
-            if (__ELEMENT) {
-                if (++count > __FORMBREAK) {
-                    if (++column > __FORMWIDTH) {
-                        column = 1;
+                if (__ELEMENT) {
+                    if (++count > __FORMBREAK) {
+                        if (++column > __FORMWIDTH) {
+                            column = 1;
+                        }
                     }
+                    if (column === 1) {
+                        form += '</tr><tr>';
+                    }
+                    form += '\n<td' + __TDOPT + '>' + __ELEMENT.replace('|', '</td><td>') + '</td>';
                 }
-                if (column === 1) {
-                    form += '</tr><tr>';
-                }
-                form += '\n<td' + __TDOPT + '>' + __ELEMENT.replace('|', '</td><td>') + '</td>';
             }
         }
     }
@@ -3408,7 +3682,9 @@ Class.define(Classification, Object, {
 
                                           if (__PARAM !== undefined) {
                                               // Klassifizierte Optionen umbenennen...
-                                              renameOptions(this.optSet, this.optSelect, __PARAM, this.renameFun);
+                                              return renameOptions(this.optSet, this.optSelect, __PARAM, this.renameFun);
+                                          } else {
+                                              return Promise.resolve();
                                           }
                                       },
                     'deleteOptions' : function(ignList) {
@@ -3416,7 +3692,7 @@ Class.define(Classification, Object, {
 
                                           return deleteOptions(this.optSet, __OPTSELECT, true, true);
                                       }
-                } );
+                });
 
 // ==================== Ende Abschnitt fuer Klasse Classification ====================
 
@@ -3443,7 +3719,7 @@ Class.define(TeamClassification, Classification, {
                                                return undefined;
                                            }
                                        }
-                } );
+                });
 
 // ==================== Ende Abschnitt fuer Klasse TeamClassification ====================
 
@@ -3468,7 +3744,7 @@ Class.define(Team, Object, {
                                         'LdNr' : true,
                                         'LgNr' : true
                                     }
-                } );
+                });
 
 // ==================== Ende Abschnitt fuer Klasse Team ====================
 
@@ -3496,7 +3772,7 @@ Class.define(Verein, Team, {
                                         'Manager' : true,
                                         'Flags'   : true
                                     }
-                } );
+                });
 
 // ==================== Ende Abschnitt fuer Klasse Verein ====================
 
@@ -3510,18 +3786,18 @@ const __TEAMCLASS = new TeamClassification();
 
 // Optionen mit Daten, die ZAT- und Team-bezogen gemerkt werden...
 __TEAMCLASS.optSelect = {
-                       'datenZat'     : true,
-                       'oldDatenZat'  : true,
-                       'fingerprints' : true,
-                       'birthdays'    : true,
-                       'tClasses'     : true,
-                       'progresses'   : true,
-                       'zatAges'      : true,
-                       'trainiert'    : true,
-                       'positions'    : true,
-                       'skills'       : true,
-                       'foerderung'   : true
-                   };
+                            'datenZat'     : true,
+                            'oldDatenZat'  : true,
+                            'fingerprints' : true,
+                            'birthdays'    : true,
+                            'tClasses'     : true,
+                            'progresses'   : true,
+                            'zatAges'      : true,
+                            'trainiert'    : true,
+                            'positions'    : true,
+                            'skills'       : true,
+                            'foerderung'   : true
+                        };
 
 // Gibt die Teamdaten zurueck und aktualisiert sie ggfs. in der Option
 // optSet: Platz fuer die gesetzten Optionen
@@ -3532,16 +3808,18 @@ function getMyTeam(optSet = undefined, teamParams = undefined, myTeam = new Team
     if (teamParams !== undefined) {
         addProps(myTeam, teamParams, myTeam.__TEAMITEMS);
         __LOG[2]("Ermittelt: " + safeStringify(myTeam));
-        // ... und abspeichern...
-        setOpt(optSet.team, myTeam, false);
+        // ... und abspeichern, falls erweunscht...
+        if (optSet && optSet.team) {
+            setOpt(optSet.team, myTeam, false);
+        }
     } else {
-        const __TEAM = getOptValue(optSet.team);  // Gespeicherte Parameter
+        const __TEAM = ((optSet && optSet.team) ? getOptValue(optSet.team) : undefined);  // Gespeicherte Parameter
 
         if ((__TEAM !== undefined) && (__TEAM.Land !== undefined)) {
             addProps(myTeam, __TEAM, myTeam.__TEAMITEMS);
             __LOG[2]("Gespeichert: " + safeStringify(myTeam));
         } else {
-            __LOG[1]("Unbekannt: " + safeStringify(__TEAM));
+            __LOG[6]("Team nicht ermittelt: " + safeStringify(__TEAM));
         }
     }
 
@@ -3559,28 +3837,26 @@ function getMyTeam(optSet = undefined, teamParams = undefined, myTeam = new Team
 // 'hideForm': Checkliste der auf der Seite unsichtbaren Optionen (true fuer unsichtbar)
 // 'formWidth': Anzahl der Elemente pro Zeile
 // 'formBreak': Elementnummer des ersten Zeilenumbruchs
-// return Gefuelltes Objekt mit den gesetzten Optionen
+// return Promise auf gefuelltes Objekt mit den gesetzten Optionen
 function buildOptions(optConfig, optSet = undefined, optParams = { 'hideMenu' : false }) {
     // Klassifikation ueber Land und Liga des Teams...
     __TEAMCLASS.optSet = optSet;  // Classification mit optSet verknuepfen
     __TEAMCLASS.teamParams = optParams.teamParams;  // Ermittelte Parameter
 
-    optSet = startOptions(optConfig, optSet, __TEAMCLASS);
+    return startOptions(optConfig, optSet, __TEAMCLASS).then(optSet => {
+                    if (optParams.getDonation) {
+                        // Jugendfoerderung aus der Options-HTML-Seite ermitteln...
+                        const __BOXDONATION = document.getElementsByTagName('option');
+                        const __DONATION = getSelectionFromComboBox(__BOXDONATION, 10000, 'Number');
 
-    if (optParams.getDonation) {
-        // Jugendfoerderung aus der Options-HTML-Seite ermitteln...
-        const __BOXDONATION = document.getElementsByTagName('option');
-        const __DONATION = getSelectionFromComboBox(__BOXDONATION, 10000, 'Number');
+                        __LOG[3]("Jugendf\xF6rderung: " + __DONATION + " Euro");
 
-        __LOG[3]("Jugendf\xF6rderung: " + __DONATION + " Euro");
+                        // ... und abspeichern...
+                        setOpt(optSet.foerderung, __DONATION, false);
+                    }
 
-        // ... und abspeichern...
-        setOpt(optSet.foerderung, __DONATION, false);
-    }
-
-    showOptions(optSet, optParams);
-
-    return optSet;
+                    return showOptions(optSet, optParams);
+                }, defaultCatch);
 }
 
 // ==================== Ende Abschnitt fuer Optionen ====================
@@ -3595,7 +3871,9 @@ function init(playerRows, optSet, colIdx, offsetUpper = 1, offsetLower = 0, relo
     storePlayerDataFromHTML(playerRows, optSet, colIdx, offsetUpper, offsetLower, reloadData);
 
     const __SAISON = getOptValue(optSet.saison);
-    const __CURRZAT = getOptValue(optSet.aktuellerZat);
+    const __AKTZAT = getOptValue(optSet.aktuellerZat);
+    const __GEALTERT = ((__AKTZAT >= 72) ? (getIntFromHTML(playerRows[playerRows.length - offsetLower - 1].cells, colIdx.Age) < 13) : false);
+    const __CURRZAT = (__GEALTERT ? 0 : __AKTZAT);
     const __DONATION = getOptValue(optSet.foerderung);
     const __BIRTHDAYS = getOptValue(optSet.birthdays, []);
     const __TCLASSES = getOptValue(optSet.tClasses, []);
@@ -4148,7 +4426,7 @@ Class.define(ColumnManager, Object, {
                                    }
                                }
                            }  // Ende addValues(player, playerRow)
-    } );
+    });
 
 // Klasse PlayerRecord ******************************************************************
 
@@ -4391,7 +4669,7 @@ Class.define(PlayerRecord, Object, {
                                       return parseFloat(100 * optiSec / __OPTI);
                                   },
         'getTalent'             : function() {
-                                      return (this.talent < 0) ? "wenig" : (this.talent > 0) ? "hoch" : "normal";
+                                      return (this.talent < 0) ? 'wenig' : (this.talent > 0) ? 'hoch' : 'normal';
                                   },
         'getAufwert'            : function() {
                                       return this.aufwert;
@@ -4443,7 +4721,12 @@ Class.define(PlayerRecord, Object, {
                                       const __SUMALLSKILLS = this.getSkillSum(when);
                                       const __SUMPRISKILLS = this.getSkillSum(when, getIdxPriSkills(pos), 2 * 4);
                                       const __OVERFLOW = Math.max(0, __SUMPRISKILLS - this.__MAXPRISKILLS);
-
+/*if (this.zatGeb === 24) {
+    console.error("__OVERFLOW = " + __OVERFLOW);
+    console.error("__SUMALLSKILLS = " + __SUMALLSKILLS);
+    console.error("__SUMPRISKILLS = " + __SUMPRISKILLS);
+    console.error("getOpti(" + pos + ") = " + ((4 * (__SUMPRISKILLS - __OVERFLOW) + __SUMALLSKILLS) / 27));
+}*/
                                       return (4 * (__SUMPRISKILLS - __OVERFLOW) + __SUMALLSKILLS) / 27;
                                   },
         'getPrios'              : function(pos, when = this.__TIME.now) {
@@ -4551,7 +4834,7 @@ Class.define(PlayerRecord, Object, {
 
                                       return ((__RET.length === 1) ? __RET[0] : undefined);
                                   }
-    } );
+    });
 
 // Funktionen fuer die HTML-Seite *******************************************************
 
@@ -4606,35 +4889,6 @@ function getStringFromHTML(cells, colIdxStr) {
     return getValue(__TEXT.toString(), "");
 }
 
-// Ermittelt den ausgewaehlten Wert eines Selects (Combo-Box) und gibt diesen zurueck
-// element: "select"-Element oder dessen Name auf der HTML-Seite mit 'option'-Eintraegen der Combo-Box
-// defValue: Default-Wert, falls nichts selektiert ist
-// return Ausgewaehlter Wert
-function getSelection(element, defValue = undefined, valType = 'String') {
-    const __ELEMENT = ((typeof element) === 'string' ? document.getElementsByName(element) : element);
-    const __ENTRY = (__ELEMENT ? __ELEMENT.selectedOptions[0] : undefined);
-
-    return this[valType](getValue(__ENTRY, defValue, __ENTRY.textContent));
-}
-
-// Ermittelt den ausgewaehlten Wert einer Combo-Box und gibt diesen zurueck
-// comboBox: Alle 'option'-Eintraege der Combo-Box
-// defValue: Default-Wert, falls nichts selektiert ist
-// return Ausgewaehlter Wert
-function getSelectionFromComboBox(comboBox, defValue = undefined, valType = 'String') {
-    let selection;
-
-    for (let i = 0; i < comboBox.length; i++) {
-        const __ENTRY = comboBox[i];
-
-        if (__ENTRY.outerHTML.match(/selected/)) {
-            selection = __ENTRY.textContent;
-        }
-    }
-
-    return this[valType](getValue(selection, defValue));
-}
-
 // Liest die Talentklasse ("wenig", "normal", "hoch") aus der Spalte einer Zeile der Tabelle aus
 // cells: Die Zellen einer Zeile
 // colIdxStr: Spaltenindex der gesuchten Werte
@@ -4642,7 +4896,7 @@ function getSelectionFromComboBox(comboBox, defValue = undefined, valType = 'Str
 function getTalentFromHTML(cells, colIdxTal) {
     const __TEXT = getStringFromHTML(cells, colIdxTal);
 
-    return parseInt((__TEXT === "wenig") ? -1 : (__TEXT === "hoch") ? +1 : 0, 10);
+    return parseInt((__TEXT === 'wenig') ? -1 : (__TEXT === 'hoch') ? +1 : 0, 10);
 }
 
 // Liest die Einzelskills aus der Spalte einer Zeile der Tabelle aus
@@ -4876,12 +5130,12 @@ function sortPositionArray(array) {
 // Fuegt in die uebergebene Zahl Tausender-Trennpunkte ein
 // Wandelt einen etwaig vorhandenen Dezimalpunkt in ein Komma um
 function getNumberString(numberString) {
-    if (numberString.lastIndexOf(".") !== -1) {
+    if (numberString.lastIndexOf('.') !== -1) {
         // Zahl enthaelt Dezimalpunkt
-        const __VORKOMMA = numberString.substring(0, numberString.lastIndexOf("."));
-        const __NACHKOMMA = numberString.substring(numberString.lastIndexOf(".") + 1, numberString.length);
+        const __VORKOMMA = numberString.substring(0, numberString.lastIndexOf('.'));
+        const __NACHKOMMA = numberString.substring(numberString.lastIndexOf('.') + 1, numberString.length);
 
-        return getNumberString(__VORKOMMA) + "," + __NACHKOMMA;
+        return getNumberString(__VORKOMMA) + ',' + __NACHKOMMA;
     } else {
         // Kein Dezimalpunkt, fuege Tausender-Trennpunkte ein:
         // String umdrehen, nach jedem dritten Zeichen Punkt einfuegen, dann wieder umdrehen:
@@ -4890,7 +5144,7 @@ function getNumberString(numberString) {
 
         for (let i = 0; i < __TEMP.length; i++) {
             if ((i > 0) && (i % 3 === 0)) {
-                result += ".";
+                result += '.';
             }
             result += __TEMP.substr(i, 1);
         }
@@ -5010,7 +5264,7 @@ function getColor(pos) {
 
 // ==================== Abschnitt fuer interne IDs auf den Seiten ====================
 
-const __GAMETYPES = {    // "Blind FSS gesucht!"
+const __GAMETYPENRN = {    // "Blind FSS gesucht!"
         'unbekannt'  : -1,
         'reserviert' :  0,
         'Frei'       :  0,
@@ -5021,8 +5275,25 @@ const __GAMETYPES = {    // "Blind FSS gesucht!"
         'OSEQ'       :  4,
         'OSE'        :  5,
         'OSCQ'       :  6,
-        'OSC'        :  7
+        'OSC'        :  7,
+        'Supercup'   : 10
     };
+
+const __GAMETYPEALIASES = {
+        'unbekannt'  :  "unbekannt",
+        'reserviert' :  undefined,
+        'Frei'       :  undefined,
+        'spielfrei'  :  "",
+        'Friendly'   :  "FSS",
+        'Liga'       :  undefined,
+        'LP'         :  "Pokal",
+        'OSEQ'       :  undefined,
+        'OSE'        :  undefined,
+        'OSCQ'       :  undefined,
+        'OSC'        :  undefined,
+        'Supercup'   : "Super"
+    };
+const __GAMETYPES = reverseMapping(__GAMETYPENRN);
 
 const __LIGANRN = {
         'unbekannt'  :  0,
@@ -5034,6 +5305,7 @@ const __LIGANRN = {
         '3. Liga C'  :  6,
         '3. Liga D'  :  7
     };
+const __LIGATYPES = reverseMapping(__LIGANRN);
 
 const __LANDNRN = {
         'unbekannt'              :   0,
@@ -5090,31 +5362,223 @@ const __LANDNRN = {
         'Weissrussland'          :  71,
         'Zypern'                 :  38
     };
+const __LAENDER = reverseMapping(__LANDNRN);
+
+const __TLALAND = {
+        undefined : 'unbekannt',
+        'ALB'     : 'Albanien',
+        'AND'     : 'Andorra',
+        'ARM'     : 'Armenien',
+        'AZE'     : 'Aserbaidschan',
+        'BEL'     : 'Belgien',
+        'BIH'     : 'Bosnien-Herzegowina',
+        'BUL'     : 'Bulgarien',
+        'DEN'     : 'D\xE4nemark',
+        'GER'     : 'Deutschland',
+        'ENG'     : 'England',
+        'EST'     : 'Estland',
+        'FRO'     : 'Far\xF6er',
+        'FIN'     : 'Finnland',
+        'FRA'     : 'Frankreich',
+        'GEO'     : 'Georgien',
+        'GRE'     : 'Griechenland',
+        'IRL'     : 'Irland',
+        'ISL'     : 'Island',
+        'ISR'     : 'Israel',
+        'ITA'     : 'Italien',
+        'KAZ'     : 'Kasachstan',
+        'CRO'     : 'Kroatien',
+        'LVA'     : 'Lettland',
+        'LIE'     : 'Liechtenstein',
+        'LTU'     : 'Litauen',
+        'LUX'     : 'Luxemburg',
+        'MLT'     : 'Malta',
+        'MKD'     : 'Mazedonien',
+        'MDA'     : 'Moldawien',
+        'NED'     : 'Niederlande',
+        'NIR'     : 'Nordirland',
+        'NOR'     : 'Norwegen',
+        'AUT'     : '\xD6sterreich',
+        'POL'     : 'Polen',
+        'POR'     : 'Portugal',
+        'ROM'     : 'Rum\xE4nien',
+        'RUS'     : 'Russland',
+        'SMR'     : 'San Marino',
+        'SCO'     : 'Schottland',
+        'SWE'     : 'Schweden',
+        'SUI'     : 'Schweiz',
+        'SCG'     : 'Serbien und Montenegro',
+        'SVK'     : 'Slowakei',
+        'SVN'     : 'Slowenien',
+        'ESP'     : 'Spanien',
+        'CZE'     : 'Tschechien',
+        'TUR'     : 'T\xFCrkei',
+        'UKR'     : 'Ukraine',
+        'HUN'     : 'Ungarn',
+        'WAL'     : 'Wales',
+        'BLR'     : 'Weissrussland',
+        'CYP'     : 'Zypern'
+    };
+const __LANDTLAS = reverseMapping(__TLALAND);
 
 // ==================== Abschnitt fuer Daten des Spielplans ====================
 
 // Gibt die ID fuer den Namen eines Wettbewerbs zurueck
 // gameType: Name des Wettbewerbs eines Spiels
-// return OS2-ID fuer den Spieltyp (1 bis 7), 0 fuer spielfrei/Frei/reserviert, -1 fuer ungueltig
-function getGameTypeID(gameType) {
-    return getValue(__GAMETYPES[gameType], __GAMETYPES.unbekannt);
+// defValue: Default-Wert
+// return OS2-ID fuer den Spieltyp (1 bis 7 oder 10), 0 fuer "spielfrei"/"Frei"/"reserviert", -1 fuer ungueltig
+function getGameTypeID(gameType, defValue = __GAMETYPENRN.unbekannt) {
+    return getValue(__GAMETYPENRN[gameType], defValue);
+}
+
+// Gibt den Namen eines Wettbewerbs zurueck
+// id: OS2-ID des Wettbewerbs eines Spiels (1 bis 7 oder 10), 0 fuer "spielfrei"/"Frei"/"reserviert", -1 fuer ungueltig
+// defValue: Default-Wert
+// return Spieltyp fuer die uebergebene OS2-ID
+function getGameType(id, defValue) {
+    return getValue(__GAMETYPES[id], defValue);
+}
+
+// Gibt den alternativen (Kurznamen) fuer den Namen eines Wettbewerbs zurueck
+// gameType: Name des Wettbewerbs eines Spiels
+// return Normalerweise den uebergebenen Parameter, in Einzelfaellen eine Kurzversion
+function getGameTypeAlias(gameType) {
+    return getValue(__GAMETYPEALIASES[gameType], getValue(gameType, __GAMETYPEALIASES.unbekannt));
+}
+
+// Gibt den Namen des Landes mit dem uebergebenen Kuerzel (TLA) zurueck.
+// tla: Kuerzel (TLA) des Landes
+// defValue: Default-Wert
+// return Name des Landes, 'unbekannt' fuer undefined
+function getLandName(tla, defValue = __TLALAND[undefined]) {
+    return getValue(__TLALAND[tla], defValue);
 }
 
 // Gibt die ID des Landes mit dem uebergebenen Namen zurueck.
 // land: Name des Landes
+// defValue: Default-Wert
 // return OS2-ID des Landes, 0 fuer ungueltig
-function getLandNr(land) {
-    return getValue(__LANDNRN[land], __LANDNRN.unbekannt);
+function getLandNr(land, defValue = __LANDNRN.unbekannt) {
+    return getValue(__LANDNRN[land], defValue);
 }
 
 // Gibt die ID der Liga mit dem uebergebenen Namen zurueck.
 // land: Name der Liga
+// defValue: Default-Wert
 // return OS2-ID der Liga, 0 fuer ungueltig
-function getLigaNr(liga) {
-    return getValue(__LIGANRN[liga], __LIGANRN.unbekannt);
+function getLigaNr(liga, defValue = __LIGANRN.unbekannt) {
+    return getValue(__LIGANRN[liga], defValue);
+}
+
+// Kehrt das Mapping eines Objekts um und liefert ein neues Objekt zurueck.
+// obj: Objekt mit key => value
+// convFun: Konvertierfunktion fuer die Werte
+// return Neues Objekt mit value => key (doppelte value-Werte fallen heraus!)
+function reverseMapping(obj, convFun) {
+    if (! obj) {
+        return obj;
+    }
+
+    const __RET = { };
+
+    for (let key in obj) {
+        const __VALUE = obj[key];
+
+        __RET[__VALUE] = (convFun ? convFun(key) : key);
+    }
+
+    return __RET;
 }
 
 // ==================== Abschnitt fuer sonstige Parameter ====================
+
+// Formatiert eine Zelle um (mit einfachen Parametern)
+// cell: Zu formatierende Zelle
+// bold: Inhalt fett darstellen (true = ja, false = nein)
+// color: Falls angegeben, die Schriftfarbe
+// bgColor: Falls angegeben, die Hintergrundfarbe
+// return Die formatierte Zelle
+function formatCell(cell, bold = true, color = undefined, bgColor = undefined) {
+    if (cell) {
+        if (bold) {
+            cell.style.fontWeight = 'bold';
+        }
+        if (color) {
+            cell.style.color = color;
+        }
+        if (bgColor) {
+            cell.style.backgroundColor = bgColor;
+        }
+    }
+
+    return cell;
+}
+
+// Ermittelt die auszugewaehlenden Werte eines Selects (Combo-Box) als Array zurueck
+// element: 'select'-Element oder dessen Name auf der HTML-Seite mit 'option'-Eintraegen der Combo-Box
+// valType: Typ-Klasse der Optionswerte ('String', 'Number', ...)
+// valFun: Funktion zur Ermittlung des Wertes eines 'option'-Eintrags (getSelectedOptionText, getSelectedValue, ...)
+// defValue: Default-Wert, falls nichts selektiert ist
+// return Array mit den Options-Werten
+function getSelectionArray(element, valType = 'String', valFun = getSelectedValue, defValue = undefined) {
+    const __SELECT = ((typeof element) === 'string' ? getValue(document.getElementsByName(element), [])[0] : element);
+
+    return (__SELECT ? [].map.call(__SELECT.options, function(option) {
+                                                         return this[valType](getValue(valFun(option), defValue));
+                                                     }) : undefined);
+}
+
+// Ermittelt den ausgewaehlten Wert eines Selects (Combo-Box) und gibt diesen zurueck
+// element: 'select'-Element oder dessen Name auf der HTML-Seite mit 'option'-Eintraegen der Combo-Box
+// valType: Typ-Klasse der Optionswerte ('String', 'Number', ...)
+// valFun: Funktion zur Ermittlung des Wertes eines 'option'-Eintrags (getSelectedOptionText, getSelectedValue, ...)
+// defValue: Default-Wert, falls nichts selektiert ist
+// return Ausgewaehlter Wert
+function getSelection(element, valType = 'String', valFun = getSelectedOptionText, defValue = undefined) {
+    const __SELECT = ((typeof element) === 'string' ? getValue(document.getElementsByName(element), [])[0] : element);
+
+    return this[valType](getValue(valFun(__SELECT), defValue));
+}
+
+// Ermittelt den ausgewaehlten Wert einer Combo-Box und gibt diesen zurueck
+// comboBox: Alle 'option'-Eintraege der Combo-Box
+// defValue: Default-Wert, falls nichts selektiert ist
+// valType: Typ-Klasse der Optionswerte ('String', 'Number', ...)
+// return Ausgewaehlter Wert
+function getSelectionFromComboBox(comboBox, defValue = undefined, valType = 'String') {
+    let selection;
+
+    for (let i = 0; i < comboBox.length; i++) {
+        const __ENTRY = comboBox[i];
+
+        if (__ENTRY.outerHTML.match(/selected/)) {
+            selection = __ENTRY.textContent;
+        }
+    }
+
+    return this[valType](getValue(selection, defValue));
+}
+
+// Liefert den Text (textContent) einer selektierten Option
+// element: 'select'-Element auf der HTML-Seite mit 'option'-Eintraegen der Combo-Box
+// return Wert der Selektion (textContent)
+function getSelectedOptionText(element) {
+    const __SELECTEDOPTIONS = getValue(element, { }).selectedOptions;
+    const __OPTION = getValue(__SELECTEDOPTIONS, { })[0];
+
+    return (__OPTION ? __OPTION.textContent : undefined);
+}
+
+// Liefert den 'value' einer selektierten Option
+// element: 'select'-Element auf der HTML-Seite mit 'option'-Eintraegen der Combo-Box
+// return Wert der Selektion ('value')
+function getSelectedValue(element) {
+    return getValue(element, { }).value;
+}
+
+// ==================== Ende Abschnitt fuer sonstige Parameter ====================
+
+// ==================== Abschnitt fuer sonstige Parameter des Spielplans ====================
 
 const __TEAMSEARCHHAUPT = {  // Parameter zum Team "<b>Willkommen im Managerb&uuml;ro von TEAM</b><br>LIGA LAND<a href=..."
         'Zeile'  : 0,
@@ -5185,7 +5649,7 @@ function getTeamParamsFromTable(table, teamSearch = undefined) {
 // leafs: Liste von Filenamen mit der Default-Seitennummer (falls Query-Parameter nicht gefunden)
 // item: Query-Parameter, der die Nummer der Unterseite angibt
 // return Parameter aus der URL der Seite als Nummer
-function getPageIdFromURL(url, leafs, item = "page") {
+function getPageIdFromURL(url, leafs, item = 'page') {
     const __URI = new URI(url);
     const __LEAF = __URI.getLeaf();
 
@@ -5218,7 +5682,9 @@ function getZATNrFromCell(cell) {
     return ZATNr;
 }
 
-// ==================== Ende Abschnitt fuer sonstige Parameter ====================
+// ==================== Ende Abschnitt fuer sonstige Parameter des Spielplans ====================
+
+// ==================== Ende Abschnitt fuer Spielplan und ZATs ====================
 
 // ==================== Hauptprogramm ====================
 
@@ -5226,53 +5692,53 @@ function getZATNrFromCell(cell) {
 function procHaupt() {
     const __TEAMPARAMS = getTeamParamsFromTable(getTable(1), __TEAMSEARCHHAUPT);  // Link mit Team, Liga, Land...
 
-    buildOptions(__OPTCONFIG, __OPTSET, {
-                     'teamParams' : __TEAMPARAMS,
-                     'hideMenu'   : true
-                 });
+    return buildOptions(__OPTCONFIG, __OPTSET, {
+                            'teamParams' : __TEAMPARAMS,
+                            'hideMenu'   : true
+                        }).then(async optSet => {
+            const __ZATCELL = getProp(getProp(getRows(0), 2), 'cells', { })[0];
+            const __NEXTZAT = getZATNrFromCell(__ZATCELL);  // "Der naechste ZAT ist ZAT xx und ..."
+            const __CURRZAT = __NEXTZAT - 1;
+            const __DATAZAT = getOptValue(__OPTSET.datenZat);
 
-    const __ZATCELL = getProp(getProp(getRows(0), 2), 'cells', { })[0];
-    const __NEXTZAT = getZATNrFromCell(__ZATCELL);  // "Der naechste ZAT ist ZAT xx und ..."
-    const __CURRZAT = __NEXTZAT - 1;
-    const __DATAZAT = getOptValue(__OPTSET.datenZat);
+            // Stand der alten Daten merken...
+            setOpt(__OPTSET.oldDatenZat, __DATAZAT, false);
 
-    // Stand der alten Daten merken...
-    setOpt(__OPTSET.oldDatenZat, __DATAZAT, false);
+            if (__CURRZAT >= 0) {
+                __LOG[2]("Aktueller ZAT: " + __CURRZAT);
 
-    if (__CURRZAT >= 0) {
-        __LOG[2]("Aktueller ZAT: " + __CURRZAT);
+                // Neuen aktuellen ZAT speichern...
+                setOpt(__OPTSET.aktuellerZat, __CURRZAT, false);
 
-        // Neuen aktuellen ZAT speichern...
-        setOpt(__OPTSET.aktuellerZat, __CURRZAT, false);
+                if (__CURRZAT !== __DATAZAT) {
+                    __LOG[2](__LOG.changed(__DATAZAT, __CURRZAT));
 
-        if (__CURRZAT !== __DATAZAT) {
-            __LOG[2](__LOG.changed(__DATAZAT, __CURRZAT));
+                    // ... und ZAT-bezogene Daten als veraltet markieren (ausser 'skills' und 'positions')
+                    await __TEAMCLASS.deleteOptions({
+                                                    'skills'      : true,
+                                                    'positions'   : true,
+                                                    'datenZat'    : true,
+                                                    'oldDatenZat' : true
+                                                }).catch(defaultCatch);
 
-            // ... und ZAT-bezogene Daten als veraltet markieren (ausser 'skills' und 'positions')
-            __TEAMCLASS.deleteOptions({
-                                          'skills'      : true,
-                                          'positions'   : true,
-                                          'datenZat'    : true,
-                                          'oldDatenZat' : true
-                                      });
-
-            // Neuen Daten-ZAT speichern...
-            setOpt(__OPTSET.datenZat, __CURRZAT, false);
-        }
-    }
+                    // Neuen Daten-ZAT speichern...
+                    setOpt(__OPTSET.datenZat, __CURRZAT, false);
+                }
+            }
+        });
 }
 
 // Verarbeitet Ansicht "Optionen" zur Ermittlung der Jugendfoerderung
 function procOptionen() {
-    buildOptions(__OPTCONFIG, __OPTSET, {
-                     'menuAnchor'  : getTable(0, "div"),
-                     'hideMenu'    : true,
-                     'getDonation' : true,
-                     'showForm'    : {
-                                         'foerderung'    : true,
-                                         'showForm'      : true
-                                     }
-                 });
+    return buildOptions(__OPTCONFIG, __OPTSET, {
+                            'menuAnchor'  : getTable(0, 'div'),
+                            'hideMenu'    : true,
+                            'getDonation' : true,
+                            'showForm'    : {
+                                                'foerderung'    : true,
+                                                'showForm'      : true
+                                            }
+        });
 }
 
 // Verarbeitet Ansicht "Teamuebersicht"
@@ -5298,76 +5764,76 @@ function procTeamuebersicht() {
     } else if (getRows(1) === undefined) {
         __LOG[2]("Diese Seite ist ohne Team nicht verf\xFCgbar!");
     } else {
-        buildOptions(__OPTCONFIG, __OPTSET, {
-                         'menuAnchor' : getTable(0, "div"),
-                         'showForm'   : {
-                                            'kennzeichenEnde'    : true,
-                                            'shortAufw'          : true,
-                                            'sepStyle'           : true,
-                                            'sepColor'           : true,
-                                            'sepWidth'           : true,
-                                            'saison'             : true,
-                                            'aktuellerZat'       : true,
-                                            'foerderung'         : true,
-                                            'team'               : true,
-                                            'zeigeBalken'        : true,
-                                            'absBalken'          : true,
-                                            'zeigeId'            : true,
-                                            'ersetzeAlter'       : true,
-                                            'zeigeAlter'         : true,
-                                            'zeigeQuote'         : true,
-                                            'zeigePosition'      : true,
-                                            'zeigeZatDone'       : true,
-                                            'zeigeZatLeft'       : true,
-                                            'zeigeFixSkills'     : true,
-                                            'zeigeTrainiert'     : true,
-                                            'zeigeAnteilPri'     : true,
-                                            'zeigeAnteilSec'     : true,
-                                            'zeigePrios'         : true,
-                                            'zeigeSkill'         : true,
-                                            'anzahlOpti'         : true,
-                                            'anzahlMW'           : true,
-                                            'zeigeTrainiertEnde' : true,
-                                            'zeigeAnteilPriEnde' : true,
-                                            'zeigeAnteilSecEnde' : true,
-                                            'zeigePriosEnde'     : true,
-                                            'zeigeSkillEnde'     : true,
-                                            'anzahlOptiEnde'     : true,
-                                            'anzahlMWEnde'       : true,
-                                            'zatAges'            : true,
-                                            'trainiert'          : true,
-                                            'positions'          : true,
-                                            'skills'             : true,
-                                            'reset'              : true,
-                                            'showForm'           : true
-                                        },
-                         'formWidth'  : 1
-                     });
+        return buildOptions(__OPTCONFIG, __OPTSET, {
+                                'menuAnchor' : getTable(0, 'div'),
+                                'showForm'   : {
+                                                   'kennzeichenEnde'    : true,
+                                                   'shortAufw'          : true,
+                                                   'sepStyle'           : true,
+                                                   'sepColor'           : true,
+                                                   'sepWidth'           : true,
+                                                   'saison'             : true,
+                                                   'aktuellerZat'       : true,
+                                                   'foerderung'         : true,
+                                                   'team'               : true,
+                                                   'zeigeBalken'        : true,
+                                                   'absBalken'          : true,
+                                                   'zeigeId'            : true,
+                                                   'ersetzeAlter'       : true,
+                                                   'zeigeAlter'         : true,
+                                                   'zeigeQuote'         : true,
+                                                   'zeigePosition'      : true,
+                                                   'zeigeZatDone'       : true,
+                                                   'zeigeZatLeft'       : true,
+                                                   'zeigeFixSkills'     : true,
+                                                   'zeigeTrainiert'     : true,
+                                                   'zeigeAnteilPri'     : true,
+                                                   'zeigeAnteilSec'     : true,
+                                                   'zeigePrios'         : true,
+                                                   'zeigeSkill'         : true,
+                                                   'anzahlOpti'         : true,
+                                                   'anzahlMW'           : true,
+                                                   'zeigeTrainiertEnde' : true,
+                                                   'zeigeAnteilPriEnde' : true,
+                                                   'zeigeAnteilSecEnde' : true,
+                                                   'zeigePriosEnde'     : true,
+                                                   'zeigeSkillEnde'     : true,
+                                                   'anzahlOptiEnde'     : true,
+                                                   'anzahlMWEnde'       : true,
+                                                   'zatAges'            : true,
+                                                   'trainiert'          : true,
+                                                   'positions'          : true,
+                                                   'skills'             : true,
+                                                   'reset'              : true,
+                                                   'showForm'           : true
+                                               },
+                                'formWidth'  : 1
+                            }).then(optSet => {
+                const __ROWS = getRows(1);
+                const __HEADERS = __ROWS[0];
+                const __TITLECOLOR = getColor('LEI');  // "#FFFFFF"
 
-        const __ROWS = getRows(1);
-        const __HEADERS = __ROWS[0];
-        const __TITLECOLOR = getColor('LEI');  // "#FFFFFF"
+                const __PLAYERS = init(__ROWS, __OPTSET, __COLUMNINDEX, __ROWOFFSETUPPER, __ROWOFFSETLOWER, true);
+                const __COLMAN = new ColumnManager(__OPTSET, __COLUMNINDEX, {
+                                                    'Default'            : true,
+                                                    'ersetzeSkills'      : false,
+                                                    'zeigeGeb'           : false,
+                                                    'zeigeSkill'         : false,
+                                                    'zeigeTal'           : false,
+                                                    'zeigeAufw'          : false
+                                                });
 
-        const __PLAYERS = init(__ROWS, __OPTSET, __COLUMNINDEX, __ROWOFFSETUPPER, __ROWOFFSETLOWER, true);
-        const __COLMAN = new ColumnManager(__OPTSET, __COLUMNINDEX, {
-                                            'Default'            : true,
-                                            'ersetzeSkills'      : false,
-                                            'zeigeGeb'           : false,
-                                            'zeigeSkill'         : false,
-                                            'zeigeTal'           : false,
-                                            'zeigeAufw'          : false
-                                        });
+                __COLMAN.addTitles(__HEADERS, __TITLECOLOR);
 
-        __COLMAN.addTitles(__HEADERS, __TITLECOLOR);
+                for (let i = 0; i < __PLAYERS.length; i++) {
+                    __COLMAN.addValues(__PLAYERS[i], __ROWS[i + __ROWOFFSETUPPER], __TITLECOLOR);
+                }
 
-        for (let i = 0; i < __PLAYERS.length; i++) {
-            __COLMAN.addValues(__PLAYERS[i], __ROWS[i + __ROWOFFSETUPPER], __TITLECOLOR);
-        }
+                // Format der Trennlinie zwischen den Monaten...
+                const __BORDERSTRING = getOptValue(__OPTSET.sepStyle) + ' ' + getOptValue(__OPTSET.sepColor) + ' ' + getOptValue(__OPTSET.sepWidth);
 
-        // Format der Trennlinie zwischen den Monaten...
-        const __BORDERSTRING = getOptValue(__OPTSET.sepStyle) + ' ' + getOptValue(__OPTSET.sepColor) + ' ' + getOptValue(__OPTSET.sepWidth);
-
-        separateGroups(__ROWS, __BORDERSTRING, __COLUMNINDEX.Age, __ROWOFFSETUPPER, __ROWOFFSETLOWER, -1, 0, floorValue);
+                separateGroups(__ROWS, __BORDERSTRING, __COLUMNINDEX.Age, __ROWOFFSETUPPER, __ROWOFFSETLOWER, -1, 0, floorValue);
+            });
     }
 }
 
@@ -5411,60 +5877,66 @@ function procSpielereinzelwerte() {
     if (getRows(1) === undefined) {
         __LOG[2]("Diese Seite ist ohne Team nicht verf\xFCgbar!");
     } else {
-        buildOptions(__OPTCONFIG, __OPTSET, {
-                         'menuAnchor' : getTable(0, "div"),
-                         'hideForm'   : {
-                                            'zatAges'       : true,
-                                            'trainiert'     : true,
-                                            'positions'     : true,
-                                            'skills'        : true,
-                                            'shortAufw'     : true
-                                        },
-                         'formWidth'  : 1
-                     });
+        return buildOptions(__OPTCONFIG, __OPTSET, {
+                                'menuAnchor' : getTable(0, 'div'),
+                                'hideForm'   : {
+                                                   'zatAges'       : true,
+                                                   'trainiert'     : true,
+                                                   'positions'     : true,
+                                                   'skills'        : true,
+                                                   'shortAufw'     : true
+                                               },
+                                'formWidth'  : 1
+                            }).then(optSet => {
+                const __ROWS = getRows(1);
+                const __HEADERS = __ROWS[0];
+                const __TITLECOLOR = getColor('LEI');  // "#FFFFFF"
 
-        const __ROWS = getRows(1);
-        const __HEADERS = __ROWS[0];
-        const __TITLECOLOR = getColor('LEI');  // "#FFFFFF"
+                const __PLAYERS = init(__ROWS, __OPTSET, __COLUMNINDEX, __ROWOFFSETUPPER, __ROWOFFSETLOWER, false);
+                const __COLMAN = new ColumnManager(__OPTSET, __COLUMNINDEX, true);
 
-        const __PLAYERS = init(__ROWS, __OPTSET, __COLUMNINDEX, __ROWOFFSETUPPER, __ROWOFFSETLOWER, false);
-        const __COLMAN = new ColumnManager(__OPTSET, __COLUMNINDEX, true);
+                __COLMAN.addTitles(__HEADERS, __TITLECOLOR);
 
-        __COLMAN.addTitles(__HEADERS, __TITLECOLOR);
+                for (let i = 0; i < __PLAYERS.length; i++) {
+                    __COLMAN.addValues(__PLAYERS[i], __ROWS[i + __ROWOFFSETUPPER], __TITLECOLOR);
+                }
 
-        for (let i = 0; i < __PLAYERS.length; i++) {
-            __COLMAN.addValues(__PLAYERS[i], __ROWS[i + __ROWOFFSETUPPER], __TITLECOLOR);
+                // Format der Trennlinie zwischen den Monaten...
+                const __BORDERSTRING = getOptValue(__OPTSET.sepStyle) + ' ' + getOptValue(__OPTSET.sepColor) + ' ' + getOptValue(__OPTSET.sepWidth);
+
+                separateGroups(__ROWS, __BORDERSTRING, __COLUMNINDEX.Age, __ROWOFFSETUPPER, __ROWOFFSETLOWER, -1, 0, floorValue);
+            });
+    }
+}
+
+(() => {
+    (async () => {
+        try {
+            // URL-Legende:
+            // page=0: Managerbuero
+            // page=1: Teamuebersicht
+            // page=2: Spielereinzelwerte
+            // page=3: Optionen
+
+            // Verzweige in unterschiedliche Verarbeitungen je nach Wert von page:
+            switch (getPageIdFromURL(window.location.href, {
+                                                               'haupt.php' : 0,  // Ansicht "Haupt" (Managerbuero)
+                                                               'ju.php'    : 1   // Ansicht "Jugendteam"
+                                                           }, 'page')) {
+                case 0  : await procHaupt().catch(defaultCatch); break;
+                case 1  : await procTeamuebersicht().catch(defaultCatch); break;
+                case 2  : await procSpielereinzelwerte().catch(defaultCatch); break;
+                case 3  : await procOptionen().catch(defaultCatch); break;
+                default : break;
+            }
+
+            return 'OK';
+        } catch (ex) {
+            return defaultCatch(ex);
         }
-
-        // Format der Trennlinie zwischen den Monaten...
-        const __BORDERSTRING = getOptValue(__OPTSET.sepStyle) + ' ' + getOptValue(__OPTSET.sepColor) + ' ' + getOptValue(__OPTSET.sepWidth);
-
-        separateGroups(__ROWS, __BORDERSTRING, __COLUMNINDEX.Age, __ROWOFFSETUPPER, __ROWOFFSETLOWER, -1, 0, floorValue);
-    }
-}
-
-try {
-    // URL-Legende:
-    // page=0: Managerbuero
-    // page=1: Teamuebersicht
-    // page=2: Spielereinzelwerte
-    // page=3: Optionen
-
-    // Verzweige in unterschiedliche Verarbeitungen je nach Wert von page:
-    switch (getPageIdFromURL(window.location.href, {
-                                                       'haupt.php' : 0,  // Ansicht "Haupt" (Managerbuero)
-                                                       'ju.php'    : 1   // Ansicht "Jugendteam"
-                                                   }, 'page')) {
-        case 0  : procHaupt(); break;
-        case 1  : procTeamuebersicht(); break;
-        case 2  : procSpielereinzelwerte(); break;
-        case 3  : procOptionen(); break;
-        default : break;
-    }
-} catch (ex) {
-    showAlert('[' + ex.lineNumber + "] " + __DBMOD.Name, ex.message, ex);
-} finally {
-    __LOG[2]("SCRIPT END");
-}
+    })().then(rc => {
+            __LOG[1]('SCRIPT END', __DBMOD.Name, '(' + rc + ')');
+        })
+})();
 
 // *** EOF ***
