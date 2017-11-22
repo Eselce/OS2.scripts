@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        OS2.haupt
 // @namespace   http://os.ongapo.com/
-// @version     0.21
+// @version     0.22
 // @copyright   2016+
 // @author      Sven Loges (SLC)
 // @description Managerbuero-Abschnitt aus dem Master-Script fuer Online Soccer 2.0
@@ -34,6 +34,9 @@ const __LIGASIZE    = __LIGASIZES[0];
 // Optionen (mit Standardwerten initialisiert und per loadOptions() geladen):
 let saison   = __SAISON;
 let ligaSize = __LIGASIZE;
+
+// Teamparameter fuer getrennte Speicherung der Optionen fuer Erst- und Zweitteam...
+let myTeam = { 'Team' : undefined, 'Liga' : undefined, 'Land' : undefined };
 
 // Setzt eine Option dauerhaft und laedt die Seite neu
 // name: Name der Option als Speicherort
@@ -100,6 +103,8 @@ function registerNextMenuOption(opt, arr, menu, fun, key) {
 // Baut das Benutzermenu auf
 function registerMenu() {
     console.log("registerMenu()");
+    console.log(myTeam);
+
     registerNextMenuOption(saison, __SAISONS, "Saison: " + saison, setNextSaison, 'S');
     registerNextMenuOption(ligaSize, __LIGASIZES, "Liga: " + ligaSize + "er", setNextLigaSize, 'L');
 
@@ -109,15 +114,19 @@ function registerMenu() {
 // Setzt die Optionen auf die "Werkseinstellungen" des Skripts
 function resetOptions() {
     GM_deleteValue("saison");
-    GM_deleteValue("ligaSize");
+    GM_deleteValue(myTeam.Land + "ligaSize");
 
     window.location.reload();
 }
 
 // Laedt die permament (ueber Menu) gesetzten Optionen
-function loadOptions() {
-    saison    = GM_getValue("saison",   saison);
-    ligaSize  = GM_getValue("ligaSize", ligaSize);
+// teamParams: Getrennte "ligaSize"-Option wird genutzt, hier: myTeam mit 'Land' des Erst- bzw. Zweitteams
+function loadOptions(teamParams) {
+    // Prefix fuer die Option "ligaSize"
+    myTeam = teamParams;
+
+    saison    = GM_getValue("saison", saison);
+    ligaSize  = GM_getValue(myTeam.Land + "ligaSize", ligaSize);
 }
 
 // Setzt die naechste moegliche Saison als Option
@@ -127,7 +136,7 @@ function setNextSaison() {
 
 // Setzt die naechste moegliche Ligagroesse als Option
 function setNextLigaSize() {
-    ligaSize = setNextOption(__LIGASIZES, "ligaSize", ligaSize);
+    ligaSize = setNextOption(__LIGASIZES, myTeam.Land + "ligaSize", ligaSize);
 }
 
 // Beschreibungstexte aller Runden
@@ -140,7 +149,7 @@ const __HINRUECK    = [ " Hin", " R\xFCck", "" ];
 // Liefert einen vor den ersten ZAT zurueckgesetzten Spielplanzeiger
 // saison: Enthaelt die Nummer der laufenden Saison
 // ligaSize: Anzahl der Teams in dieser Liga (Gegner + 1)
-// - ZAT pro Abrechnungsmonat
+// - ZATs pro Abrechnungsmonat
 // - Saison
 // - ZAT
 // - GameType
@@ -187,13 +196,24 @@ function getZAT(currZAT, longStats) {
            'S' + currZAT.saison + "-Z" + ((currZAT.ZAT < 10) ? '0' : "") + currZAT.ZAT;
 }
 
-// Spult die Daten um anzZAT ZAT vor und schreibt Parameter
+// Liefert die ZATs der Sonderspieltage fuer 10er- (2) und 20er-Ligen (4)
+// saison: Enthaelt die Nummer der laufenden Saison
+// return [ 10erHin, 10erRueck, 20erHin, 20erRueck ], ZAT-Nummern der Zusatzspieltage
+function getLigaExtra(saison) {
+    if (saison < 3) {
+        return [ 8, 64, 32, 46 ];
+    } else {
+        return [ 9, 65, 33, 57 ];
+    }
+}
+
+// Spult die Daten um anzZAT ZATs vor und schreibt Parameter
 // anhand des Spielplans fort. Also Spieltag, Runde, etc.
 // currZAT: Enthaelt den Spielplanzeiger auf den aktuellen ZAT
 // anzZAT: Anzahl der ZAT, um die vorgespult wird
 function incZAT(currZAT, anzZAT = 1) {
-    const __LIGAFIRST = (currZAT.saison < 3) ? 3 : 2;
-    const __LIGAEXTRA = (currZAT.saison < 3) ? [ 8, 64, 32, 46 ] : [ 9, 65, 33, 57 ];
+    const __LIGAEXTRA = getLigaExtra(currZAT.saison);
+    const __LIGAFIRST = 3 - (__LIGAEXTRA[0] % 2);
     let zusatz = "";
 
     for (let i = anzZAT; i > 0; i--) {
@@ -316,7 +336,7 @@ function setSpielArtFromCell(currZAT, cell) {
     currZAT.heim     = (__SPIELART.length < 2) || (__SPIELART[1] === "Heim");
 }
 
-const __GAMETYPES = {
+const __GAMETYPES = {    // "Blind FSS gesucht!"
     "reserviert" : 0,
     "Frei"       : 0,
     "spielfrei"  : 0,
@@ -374,7 +394,35 @@ function addBilanzLinkToCell(cell, gameType, label) {
     }
 }
 
-// Gibt die laufende Nummer des ZAT im Text einer Zelle zurueck
+// Ermittelt, wie das eigene Team heißt und aus welchem Land bzw. Liga es kommt (zur Unterscheidung von Erst- und Zweitteam)
+// cell: Tabellenzelle mit den Parametern zum Team "<b>Willkommen im Managerb&uuml;ro von TEAM</b><br>LIGA LAND<a href=..."
+// return Im Beispiel { 'Team' : "TEAM", 'Liga' : "LIGA", 'Land' : "LAND" },
+//        z.B. { 'Team' : "Choromonets Odessa", 'Liga' : "1. Liga", 'Land' : "Ukraine" }
+function getMyTeamFromCell(cell) {
+    const __SEARCHSTART = " von ";
+    const __SEARCHMIDDLE = "</b><br>";
+    const __SEARCHLIGA = ". Liga ";
+    const __SEARCHEND = "<a href=";
+    let teamParams = cell.innerHTML.substring(cell.innerHTML.indexOf(__SEARCHSTART) + __SEARCHSTART.length, cell.innerHTML.indexOf(__SEARCHEND));
+    let land = teamParams.substring(teamParams.indexOf(__SEARCHLIGA) + __SEARCHLIGA.length);
+
+    if (land.charAt(1) == ' ') {    // Land z.B. hinter "2. Liga A " statt "1. Liga "
+        land = land.substr(2);
+    }
+
+    const __TEAM = teamParams.substring(0, teamParams.indexOf(__SEARCHMIDDLE));
+    const __LIGA = teamParams.substring(teamParams.indexOf(__SEARCHMIDDLE) + __SEARCHMIDDLE.length,
+                                        teamParams.length - land.length - 1);
+    const __RET = {
+        'Team' : __TEAM,
+        'Liga' : __LIGA,
+        'Land' : land
+    };
+
+    return __RET;
+}
+
+// Gibt die laufende Nummer des ZATs im Text einer Zelle zurueck
 // cell: Tabellenzelle mit der ZAT-Nummer im Text
 // return ZAT-Nummer im Text
 function getZATNrFromCell(cell) {
@@ -407,7 +455,7 @@ function appendCell(row, content, color) {
 	row.cells[__COLIDX].style.color = color;
 }
 
-// Spult die Daten um anzZAT ZAT vor und schreibt Parameter
+// Spult die Daten um anzZAT ZATs vor und schreibt Parameter
 // anhand des Spielplans fort. Also Spieltag, Runde, etc.
 // row: Zeile mit den Daten zum Spiel (Spielart, Gegner)
 // currZAT: Enthaelt den Spielplanzeiger auf den aktuellen ZAT
@@ -436,10 +484,12 @@ function addZusatz(row, currZAT, anzZAT = 1, bilanz = false) {
 
 // Verarbeitet Ansicht "Haupt" (Managerbuero)
 function procHaupt() {
-    loadOptions();
+    const __TTAGS = document.getElementsByTagName("table");
+    const __MYTEAM = getMyTeamFromCell(__TTAGS[1].rows[0].cells[1]); // Link mit Team, Liga, Land...
+
+    loadOptions(__MYTEAM);
     registerMenu();
 
-    const __TTAGS = document.getElementsByTagName("table");
     const __ZAT = firstZAT(saison, ligaSize);
 
     const __NEXTZAT = getZATNrFromCell(__TTAGS[0].rows[2].cells[0]); // "Der naechste ZAT ist ZAT xx und ..."
