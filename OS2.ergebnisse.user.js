@@ -906,8 +906,9 @@ function getMulValue(valueA, valueB, digits = 0, defValue = NaN) {
 // return true, wenn der Prototyp rekursiv gefunden werden konnte
 function instanceOf(obj, base) {
     while (obj !== null) {
-        if (obj === base.prototype)
+        if (obj === base.prototype) {
             return true;
+        }
         if ((typeof obj) === 'xml') {  // Sonderfall mit Selbstbezug
             return (base.prototype === XML.prototype);
         }
@@ -1879,7 +1880,7 @@ function startOptions(optConfig, optSet = undefined, classification = undefined)
     // Zwischengespeicherte Befehle auslesen...
     const __STOREDCMDS = getStoredCmds(myOptMem);
 
-    // ... ermittelte Befehle ausführen...
+    // ... ermittelte Befehle ausfÃ¼hren...
     const __LOADEDCMDS = runStoredCmds(__STOREDCMDS, optSet, true);  // BeforeLoad
 
     // Bisher noch nicht geladenene Optionen laden...
@@ -1898,7 +1899,7 @@ function startOptions(optConfig, optSet = undefined, classification = undefined)
         classification.renameOptions();
     }
 
-    // ... ermittelte Befehle ausführen...
+    // ... ermittelte Befehle ausfÃ¼hren...
     runStoredCmds(__LOADEDCMDS, optSet, false);  // Rest
 
     // Als globale Daten speichern...
