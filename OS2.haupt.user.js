@@ -1,15 +1,17 @@
 // ==UserScript==
 // @name        OS2.haupt
 // @namespace   http://os.ongapo.com/
-// @version     0.11
+// @version     0.12
 // @copyright   2016+, Sven Loges (SLC)
 // @description Managerbuero-Abschnitt aus dem Master-Script fuer Online Soccer 2.0
 // @include     http://os.ongapo.com/haupt.php
 // @include     http://os.ongapo.com/haupt.php?changetosecond=*
-// @include     http://www.online-soccer.eu/haupt.php
-// @include     http://www.online-soccer.eu/haupt.php?changetosecond=*
+// @include     http://www.os.ongapo.com/haupt.php
+// @include     http://www.os.ongapo.com/haupt.php?changetosecond=*
 // @include     http://online-soccer.eu/haupt.php
 // @include     http://online-soccer.eu/haupt.php?changetosecond=*
+// @include     http://www.online-soccer.eu/haupt.php
+// @include     http://www.online-soccer.eu/haupt.php?changetosecond=*
 // @grant       none
 // ==/UserScript==
 
