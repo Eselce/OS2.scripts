@@ -5,14 +5,7 @@
 // @copyright    2013+
 // @author       Sven Loges (SLC)
 // @description  Spielplan-Abschnitt aus dem Master-Script fuer Online Soccer 2.0
-// @include      http*://os.ongapo.com/st.php?s=*
-// @include      http*://os.ongapo.com/showteam.php?s=*
-// @include      http*://www.os.ongapo.com/st.php?s=*
-// @include      http*://www.os.ongapo.com/showteam.php?s=*
-// @include      http*://online-soccer.eu/st.php?s=*
-// @include      http*://online-soccer.eu/showteam.php?s=*
-// @include      http*://www.online-soccer.eu/st.php?s=*
-// @include      http*://www.online-soccer.eu/showteam.php?s=*
+// @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/(st|showteam)\.php\?s=6(&\S+)*$/
 // @grant        GM_getValue
 // @grant        GM_setValue
 // @grant        GM_deleteValue
@@ -152,8 +145,8 @@ const __OPTCONFIG = {
                    'ValType'   : "Number",
                    'FreeValue' : true,
                    'SelValue'  : false,
-                   'Choice'    : [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ],
-                   'Default'   : 10,
+                   'Choice'    : [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19 ],
+                   'Default'   : 11,
                    'Action'    : __OPTACTION.NXT,
                    'Label'     : "Saison: $",
                    'Hotkey'    : 'a',
@@ -226,15 +219,6 @@ const __OPTCONFIG = {
 
 // ==================== Invarianter Abschnitt fuer Optionen ====================
 
-// Kompatibilitaetsfunktion zur Ermittlung des Namens einer Funktion (falle <Function>.name nicht vorhanden ist)
-if (Function.prototype.name === undefined) {
-    Object.defineProperty(Function.prototype, 'name', {
-            get : function() {
-                      return /function ([^(\s]*)/.exec(this.toString())[1];
-                  }
-        });
-}
-
 // Ein Satz von Logfunktionen, die je nach Loglevel zur Verfuegung stehen. Aufruf: __LOG[level](text)
 const __LOG = {
                   'logFun'   : [
@@ -260,6 +244,37 @@ const __LOG = {
               };
 
 __LOG.init(window, __LOGLEVEL);
+
+// Kompatibilitaetsfunktion zur Ermittlung des Namens einer Funktion (falle <Function>.name nicht vorhanden ist)
+if (Function.prototype.name === undefined) {
+    Object.defineProperty(Function.prototype, 'name', {
+            get : function() {
+                      return /function ([^(\s]*)/.exec(this.toString())[1];
+                  }
+        });
+}
+
+// Ergaenzung fuer Strings: Links oder rechts auffuellen nach Vorlage
+// padStr: Vorlage, z.B. "00" fuer zweistellige Zahlen
+// padLeft: true = rechtsbuendig, false = linksbuendig
+// clip: Abschneiden, falls zu lang
+// return Rechts- oder linksbuendiger String, der so lang ist wie die Vorlage
+String.prototype.pad = function(padStr, padLeft = true, clip = false) {
+    const __LEN = ((clip || (padStr.length > this.length)) ? padStr.length : this.length);
+
+    return (padLeft ? String(padStr + this).slice(- __LEN) : String(this + padStr).slice(0, __LEN));
+};
+
+// Ersetzt in einem String {0}, {1}, ... durch die entsprechenden Parameter
+// arguments: Parameter, die fuer {0}, {1}, ... eingesetzt werden sollen
+// return Resultierender String
+String.prototype.format = function() {
+    const __ARGS = arguments;
+    return this.replace(/{(\d+)}/g, function(match, argIdx) {
+                                        const __ARG = __ARGS[argIdx];
+                                        return ((__ARG !== undefined) ? __ARG : match);
+                                    });
+};
 
 // Gibt eine Meldung in der Console aus und oeffnet ein Bestaetigungsfenster mit der Meldung
 // label: Eine Ueberschrift
@@ -306,7 +321,7 @@ function Class(className, baseClass, initFun) {
         }
 
         console.assert((__BASE === null) || ((typeof __BASE) === 'function'), "No function:", __BASE);
-        console.assert((typeof initFun) === 'function', "No function:", initFun);
+        console.assert((typeof initFun) === 'function', "Not a function:", initFun);
 
         this.init = initFun;
     } catch (ex) {
@@ -334,8 +349,8 @@ Object.setConst(Object.prototype, 'subclass', function(baseClass, members, initF
             const __MEMBERS = (members || { });
             const __CREATEPROTO = ((createProto === undefined) ? true : createProto);
 
-            console.assert((typeof this) === 'function');
-            console.assert((typeof __MEMBERS) === 'object');
+            console.assert((typeof this) === 'function', "Not a function:", this);
+            console.assert((typeof __MEMBERS) === 'object', "Not an object:", __MEMBERS);
 
             const __CLASS = new Class(this.name || __MEMBERS.__name, baseClass, initFun || __MEMBERS.__init);
             const __PROTO = (__CREATEPROTO ? Object.create(__CLASS.baseProto) : this.prototype);
@@ -662,12 +677,12 @@ Class.define(URI, Path, {
                                          const __ROOTDELIM = this.delims.root + this.delims.delim;
                                          const __NOSCHEME = this.stripSchemePrefix(path);
                                          const __INDEXHOST = (__NOSCHEME ? __NOSCHEME.indexOf(__HOSTDELIM) : -1);
-                                         const __PATH = (~ __INDEXHOST) ? __NOSCHEME.substring(__INDEXHOST + __HOSTDELIM.length) : __NOSCHEME;
+                                         const __PATH = ((~ __INDEXHOST) ? __NOSCHEME.substring(__INDEXHOST + __HOSTDELIM.length) : __NOSCHEME);
                                          const __INDEXHOSTPORT = (__PATH ? __PATH.indexOf(__ROOTDELIM) : -1);
-                                         const __HOSTPORT = (~ __INDEXHOSTPORT) ? __PATH.substring(0, __INDEXHOSTPORT) : undefined;
+                                         const __HOSTPORT = ((~ __INDEXHOSTPORT) ? __PATH.substring(0, __INDEXHOSTPORT) : undefined);
                                          const __INDEXPORT = (__HOSTPORT ? __HOSTPORT.indexOf(__PORTDELIM) : -1);
-                                         const __HOST = (~ __INDEXPORT) ? __HOSTPORT.substring(0, __INDEXPORT) : __HOSTPORT;
-                                         const __PORT = (~ __INDEXPORT) ? __HOSTPORT.substring(__INDEXPORT + __PORTDELIM.length) : undefined;
+                                         const __HOST = ((~ __INDEXPORT) ? __HOSTPORT.substring(0, __INDEXPORT) : __HOSTPORT);
+                                         const __PORT = ((~ __INDEXPORT) ? __HOSTPORT.substring(__INDEXPORT + __PORTDELIM.length) : undefined);
 
                                          return {
                                                     'host' : __HOST,
@@ -678,47 +693,47 @@ Class.define(URI, Path, {
                                          const __HOSTDELIM = this.delims.host;
                                          const __ROOTDELIM = this.delims.root + this.delims.delim;
                                          const __INDEXHOST = (path ? path.indexOf(__HOSTDELIM) : -1);
-                                         const __PATH = (~ __INDEXHOST) ? path.substring(__INDEXHOST + __HOSTDELIM.length) : path;
+                                         const __PATH = ((~ __INDEXHOST) ? path.substring(__INDEXHOST + __HOSTDELIM.length) : path);
                                          const __INDEXHOSTPORT = (__PATH ? __PATH.indexOf(__ROOTDELIM) : -1);
 
-                                         return (~ __INDEXHOSTPORT) ? __PATH.substring(__INDEXHOSTPORT) : __PATH;
+                                         return ((~ __INDEXHOSTPORT) ? __PATH.substring(__INDEXHOSTPORT) : __PATH);
                                      },
                'getSchemePrefix'   : function(path = undefined) {
                                          const __SCHEMEDELIM = this.delims.scheme;
                                          const __INDEXSCHEME = (path ? path.indexOf(__SCHEMEDELIM) : -1);
 
-                                         return (~ __INDEXSCHEME) ? path.substring(0, __INDEXSCHEME) : undefined;
+                                         return ((~ __INDEXSCHEME) ? path.substring(0, __INDEXSCHEME) : undefined);
                                      },
                'stripSchemePrefix' : function(path = undefined) {
                                          const __SCHEMEDELIM = this.delims.scheme;
                                          const __INDEXSCHEME = (path ? path.indexOf(__SCHEMEDELIM) : -1);
 
-                                         return (~ __INDEXSCHEME) ? path.substring(__INDEXSCHEME + __INDEXSCHEME.length) : path;
+                                         return ((~ __INDEXSCHEME) ? path.substring(__INDEXSCHEME + __INDEXSCHEME.length) : path);
                                      },
                'getNodeSuffix'     : function(path = undefined) {
                                          const __NODEDELIM = this.delims.node;
                                          const __INDEXNODE = (path ? path.lastIndexOf(__NODEDELIM) : -1);
 
-                                         return (~ __INDEXNODE) ? path.substring(__INDEXNODE + __NODEDELIM.length) : undefined;
+                                         return ((~ __INDEXNODE) ? path.substring(__INDEXNODE + __NODEDELIM.length) : undefined);
                                      },
                'stripNodeSuffix'   : function(path = undefined) {
                                          const __NODEDELIM = this.delims.node;
                                          const __INDEXNODE = (path ? path.lastIndexOf(__NODEDELIM) : -1);
 
-                                         return (~ __INDEXNODE) ? path.substring(0, __INDEXNODE) : path;
+                                         return ((~ __INDEXNODE) ? path.substring(0, __INDEXNODE) : path);
                                      },
                'getQueryString'    : function(path = undefined) {
                                          const __QUERYDELIM = this.delims.query;
                                          const __PATH = this.stripNodeSuffix(path);
                                          const __INDEXQUERY = (__PATH ? __PATH.indexOf(__QUERYDELIM) : -1);
 
-                                         return (~ __INDEXQUERY) ? __PATH.substring(__INDEXQUERY + __QUERYDELIM.length) : undefined;
+                                         return ((~ __INDEXQUERY) ? __PATH.substring(__INDEXQUERY + __QUERYDELIM.length) : undefined);
                                      },
                'stripQueryString'  : function(path = undefined) {
                                          const __QUERYDELIM = this.delims.query;
                                          const __INDEXQUERY = (path ? path.indexOf(__QUERYDELIM) : -1);
 
-                                         return (~ __INDEXQUERY) ? path.substring(0, __INDEXQUERY) : path;
+                                         return ((~ __INDEXQUERY) ? path.substring(0, __INDEXQUERY) : path);
                                      },
                'formatParams'      : function(params, formatFun, delim = ' ', assign = '=') {
                                          const __PARAMS = [];
@@ -740,8 +755,8 @@ Class.define(URI, Path, {
 
                                                  if (__PARAM) {
                                                      const __INDEX = __PARAM.indexOf(assign);
-                                                     const __KEY = (~ __INDEX) ? __PARAM.substring(0, __INDEX) : __PARAM;
-                                                     const __VAL = (~ __INDEX) ? parseFun(__PARAM.substring(__INDEX + assign.length)) : true;
+                                                     const __KEY = ((~ __INDEX) ? __PARAM.substring(0, __INDEX) : __PARAM);
+                                                     const __VAL = ((~ __INDEX) ? parseFun(__PARAM.substring(__INDEX + assign.length)) : true);
 
                                                      __RET[__KEY] = __VAL;
                                                  }
@@ -939,7 +954,19 @@ function getMulValue(valueA, valueB, digits = 0, defValue = NaN) {
         product = parseFloat(valueA) * parseFloat(valueB);
     }
 
+    if (isNaN(product)) {
+        product = defValue;
+    }
+
     return parseFloat(product.toFixed(digits));
+}
+
+// Hilfsfunktion fuer Array.sort(): Vergleich zweier Zahlen
+// valueA: Erster Zahlenwert
+// valueB: Zweiter Zahlenwert
+// return -1 = kleiner, 0 = gleich, +1 = groesser
+function compareNumber(valueA, valueB) {
+    return +(valueA > valueB) || (+(valueA === valueB) - 1);
 }
 
 // Ueberprueft, ob ein Objekt einer bestimmten Klasse angehoert (ggfs. per Vererbung)
@@ -948,9 +975,8 @@ function getMulValue(valueA, valueB, digits = 0, defValue = NaN) {
 // return true, wenn der Prototyp rekursiv gefunden werden konnte
 function instanceOf(obj, base) {
     while (obj !== null) {
-        if (obj === base.prototype) {
+        if (obj === base.prototype)
             return true;
-        }
         if ((typeof obj) === 'xml') {  // Sonderfall mit Selbstbezug
             return (base.prototype === XML.prototype);
         }
@@ -1000,10 +1026,10 @@ function getAllProperties(obj) {
 function checkItem(item, inList = undefined, exList = undefined) {
     let active = true;
 
-    if (inList !== undefined) {
+    if (inList) {
         active = (inList[item] === true);  // gesetzt und true
     }
-    if (exList !== undefined) {
+    if (exList) {
         if (exList[item] === true) {  // gesetzt und true
             active = false;  // NICHT anzeigen
         }
@@ -1022,6 +1048,21 @@ function addProps(data, addData, addList = undefined, ignList = undefined) {
     for (let item in getValue(addData, { })) {
         if (checkItem(item, addList, ignList)) {
             data[item] = addData[item];
+        }
+    }
+
+    return data;
+}
+
+// Entfernt Properties in einem Objekt.
+// data: Objekt, deren Properties bearbeitet werden
+// delList: Checkliste der zu loeschenden Items (true fuer loeschen), falls angegeben
+// ignList: Checkliste der ignorierten Items (true fuer auslassen), falls angegeben
+// return Das veraenderte Objekt ohne die geloeschten Properties
+function delProps(data, delList = undefined, ignList = undefined) {
+    for (let item in getValue(data, { })) {
+        if (checkItem(item, delList, ignList)) {
+            delete data[item];
         }
     }
 
@@ -1103,12 +1144,77 @@ function serializer(replacer = undefined, cycleReplacer = undefined) {
         };
 }
 
+// Replacer fuer JSON.stringify() oder safeStringify(), der Arrays kompakter darstellt.
+// key: Der uebergebene Schluessel
+// value: Der uebergebene Wert
+// return Fuer Arrays eine kompakte Darstellung, sonst derselbe Wert
+function replaceArraySimple(key, value) {
+    if (Array.isArray(value)) {
+        return "[ " + value.join(", ") + " ]";
+    }
+
+    return value;
+}
+
+// Replacer fuer JSON.stringify() oder safeStringify(), der Arrays kompakter darstellt.
+// key: Der uebergebene Schluessel
+// value: Der uebergebene Wert
+// return Fuer Arrays eine kompakte Darstellung, sonst derselbe Wert
+function replaceArray(key, value) {
+    if (Array.isArray(value)) {
+        __RET = value.map(function(element) {
+                              return safeStringify(element, replaceArray, 0);
+                          });
+
+        return __RET;
+    }
+
+    return value;
+}
+
+// Fuegt in die uebergebene Zahl Tausender-Trennpunkte ein
+// Wandelt einen etwaig vorhandenen Dezimalpunkt in ein Komma um
+function getNumberString(numberString) {
+    if (numberString.lastIndexOf(".") !== -1) {
+        // Zahl enthaelt Dezimalpunkt
+        const __VORKOMMA = numberString.substring(0, numberString.lastIndexOf("."));
+        const __NACHKOMMA = numberString.substring(numberString.lastIndexOf(".") + 1, numberString.length);
+
+        return getNumberString(__VORKOMMA) + "," + __NACHKOMMA;
+    } else {
+        // Kein Dezimalpunkt, fuege Tausender-Trennpunkte ein:
+        // String umdrehen, nach jedem dritten Zeichen Punkt einfuegen, dann wieder umdrehen:
+        const __TEMP = reverseString(numberString);
+        let result = "";
+
+        for (let i = 0; i < __TEMP.length; i++) {
+            if ((i > 0) && (i % 3 === 0)) {
+                result += ".";
+            }
+            result += __TEMP.substr(i, 1);
+        }
+
+        return reverseString(result);
+    }
+}
+
+// Dreht den uebergebenen String um
+function reverseString(string) {
+    let result = "";
+
+    for (let i = string.length - 1; i >= 0; i--) {
+        result += string.substr(i, 1);
+    }
+
+    return result;
+}
+
 // Speichert einen beliebiegen (strukturierten) Wert unter einem Namen ab
 // name: GM_setValue-Name, unter dem die Daten gespeichert werden
 // value: Beliebiger (strukturierter) Wert
 // return String-Darstellung des Wertes
 function serialize(name, value) {
-    const __STREAM = (value !== undefined) ? safeStringify(value) : value;
+    const __STREAM = ((value !== undefined) ? safeStringify(value) : value);
 
     __LOG[4](name + " >> " + __STREAM);
 
@@ -1122,7 +1228,7 @@ function serialize(name, value) {
 // defValue: Default-Wert fuer den Fall, dass nichts gespeichert ist
 // return Objekt, das unter dem Namen gespeichert war
 function deserialize(name, defValue = undefined) {
-    const __STREAM = GM_getValue(name, defValue);
+    const __STREAM = GM_getValue(name);
 
     __LOG[4](name + " << " + __STREAM);
 
@@ -1134,7 +1240,7 @@ function deserialize(name, defValue = undefined) {
         }
     }
 
-    return undefined;
+    return defValue;
 }
 
 // Setzt eine Option dauerhaft und laedt die Seite neu
@@ -1450,7 +1556,7 @@ function getMemSize(memory = undefined) {
 
 // Gibt rekursiv und detailliert die Groesse des benutzten Speichers fuer ein Objekt aus
 // value: (Enumerierbares) Objekt oder Wert, dessen Groesse gemessen wird
-// out: Logfunktion, etwa console.log
+// out: Logfunktion, etwa __LOG[4]
 // depth: Gewuenschte Rekursionstiefe (0 = nur dieses Objekt, -1 = alle Ebenen)
 // name: Name des Objekts
 function getMemUsage(value = undefined, out = undefined, depth = -1, name = '$') {
@@ -1459,7 +1565,7 @@ function getMemUsage(value = undefined, out = undefined, depth = -1, name = '$')
     if ((typeof value) === 'string') {
         const __SIZE = value.length;
 
-        __OUT("USAGE: " + name + '\t' + __SIZE + '\t' + value.substr(0, 255));
+        __OUT("USAGE: " + name + '\t' + __SIZE + '\t' + value.slice(0, 255));
     } else if ((typeof value) === 'object') {
         if (depth === 0) {
             const __SIZE = safeStringify(value).length;
@@ -1822,14 +1928,14 @@ function getSharedConfig(optConfig, item = undefined) {
     if (__SHARED !== undefined) {
         const __OBJREF = getSharedRef(__SHARED, item);  // Gemeinsame Daten
 
-        if (getValue(__SHARED.item, '$') !== '$') {  // __REF ist ein Item
+        if (getValue(__SHARED.item, '$') !== '$') {  // __OBJREF ist ein Item
             const __REF = valueOf(__OBJREF);
 
             config = { };  // Neu aufbauen...
             addProps(config, getOptConfig(__REF));
             addProps(config, optConfig);
             config.setConst('SharedData', getOptValue(__REF));
-        } else {  // __REF enthaelt die Daten selbst
+        } else {  // __OBJREF enthaelt die Daten selbst
             if (! config.Name) {
                 config.Name = __OBJREF.getPath();
             }
@@ -1860,10 +1966,9 @@ function initOptions(optConfig, optSet = undefined, preInit = undefined) {
         if ((preInit === undefined) || (__PREINIT === preInit)) {
             const __CONFIG = getSharedConfig(__OPTCONFIG, opt);
             const __ALTACTION = getValue(__CONFIG.AltAction, __CONFIG.Action);
-            // Gab es vorher einen Aufruf, der einen Stub-Eintrag erzeugt hat? Wurde ggfs. bereits geaendert...
-            const __USESTUB = ((preInit === false) && __PREINIT);
-            const __LOADED = (__USESTUB && optSet[opt].Loaded);
-            const __VALUE = (__USESTUB ? optSet[opt].Value : undefined);
+            // Gab es vorher einen Aufruf, der einen Stub-Eintrag erzeugt hat, und wurden Daten geladen?
+            const __LOADED = ((preInit === false) && optSet[opt].Loaded);
+            const __VALUE = (__LOADED ? optSet[opt].Value : undefined);
 
             optSet[opt] = {
                 'Item'      : opt,
@@ -1922,7 +2027,7 @@ function startOptions(optConfig, optSet = undefined, classification = undefined)
     // Zwischengespeicherte Befehle auslesen...
     const __STOREDCMDS = getStoredCmds(myOptMem);
 
-    // ... ermittelte Befehle ausführen...
+    // ... ermittelte Befehle ausfuehren...
     const __LOADEDCMDS = runStoredCmds(__STOREDCMDS, optSet, true);  // BeforeLoad
 
     // Bisher noch nicht geladenene Optionen laden...
@@ -1941,7 +2046,7 @@ function startOptions(optConfig, optSet = undefined, classification = undefined)
         classification.renameOptions();
     }
 
-    // ... ermittelte Befehle ausführen...
+    // ... ermittelte Befehle ausfuehren...
     runStoredCmds(__LOADEDCMDS, optSet, false);  // Rest
 
     // Als globale Daten speichern...
@@ -2033,7 +2138,7 @@ function promptNextOpt(opt, value = undefined, reload = false, freeValue = false
             for (let index = 0; index < __CHOICE.length; index++) {
                 message += (index + 1) + ") " + __CHOICE[index] + '\n';
             }
-            message += "\nNummer eingeben:";
+            message += "\nNummer oder Wert eingeben:";
         } else {
             message = __CHOICE.join(" / ") + "\n\nWert eingeben:";
         }
@@ -2134,7 +2239,7 @@ function buildMenu(optSet) {
 // opt: Zu invalidierende Option
 // force: Invalidiert auch Optionen mit 'AutoReset'-Attribut
 function invalidateOpt(opt, force = false) {
-    if (! opt.ReadOnly) {
+    if (opt.Loaded && ! opt.ReadOnly) {
         const __CONFIG = getOptConfig(opt);
 
         // Wert "ungeladen"...
@@ -2155,9 +2260,7 @@ function invalidateOpts(optSet, force = false) {
     for (let opt in optSet) {
         const __OPT = optSet[opt];
 
-        if (__OPT.Loaded) {
-            invalidateOpt(__OPT, force);
-        }
+        invalidateOpt(__OPT, force);
     }
 
     return optSet;
@@ -2216,7 +2319,7 @@ function loadOptions(optSet, force = false) {
 // Entfernt eine (ueber Menu) gesetzte Option (falls nicht 'Permanent')
 // opt: Gesetzte Option
 // force: Entfernt auch Optionen mit 'Permanent'-Attribut
-// reset: Setzt bei Erfolg auf Initialwert der Option
+// reset: Setzt bei Erfolg auf Initialwert der Option (auch fuer nicht 'AutoReset')
 function deleteOption(opt, force = false, reset = true) {
     const __CONFIG = getOptConfig(opt);
 
@@ -2227,7 +2330,7 @@ function deleteOption(opt, force = false, reset = true) {
 
         GM_deleteValue(__NAME);
 
-        if (reset) {
+        if (reset || __CONFIG.AutoReset) {
             setOptValue(opt, initOptValue(__CONFIG));
         }
     }
@@ -2239,7 +2342,7 @@ function deleteOption(opt, force = false, reset = true) {
 // force: Entfernt auch Optionen mit 'Permanent'-Attribut
 // reset: Setzt bei Erfolg auf Initialwert der Option
 function deleteOptions(optSet, optSelect = undefined, force = false, reset = true) {
-    const __DELETEALL = (optSelect === undefined) || (optSelect === true);
+    const __DELETEALL = ((optSelect === undefined) || (optSelect === true));
     const __OPTSELECT = getValue(optSelect, { });
 
     for (let opt in optSet) {
@@ -2263,7 +2366,11 @@ function renameOption(opt, name, reload = false, force = false) {
 
         setOptName(opt, name);
 
+        invalidateOpt(opt, opt.Loaded);
+
         if (reload) {
+            opt.Loaded = false;
+
             loadOption(opt, force);
         }
     }
@@ -2431,8 +2538,8 @@ function removeDocEvent(id, type, callback, capture = false) {
 // doc: Dokument (document)
 // return Gesuchtes Element mit der lfd. Nummer index oder undefined (falls nicht gefunden)
 function getElement(name, index = 0, doc = document) {
-    const __TAGS = document.getElementsByName(name);
-    const __TABLE = (__TAGS === undefined) ? undefined : __TAGS[index];
+    const __TAGS = doc.getElementsByName(name);
+    const __TABLE = (__TAGS ? __TAGS[index] : undefined);
 
     return __TABLE;
 }
@@ -2443,10 +2550,22 @@ function getElement(name, index = 0, doc = document) {
 // doc: Dokument (document)
 // return Gesuchtes Element oder undefined (falls nicht gefunden)
 function getTable(index, tag = "table", doc = document) {
-    const __TAGS = document.getElementsByTagName(tag);
-    const __TABLE = (__TAGS === undefined) ? undefined : __TAGS[index];
+    const __TAGS = doc.getElementsByTagName(tag);
+    const __TABLE = (__TAGS ? __TAGS[index] : undefined);
 
     return __TABLE;
+}
+
+// Hilfsfunktion fuer die Ermittlung der Zeilen einer Tabelle
+// name: Name des Tabellen-Elements (siehe "name=")
+// index: Laufende Nummer des Tabellen-Elements (0-based), Default: 0
+// doc: Dokument (document)
+// return Gesuchte Zeilen oder undefined (falls nicht gefunden)
+function getElementRows(name, index = 0, doc = document) {
+    const __TABLE = getElement(name, index, doc);
+    const __ROWS = (__TABLE ? __TABLE.rows : undefined);
+
+    return __ROWS;
 }
 
 // Hilfsfunktion fuer die Ermittlung der Zeilen einer Tabelle
@@ -2455,7 +2574,18 @@ function getTable(index, tag = "table", doc = document) {
 // return Gesuchte Zeilen oder undefined (falls nicht gefunden)
 function getRows(index, doc = document) {
     const __TABLE = getTable(index, "table", doc);
-    const __ROWS = (__TABLE === undefined) ? undefined : __TABLE.rows;
+    const __ROWS = (__TABLE ? __TABLE.rows : undefined);
+
+    return __ROWS;
+}
+
+// Hilfsfunktion fuer die Ermittlung der Zeilen einer Tabelle
+// id: ID des Tabellen-Elements
+// doc: Dokument (document)
+// return Gesuchte Zeilen oder undefined (falls nicht gefunden)
+function getRowsById(id, doc = document) {
+    const __TABLE = doc.getElementById(id);
+    const __ROWS = (__TABLE ? __TABLE.rows : undefined);
 
     return __ROWS;
 }
@@ -2678,7 +2808,7 @@ function getForm(optSet, optParams = { }) {
     for (let opt in optSet) {
         if (checkItem(opt, __SHOWFORM, optParams.hideForm)) {
             const __ELEMENT = getOptionElement(optSet[opt]);
-            const __TDOPT = (~ __ELEMENT.indexOf('|')) ? "" : ' colspan="2"';
+            const __TDOPT = ((~ __ELEMENT.indexOf('|')) ? "" : ' colspan="2"');
 
             if (__ELEMENT) {
                 if (++count > __FORMBREAK) {
@@ -2773,8 +2903,10 @@ Class.define(Classification, Object, {
                                               renameOptions(this.optSet, this.optSelect, __PARAM, this.renameFun);
                                           }
                                       },
-                    'deleteOptions' : function() {
-                                          return deleteOptions(this.optSet, this.optSelect, true, true);
+                    'deleteOptions' : function(ignList) {
+                                          const __OPTSELECT = addProps([], this.optSelect, null, ignList);
+
+                                          return deleteOptions(this.optSet, __OPTSELECT, true, true);
                                       }
                 } );
 
@@ -2831,6 +2963,34 @@ Class.define(Team, Object, {
                 } );
 
 // ==================== Ende Abschnitt fuer Klasse Team ====================
+
+// ==================== Abschnitt fuer Klasse Verein ====================
+
+// Klasse fuer Vereinsdaten
+function Verein(team, land, liga, id, manager, flags) {
+    'use strict';
+
+    Team.call(this, team, land, liga);
+
+    this.ID = id;
+    this.Manager = manager;
+    this.Flags = (flags || []);
+}
+
+Class.define(Verein, Team, {
+                    '__TEAMITEMS' : {   // Items, die in Verein als Teamdaten gesetzt werden...
+                                        'Team'    : true,
+                                        'Liga'    : true,
+                                        'Land'    : true,
+                                        'LdNr'    : true,
+                                        'LgNr'    : true,
+                                        'ID'      : true,
+                                        'Manager' : true,
+                                        'Flags'   : true
+                                    }
+                } );
+
+// ==================== Ende Abschnitt fuer Klasse Verein ====================
 
 // ==================== Spezialisierter Abschnitt fuer Optionen ====================
 
@@ -2894,8 +3054,8 @@ function buildOptions(optConfig, optSet = undefined, optParams = { 'hideMenu' : 
     optSet = startOptions(optConfig, optSet, __TEAMCLASS);
 
     // Werte aus der HTML-Seite ermitteln...
-    const __BOXSAISONS = document.getElementsByTagName("option");
-    const __SAISON = getSaisonFromComboBox(__BOXSAISONS);
+    const __BOXSAISONS = document.getElementsByTagName('option');
+    const __SAISON = getSelectionFromComboBox(__BOXSAISONS, 0, 'Number');
     const __LIGASIZE = getLigaSizeFromSpielplan(optParams.Tab.rows, optParams.Zei, optParams.Spa, getOptValue(optSet.saison));
 
     // ... und abspeichern...
@@ -3343,6 +3503,7 @@ function setGegnerFromCell(currZAT, cell) {
 // Ermittelt das Spiel-Ergebnis aus einer Tabellenzelle und setzt tore/gtore im Spielplanzeiger
 // currZAT: Enthaelt den Spielplanzeiger auf den aktuellen ZAT
 // cell: Tabellenzelle mit Eintrag "2 : 1"
+// return Modifizierter Spielplanzeiger
 function setErgebnisFromCell(currZAT, cell) {
     const __ERGEBNIS = getErgebnisFromCell(cell);
 
@@ -3353,6 +3514,8 @@ function setErgebnisFromCell(currZAT, cell) {
         currZAT.gFor = -1;
         currZAT.gAga = -1;
     }
+
+    return currZAT;
 }
 
 // Ermittelt die Spielart aus einer Tabellenzelle und setzt gameType/heim im Spielplanzeiger
@@ -3487,21 +3650,33 @@ function getPageIdFromURL(url, leafs, item = "page") {
     return -1;
 }
 
-// Verarbeitet die URL der Seite und ermittelt die Nummer der gewuenschten Unterseite
-// saisons: Alle "option"-Eintraege der Combo-Box
-// return Nummer der ausgewaehlten Saison (Default: 0)
-function getSaisonFromComboBox(saisons) {
-    let saison = 0;
+// Ermittelt den ausgewaehlten Wert eines Selects (Combo-Box) und gibt diesen zurueck
+// element: "select"-Element oder dessen Name auf der HTML-Seite mit 'option'-Eintraegen der Combo-Box
+// defValue: Default-Wert, falls nichts selektiert ist
+// return Ausgewaehlter Wert
+function getSelection(element, defValue = undefined, valType = 'String') {
+    const __ELEMENT = ((typeof element) === 'string' ? document.getElementsByName(element) : element);
+    const __ENTRY = (__ELEMENT ? __ELEMENT.selectedOptions[0] : undefined);
 
-    for (let i = 0; i < saisons.length; i++) {
-        const __SAISON = saisons[i];
+    return this[valType](getValue(__ENTRY, defValue, __ENTRY.textContent));
+}
 
-        if (__SAISON.outerHTML.match(/selected/)) {
-            saison = __SAISON.textContent;
+// Ermittelt den ausgewaehlten Wert einer Combo-Box und gibt diesen zurueck
+// comboBox: Alle 'option'-Eintraege der Combo-Box
+// defValue: Default-Wert, falls nichts selektiert ist
+// return Ausgewaehlter Wert
+function getSelectionFromComboBox(comboBox, defValue = undefined, valType = 'String') {
+    let selection;
+
+    for (let i = 0; i < comboBox.length; i++) {
+        const __ENTRY = comboBox[i];
+
+        if (__ENTRY.outerHTML.match(/selected/)) {
+            selection = __ENTRY.textContent;
         }
     }
 
-    return saison;
+    return this[valType](getValue(selection, defValue));
 }
 
 // Ermittelt aus dem Spielplan die Ligengroesse ueber die Sonderspieltage
@@ -3534,6 +3709,7 @@ function procSpielplan() {
     const __ROWOFFSETLOWER = 0;
 
     const __COLUMNINDEX = {
+        'ZAT' : 0,
         'Art' : 1,
         'Geg' : 2,
         'Erg' : 3,
