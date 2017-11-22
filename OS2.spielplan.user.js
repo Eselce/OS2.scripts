@@ -52,21 +52,21 @@ const __LIGASIZE    = __LIGASIZES[0];
 // url: Adresse der Seite
 function getPageIdFromURL(url) {
     // Variablen zur Identifikation der Seite
-    var indexS = url.lastIndexOf("s=");
-    var st = url.match(/st\.php/);              // Teamansicht Popupfenster
-    var showteam = url.match(/showteam\.php/);  // Teamansicht Hauptfenster
-    let s = -1;                                 // Seitenindex (Rueckgabewert)
+    const __INDEXS = url.lastIndexOf("s=");
+    const __ST = url.match(/st\.php/);              // Teamansicht Popupfenster
+    const __SHOWTEAM = url.match(/showteam\.php/);  // Teamansicht Hauptfenster
+    let s = -1;                                     // Seitenindex (Rueckgabewert)
 
     // Wert von s (Seitenindex) ermitteln...
     // Annahme: Entscheidend ist jeweils das letzte Vorkommnis von "s=" und ggf. von '&'
-    if (indexS < 0) {
+    if (__INDEXS < 0) {
         s = 0;
-    } else if (showteam) {
+    } else if (__ST || __SHOWTEAM) {
         // Wert von s setzt sich aus allen Zeichen hinter "s=" zusammen
-        s = parseInt(url.substring(indexS + 2, url.length), 10);
+        s = parseInt(url.substring(__INDEXS + 2, url.length), 10);
     } else {
         // Wert von s setzt sich aus allen Zeichen zwischen "s=" und '&' zusammen
-        s = parseInt(url.substring(indexS + 2, url.indexOf('&', indexS)), 10);
+        s = parseInt(url.substring(__INDEXS + 2, url.indexOf('&', __INDEXS)), 10);
     }
 
     return s;
@@ -77,9 +77,16 @@ function getPageIdFromURL(url) {
 function getSaisonFromComboBox(saisons) {
     let saison = 0;
 
+/*
     for (let entry of saisons) {
         if (entry.outerHTML.match(/selected/)) {
             saison = entry.textContent;
+        }
+    }
+*/
+    for (i = 0; i < saisons.length; i++) {
+        if (saisons[i].outerHTML.match(/selected/)) {
+            saison = saisons[i].textContent;
         }
     }
 
@@ -537,19 +544,20 @@ function setSpielArtFromCell(currZAT, cell) {
 }
 
 const __GAMETYPES = {
-    "spielfrei" : 0,
-    "Friendly"  : 1,
-    "Liga"      : 2,
-    "LP"        : 3,
-    "OSEQ"      : 4,
-    "OSE"       : 5,
-    "OSCQ"      : 6,
-    "OSC"       : 7
+    "reserviert" : 0,
+    "spielfrei"  : 0,
+    "Friendly"   : 1,
+    "Liga"       : 2,
+    "LP"         : 3,
+    "OSEQ"       : 4,
+    "OSE"        : 5,
+    "OSCQ"       : 6,
+    "OSC"        : 7
 };
 
 // Gibt die ID fuer den Namen eines Wettbewerbs zurueck
 // gameType: Name des Wettbewerbs eines Spiels
-// return OS2-ID fuer den Spieltyp (1 bis 7), 0 fuer spielfrei, -1 fuer ungueltig
+// return OS2-ID fuer den Spieltyp (1 bis 7), 0 fuer spielfrei/reserviert, -1 fuer ungueltig
 function getGameTypeID(gameType) {
     const __ID = __GAMETYPES[gameType];
 
@@ -566,7 +574,7 @@ function getBilanzLinkFromCell(cell, gameType, label) {
     let ret = "";
 
     if (cell.textContent != "Vorschau") {   // Nur falls Link nicht bereits vorhanden
-        if (__GAMETYPEID > 1) {             // nicht moeglich fuer "Friendly" bzw. "spielfrei"
+        if (__GAMETYPEID > 1) {             // nicht moeglich fuer "Friendly" bzw. "spielfrei"/"reserviert"
             const __SEARCHFUN = ":os_bericht(";
             let paarung = cell.innerHTML.substr(cell.innerHTML.indexOf(__SEARCHFUN) + __SEARCHFUN.length);
 
@@ -676,8 +684,13 @@ function procSpielplan() {
         if (sepMonths && (__ZAT.ZAT % __ZAT.anzZATpMonth === 0) && (i < __TABLE.rows.length - __ROWOFFSETLOWER - 1)) {
             const __BORDERSTRING = sepStyle + ' ' + sepColor + ' ' + sepWidth;    // Format der Trennlinie zwischen den Monaten
 
+/*
             for (let entry of __CELLS) {
                 entry.style.borderBottom = __BORDERSTRING;
+            }
+*/
+            for (let j = 0; j < __CELLS.length; j++) {
+                __CELLS[j].style.borderBottom = __BORDERSTRING;
             }
         }
     }
