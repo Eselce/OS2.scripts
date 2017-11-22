@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         OS2.jugend
 // @namespace    http://os.ongapo.com/
-// @version      0.50
+// @version      0.51
 // @copyright    2013+
 // @author       Andreas Eckes (Strindheim BK) / Sven Loges (SLC)
 // @description  Jugendteam-Script fuer Online Soccer 2.0
@@ -75,6 +75,17 @@ const __OPTMEM = {
 
 // Moegliche Optionen (hier die Standardwerte editieren oder ueber das Benutzermenu setzen):
 const __OPTCONFIG = {
+    'zeigeBalken' : {     // Spaltenauswahl fuer den Guetebalken des Talents (true = anzeigen, false = nicht anzeigen)
+                   'Name'      : "showRatioBar",
+                   'Type'      : __OPTTYPES.SW,
+                   'Default'   : true,
+                   'Action'    : __OPTACTION.NXT,
+                   'Label'     : "Balken ein",
+                   'Hotkey'    : 'B',
+                   'AltLabel'  : "Balken aus",
+                   'AltHotkey' : 'B',
+                   'FormLabel' : "Balken"
+               },
     'zeigeTal' : {        // Spaltenauswahl fuer Talente (true = anzeigen, false = nicht anzeigen)
                    'Name'      : "showTclasses",
                    'Type'      : __OPTTYPES.SW,
@@ -3435,6 +3446,7 @@ function ColumnManager(optSet, colIdx, showCol) {
 
     this.colIdx = colIdx;
 
+    this.bar = (__PROJECTION && getValue(__SHOWCOL.zeigeBalken, __SHOWALL) && getOptValue(optSet.zeigeBalken));
     this.geb = (__BIRTHDAYS && getValue(__SHOWCOL.zeigeGeb, __SHOWALL) && getOptValue(optSet.zeigeGeb));
     this.tal = (__TCLASSES && getValue(__SHOWCOL.zeigeTal, __SHOWALL) && getOptValue(optSet.zeigeTal));
     this.quo = (__ZATAGES && __TRAINIERT && getValue(__SHOWCOL.zeigeQuote, __SHOWALL) && getOptValue(optSet.zeigeQuote));
@@ -3494,11 +3506,27 @@ Class.define(ColumnManager, Object, {
                                tableRow.cells[this.addCell(tableRow)].textContent = text;
                                tableRow.cells[tableRow.cells.length - 1].style.color = color;
                            },
+        'addAndBarCell'  : function(tableRow, value, scale = 100, offset = 0, width = 100, height = 10) {
+                               const __VALUE = ((scale && isFinite(value)) ? (value - offset) * 100 / scale : 0);
+
+                               // HTML-Code fuer Anteilsbalken einfuegen...
+                               tableRow.cells[this.addCell(tableRow)].innerHTML = this.getBarImg(__VALUE, width, height);
+                               tableRow.cells[tableRow.cells.length - 1].align = 'left';
+                           },
+        'getBarImg'      : function(value, width = 100, height = 10) {
+                               const __VALUE = floorValue(Math.max(0, Math.min(99, value)));
+
+                               // HTML-Code fuer Anteilsbalken...
+                               return '<img src="images/balken/' + __VALUE + '.GIF" width="' + (__VALUE * width / 100) + '" height=' + height + '>';
+                           },
         'addTitles'      : function(headers, titleColor = "#FFFFFF") {
                                // Spaltentitel zentrieren
                                headers.align = "center";
 
                                // Titel fuer die aktuellen Werte
+                               if (this.bar) {
+                                   this.addAndFillCell(headers, "Qualit\xE4t", titleColor);
+                               }
                                if (this.tal) {
                                    this.addAndFillCell(headers, "Talent", titleColor);
                                }
@@ -3574,6 +3602,9 @@ Class.define(ColumnManager, Object, {
                                const __POS1COLOR = getColor(player.getPos());
 
                                // Aktuelle Werte
+                               if (this.bar) {
+                                   this.addAndBarCell(playerRow, player.getPrios(player.getPos(), player.__TIME.end), 100, 0, 100, 10);
+                               }
                                if (this.tal) {
                                    this.addAndFillCell(playerRow, player.getTalent(), __COLOR);
                                }
@@ -3773,7 +3804,7 @@ Class.define(PlayerRecord, Object, {
 
                                           if (isTrainableSkill(i)) {
                                               // Auf ganze Zahl runden und parseInt(), da das sonst irgendwie als String interpretiert wird
-                                              const __ADDSKILL = Math.min(getMulValue(__ADDRATIO, __SKILL, 0, NaN), 99 - progSkill);
+                                              const __ADDSKILL = Math.min(99 - progSkill, getMulValue(__ADDRATIO, __SKILL, 0, NaN));
 
                                               progSkill += __ADDSKILL;
                                               addSkill -= __ADDSKILL;
@@ -4100,9 +4131,10 @@ function sameValue(value) {
 // value: Eine uebergebene Dezimalzahl
 // return Der ganzzeilige Anteil dieser Zahl
 function floorValue(value, dot = '.') {
-    const __INDEXDOT = (value ? value.indexOf(dot) : -1);
+    const __VALUE = value.toString();
+    const __INDEXDOT = (__VALUE ? __VALUE.indexOf(dot) : -1);
 
-    return ((~ __INDEXDOT) ? value.substring(0, __INDEXDOT) : value);
+    return Number((~ __INDEXDOT) ? __VALUE.substring(0, __INDEXDOT) : __VALUE);
 }
 
 // Hilfsfunktionen **********************************************************************
@@ -4524,6 +4556,7 @@ function procTeamuebersicht() {
                                             'saison'             : true,
                                             'aktuellerZat'       : true,
                                             'team'               : true,
+                                            'zeigeBalken'        : true,
                                             'ersetzeAlter'       : true,
                                             'zeigeAlter'         : true,
                                             'zeigeQuote'         : true,
