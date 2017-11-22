@@ -1,12 +1,18 @@
 // ==UserScript==
 // @name         OS2.tabelle
 // @namespace    http://os.ongapo.com/
-// @version      0.10
+// @version      0.11+WE+
 // @copyright    2016+
 // @author       Sven Loges (SLC)
 // @description  Tabellen-Script fuer Online Soccer 2.0
 // @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/haupt\.php(\?changetosecond=\w+(&\S+)*)?$/
 // @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/(l[pt]|os(cfr|e)|fpt)\.php(\?\S+(&\S+)*)?$/
+// @grant        GM.getValue
+// @grant        GM.setValue
+// @grant        GM.deleteValue
+// @grant        GM.registerMenuCommand
+// @grant        GM.info
+// @require      https://greasemonkey.github.io/gm4-polyfill/gm4-polyfill.js
 // @grant        GM_getValue
 // @grant        GM_setValue
 // @grant        GM_deleteValue
@@ -14,13 +20,13 @@
 // @grant        GM_info
 // ==/UserScript==
 
-// ECMAScript 6: Erlaubt 'const', 'let', ...
+// ECMAScript 6:
 /* jshint esnext: true */
 /* jshint moz: true */
 
 // ==================== Konfigurations-Abschnitt fuer Optionen ====================
 
-const __LOGLEVEL = 6;
+const __LOGLEVEL = 3;
 
 // Options-Typen
 const __OPTTYPES = {
@@ -130,7 +136,7 @@ const __OPTCONFIG = {
     'aktuelleSaison' : {  // Aktuelle Saison
                    'Name'      : "currSaison",
                    'Type'      : __OPTTYPES.MC,
-                   'ValType'   : "Number",
+                   'ValType'   : 'Number',
                    'FreeValue' : true,
                    'SelValue'  : false,
                    'Choice'    : [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19 ],
@@ -143,11 +149,11 @@ const __OPTCONFIG = {
     'saison' : {          // Ausgewaehlte Saison
                    'Name'      : "saison",
                    'Type'      : __OPTTYPES.MC,
-                   'ValType'   : "Number",
+                   'ValType'   : 'Number',
                    'FreeValue' : true,
                    'SelValue'  : false,
                    'Choice'    : [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19 ],
-                   'Default'   : 11,
+                   'Default'   : 12,
                    'Action'    : __OPTACTION.NXT,
                    'Label'     : "Saison: $",
                    'Hotkey'    : 'S',
@@ -156,7 +162,7 @@ const __OPTCONFIG = {
     'liga' : {            // Ausgewaehlte Liga
                    'Name'      : "liga",
                    'Type'      : __OPTTYPES.MC,
-                   'ValType'   : "String",
+                   'ValType'   : 'String',
                    'FreeValue' : false,
                    'SelValue'  : true,
                    'Choice'    : [ '1. Liga', '2. Liga A', '2. Liga B', '3. Liga A', '3. Liga B', '3. Liga C', '3. Liga D' ],
@@ -169,7 +175,7 @@ const __OPTCONFIG = {
     'land' : {            // Ausgewaehltes Land
                    'Name'      : "land",
                    'Type'      : __OPTTYPES.MC,
-                   'ValType'   : "String",
+                   'ValType'   : 'String',
                    'FreeValue' : true,
                    'SelValue'  : false,
                    'Choice'    : [ ],
@@ -182,7 +188,7 @@ const __OPTCONFIG = {
     'tabTyp' : {          // Ausgewaehlter Tabellentyp
                    'Name'      : "tabTyp",
                    'Type'      : __OPTTYPES.MC,
-                   'ValType'   : "String",
+                   'ValType'   : 'String',
                    'FreeValue' : false,
                    'SelValue'  : true,
                    'Choice'    : [ 'Gesamttabelle', 'Heimtabelle', 'Ausw\xE4rtstabelle', '2-Punktetabelle', 'Hinrundentabelle', 'R\xFCckrundentabelle', '1. Halbzeit', '2. Halbzeit', 'Kreuztabelle' ],
@@ -195,7 +201,7 @@ const __OPTCONFIG = {
     'Prunde' : {          // Ausgewaehlte Pokalrunde
                    'Name'      : "pokalRunde",
                    'Type'      : __OPTTYPES.MC,
-                   'ValType'   : "String",
+                   'ValType'   : 'String',
                    'FreeValue' : false,
                    'SelValue'  : true,
                    'Choice'    : [ '1. Runde', '2. Runde', '3. Runde', 'Achtelfinale', 'Viertelfinale', 'Halbfinale', 'Finale' ],
@@ -208,7 +214,7 @@ const __OPTCONFIG = {
     'OSCrunde' : {        // Ausgewaehlte OSC-FR-Runde
                    'Name'      : "oscRunde",
                    'Type'      : __OPTTYPES.MC,
-                   'ValType'   : "String",
+                   'ValType'   : 'String',
                    'FreeValue' : false,
                    'SelValue'  : true,
                    'Choice'    : [ 'Viertelfinale', 'Halbfinale', 'Finale' ],
@@ -221,7 +227,7 @@ const __OPTCONFIG = {
     'OSErunde' : {        // Ausgewaehlte OSE-Runde
                    'Name'      : "oseRunde",
                    'Type'      : __OPTTYPES.MC,
-                   'ValType'   : "String",
+                   'ValType'   : 'String',
                    'FreeValue' : false,
                    'SelValue'  : true,
                    'Choice'    : [ '1. Runde', '2. Runde', '3. Runde', '4. Runde', 'Achtelfinale', 'Viertelfinale', 'Halbfinale', 'Finale' ],
@@ -234,7 +240,7 @@ const __OPTCONFIG = {
     'ligaNr' : {          // Ausgewaehlte Liga (als Nummer)
                    'Name'      : "lgNr",
                    'Type'      : __OPTTYPES.MC,
-                   'ValType'   : "Number",
+                   'ValType'   : 'Number',
                    'FreeValue' : false,
                    'SelValue'  : false,
                    'Choice'    : [ 1, 2, 3, 4, 5, 6, 7 ],
@@ -247,7 +253,7 @@ const __OPTCONFIG = {
     'landNr' : {          // Ausgewaehltes Land (als Nummer)
                    'Name'      : "ldNr",
                    'Type'      : __OPTTYPES.MC,
-                   'ValType'   : "Number",
+                   'ValType'   : 'Number',
                    'FreeValue' : true,
                    'SelValue'  : false,
                    'Choice'    : [ ],
@@ -260,7 +266,7 @@ const __OPTCONFIG = {
     'tabTypNr' : {        // Ausgewaehlter Tabellentyp (als Nummer)
                    'Name'      : "tabTypNr",
                    'Type'      : __OPTTYPES.MC,
-                   'ValType'   : "Number",
+                   'ValType'   : 'Number',
                    'FreeValue' : false,
                    'SelValue'  : false,
                    'Choice'    : [ 0, 1, 2, 3, 4, 5, 6, 7, 10 ],
@@ -273,7 +279,7 @@ const __OPTCONFIG = {
     'PrundenNr' : {       // Ausgewaehlte Pokalrunde (als Nummer)
                    'Name'      : "pokalRundenNr",
                    'Type'      : __OPTTYPES.MC,
-                   'ValType'   : "Number",
+                   'ValType'   : 'Number',
                    'FreeValue' : false,
                    'SelValue'  : false,
                    'Choice'    : [ 1, 2, 3, 4, 5, 6, 7 ],
@@ -286,7 +292,7 @@ const __OPTCONFIG = {
     'OSCrundenNr' : {     // Ausgewaehlte OSC-FR-Runde (als Nummer)
                    'Name'      : "OSCrundenNr",
                    'Type'      : __OPTTYPES.MC,
-                   'ValType'   : "Number",
+                   'ValType'   : 'Number',
                    'FreeValue' : false,
                    'SelValue'  : false,
                    'Choice'    : [ 7, 8, 9 ],
@@ -299,7 +305,7 @@ const __OPTCONFIG = {
     'OSErundenNr' : {     // Ausgewaehlte OSE-Runde (als Nummer)
                    'Name'      : "OSErundenNr",
                    'Type'      : __OPTTYPES.MC,
-                   'ValType'   : "Number",
+                   'ValType'   : 'Number',
                    'FreeValue' : false,
                    'SelValue'  : false,
                    'Choice'    : [ 1, 2, 3, 4, 5, 6, 7, 8 ],
@@ -440,6 +446,7 @@ const __OPTCONFIG = {
                    'FormLabel' : ""
                },
     'reset' : {           // Optionen auf die "Werkseinstellungen" zuruecksetzen
+                   'FormPrio'  : undefined,
                    'Name'      : "reset",
                    'Type'      : __OPTTYPES.SI,
                    'Action'    : __OPTACTION.RST,
@@ -448,9 +455,10 @@ const __OPTCONFIG = {
                    'FormLabel' : ""
                },
     'storage' : {         // Browserspeicher fuer die Klicks auf Optionen
+                   'FormPrio'  : undefined,
                    'Name'      : "storage",
                    'Type'      : __OPTTYPES.MC,
-                   'ValType'   : "String",
+                   'ValType'   : 'String',
                    'Choice'    : Object.keys(__OPTMEM),
                    'Action'    : __OPTACTION.NXT,
                    'Label'     : "Speicher: $",
@@ -458,6 +466,7 @@ const __OPTCONFIG = {
                    'FormLabel' : "Speicher:|$"
                },
     'oldStorage' : {      // Vorheriger Browserspeicher fuer die Klicks auf Optionen
+                   'FormPrio'  : undefined,
                    'Name'      : "oldStorage",
                    'Type'      : __OPTTYPES.SD,
                    'PreInit'   : true,
@@ -465,14 +474,17 @@ const __OPTCONFIG = {
                    'Hidden'    : true
                },
     'showForm' : {        // Optionen auf der Webseite (true = anzeigen, false = nicht anzeigen)
+                   'FormPrio'  : 1,
                    'Name'      : "showForm",
                    'Type'      : __OPTTYPES.SW,
                    'FormType'  : __OPTTYPES.SI,
                    'Permanent' : true,
                    'Default'   : false,
+                   'Title'     : "$V Optionen",
                    'Action'    : __OPTACTION.NXT,
                    'Label'     : "Optionen anzeigen",
                    'Hotkey'    : 'O',
+                   'AltTitle'  : "$V schlie\xDFen",
                    'AltLabel'  : "Optionen verbergen",
                    'AltHotkey' : 'O',
                    'FormLabel' : ""
@@ -483,26 +495,28 @@ const __OPTCONFIG = {
 
 // Ein Satz von Logfunktionen, die je nach Loglevel zur Verfuegung stehen. Aufruf: __LOG[level](text)
 const __LOG = {
-                  'logFun'   : [
-                                   console.error,  // [0] Alert
-                                   console.error,  // [1] Error
-                                   console.log,    // [2] Log: Release
-                                   console.log,    // [3] Log: Info
-                                   console.log,    // [4] Log: Debug
-                                   console.log,    // [5] Log: Verbose
-                                   console.log     // [6] Log: Very verbose
-                               ],
-                  'init'     : function(win, logLevel = 1) {
-                                   for (level = 0; level < this.logFun.length; level++) {
-                                       this[level] = ((level > logLevel) ? function() { } : this.logFun[level]);
-                                   }
-                               },
-                  'changed'  : function(oldVal, newVal) {
-                                   const __OLDVAL = safeStringify(oldVal);
-                                   const __NEWVAL = safeStringify(newVal);
+                  'logFun'    : [
+                                    console.error,  // [0] Alert
+                                    console.error,  // [1] Error
+                                    console.log,    // [2] Log: Release
+                                    console.log,    // [3] Log: Info
+                                    console.log,    // [4] Log: Debug
+                                    console.log,    // [5] Log: Verbose
+                                    console.log,    // [6] Log: Very verbose
+                                    console.log     // [7] Log: Testing
+                                ],
+                  'init'      : function(win, logLevel = 1) {
+                                    for (let level = 0; level < this.logFun.length; level++) {
+                                        this[level] = ((level > logLevel) ? function() { } : this.logFun[level]);
+                                    }
+                                },
+                  'stringify' : safeStringify,      // JSON.stringify
+                  'changed'   : function(oldVal, newVal) {
+                                    const __OLDVAL = this.stringify(oldVal);
+                                    const __NEWVAL = this.stringify(newVal);
 
-                                   return ((__OLDVAL !== __NEWVAL) ? __OLDVAL + " => " : "") + __NEWVAL;
-                               }
+                                    return ((__OLDVAL !== __NEWVAL) ? __OLDVAL + " => " : "") + __NEWVAL;
+                                }
               };
 
 __LOG.init(window, __LOGLEVEL);
@@ -542,14 +556,48 @@ String.prototype.format = function() {
 // label: Eine Ueberschrift
 // message: Der Meldungs-Text
 // data: Ein Wert. Ist er angegeben, wird er in der Console ausgegeben
+// return Liefert die Parameter zurueck
 function showAlert(label, message, data = undefined) {
-    __LOG[1](label + ": " + message);
+    __LOG[0](label + ": " + message);
 
     if (data !== undefined) {
         __LOG[2](data);
     }
 
     alert(label + "\n\n" + message);
+
+    return arguments;
+}
+
+// Gibt eine Meldung in der Console aus und oeffnet ein Bestaetigungsfenster
+// mit der Meldung zu einer Exception oder einer Fehlermeldung
+// label: Eine Ueberschrift
+// ex: Exception oder sonstiges Fehlerobjekt
+// return Liefert die showAlert()-Parameter zurueck
+function showException(label, ex) {
+    if (ex && ex.message) {  // Exception
+        showAlert(label, ex.message, ex);
+    } else {  // sonstiger Fehler
+        showAlert(label, ex);
+    }
+}
+
+// Standard-Callback-Funktion fuer onRejected, also abgefangener Fehler
+// in einer Promise bei Exceptions oder Fehler bzw. Rejections
+// error: Parameter von reject() im Promise-Objekt, der von Promise.catch() erhalten wurde
+// return Liefert die showAlert()-Parameter zurueck
+function defaultCatch(error) {
+    try {
+        const __LABEL = `[${error.lineNumber}] ${__DBMOD.Name}`;
+
+        if (error && error.message) {  // Exception
+            return showException(__LABEL, error.message, error);
+        } else {
+            return showException(__LABEL, error);
+        }
+    } catch (ex) {
+        return showException(`[${ex.lineNumber}] ${__DBMOD.Name}`, ex.message, ex);
+    }
 }
 
 // ==================== Abschnitt fuer Klasse Class ====================
@@ -655,7 +703,7 @@ Class.define(Class, Object, {
                     'getName'      : function() {
                                          return this.className;
                                      }
-                } );
+                });
 
 // ==================== Ende Abschnitt fuer Klasse Class ====================
 
@@ -702,7 +750,7 @@ Class.define(Delims, Object, {
               'setHome'        : function(home = undefined) {
                                      this.home = home;
                                  }
-          } );
+          });
 
 // ==================== Ende Abschnitt fuer Klasse Delims ====================
 
@@ -781,7 +829,7 @@ Class.define(UriDelims, Delims, {
               'setNode'        : function(node = undefined) {
                                      this.node = node;
                                  }
-          } );
+          });
 
 // ==================== Ende Abschnitt fuer Klasse UriDelims ====================
 
@@ -880,7 +928,7 @@ Class.define(Path, Object, {
 
                                          return __DIRS.slice(1);
                                      }
-                } );
+                });
 
 // ==================== Ende Abschnitt fuer Klasse Path ====================
 
@@ -1038,8 +1086,8 @@ Class.define(URI, Path, {
                                          } else {
                                              const __LOWER = (value ? value.toLowerCase() : undefined);
 
-                                             if ((__LOWER === "true") || (__LOWER === "false")) {
-                                                 return (value === "true");
+                                             if ((__LOWER === 'true') || (__LOWER === 'false')) {
+                                                 return (value === 'true');
                                              }
                                          }
 
@@ -1091,7 +1139,7 @@ Class.define(URI, Path, {
 
                                          return Path.prototype.getDirs.call(this, __PATH);
                                      }
-           } );
+           });
 
 // ==================== Ende Abschnitt fuer Klasse URI ====================
 
@@ -1131,7 +1179,7 @@ Class.define(Directory, Path, {
                     'pwd'   : function() {
                                   return this.getPath();
                               }
-                } );
+                });
 
 // ==================== Ende Abschnitt fuer Klasse Directory ====================
 
@@ -1159,7 +1207,7 @@ Class.define(ObjRef, Directory, {
 
                                     return ret;
                                 }
-                } );
+                });
 
 // ==================== Ende Abschnitt fuer Klasse ObjRef ====================
 
@@ -1204,8 +1252,8 @@ function getNextValue(arr, value) {
 }
 
 // Gibt ein Produkt zurueck. Ist einer der Multiplikanten nicht definiert, wird ein Alternativwert geliefert
-// valueA: Ein Multipliksnt. Ist dieser undefined, wird als Produkt defValue zurueckgeliefert
-// valueB: Ein Multipliksnt. Ist dieser undefined, wird als Produkt defValue zurueckgeliefert
+// valueA: Ein Multiplikant. Ist dieser undefined, wird als Produkt defValue zurueckgeliefert
+// valueB: Ein Multiplikant. Ist dieser undefined, wird als Produkt defValue zurueckgeliefert
 // digits: Anzahl der Stellen nach dem Komma fuer das Produkt (Default: 0)
 // defValue: Default-Wert fuer den Fall, dass ein Multiplikant nicht gesetzt ist (Default: NaN)
 // return Das Produkt auf digits Stellen genau. Ist dieses nicht definiert, dann defValue
@@ -1223,6 +1271,14 @@ function getMulValue(valueA, valueB, digits = 0, defValue = NaN) {
     return parseFloat(product.toFixed(digits));
 }
 
+// Gibt eine Ordinalzahl zur uebergebenen Zahl zurueck
+// value: Eine ganze Zahl
+// defValue: Default-Wert fuer den Fall, dass der Wert nicht gesetzt ist (Default: '*')
+// return Die Ordinalzahl als String der Form "n." oder defValue, falls nicht angegeben
+function getOrdinal(value, defValue = '*') {
+    return getValue(value, defValue, value + '.');
+}
+
 // Hilfsfunktion fuer Array.sort(): Vergleich zweier Zahlen
 // valueA: Erster Zahlenwert
 // valueB: Zweiter Zahlenwert
@@ -1237,8 +1293,9 @@ function compareNumber(valueA, valueB) {
 // return true, wenn der Prototyp rekursiv gefunden werden konnte
 function instanceOf(obj, base) {
     while (obj !== null) {
-        if (obj === base.prototype)
+        if (obj === base.prototype) {
             return true;
+        }
         if ((typeof obj) === 'xml') {  // Sonderfall mit Selbstbezug
             return (base.prototype === XML.prototype);
         }
@@ -1316,7 +1373,7 @@ function addProps(data, addData, addList = undefined, ignList = undefined) {
     return data;
 }
 
-// Entfernt Properties in einem Objekt.
+// Entfernt Properties in einem Objekt
 // data: Objekt, deren Properties bearbeitet werden
 // delList: Checkliste der zu loeschenden Items (true fuer loeschen), falls angegeben
 // ignList: Checkliste der ignorierten Items (true fuer auslassen), falls angegeben
@@ -1406,7 +1463,7 @@ function serializer(replacer = undefined, cycleReplacer = undefined) {
         };
 }
 
-// Replacer fuer JSON.stringify() oder safeStringify(), der Arrays kompakter darstellt.
+// Replacer fuer JSON.stringify() oder safeStringify(), der Arrays kompakter darstellt
 // key: Der uebergebene Schluessel
 // value: Der uebergebene Wert
 // return Fuer Arrays eine kompakte Darstellung, sonst derselbe Wert
@@ -1418,7 +1475,7 @@ function replaceArraySimple(key, value) {
     return value;
 }
 
-// Replacer fuer JSON.stringify() oder safeStringify(), der Arrays kompakter darstellt.
+// Replacer fuer JSON.stringify() oder safeStringify(), der Arrays kompakter darstellt
 // key: Der uebergebene Schluessel
 // value: Der uebergebene Wert
 // return Fuer Arrays eine kompakte Darstellung, sonst derselbe Wert
@@ -1434,15 +1491,44 @@ function replaceArray(key, value) {
     return value;
 }
 
+// Moegliche einfache Ersetzungen mit '$'...
+let textSubst;
+
+// Substituiert '$'-Parameter in einem Text
+// text: Urspruenglicher Text mit '$'-Befehlen
+// par1: Der (erste) uebergebene Parameter
+// return Fuer Arrays eine kompakte Darstellung, sonst derselbe Wert
+function substParam(text, par1) {
+    let ret = getValue(text, "");
+
+    if (! textSubst) {
+        textSubst  = {
+                'n' : __DBMOD.name,
+                'v' : __DBMOD.version,
+                'V' : __DBMOD.Name
+            };
+    }
+
+    for (let ch in textSubst) {
+        const __SUBST = textSubst[ch];
+
+        ret = ret.replace('$' + ch, __SUBST);
+    }
+
+    return ret.replace('$', par1);
+}
+
 // Fuegt in die uebergebene Zahl Tausender-Trennpunkte ein
 // Wandelt einen etwaig vorhandenen Dezimalpunkt in ein Komma um
+// numberString: Dezimalzahl als String
+// return Diese Dezimalzahl als String mit Tausender-Trennpunkten und Komma statt Dezimalpunkt
 function getNumberString(numberString) {
-    if (numberString.lastIndexOf(".") !== -1) {
+    if (numberString.lastIndexOf('.') !== -1) {
         // Zahl enthaelt Dezimalpunkt
-        const __VORKOMMA = numberString.substring(0, numberString.lastIndexOf("."));
-        const __NACHKOMMA = numberString.substring(numberString.lastIndexOf(".") + 1, numberString.length);
+        const __VORKOMMA = numberString.substring(0, numberString.lastIndexOf('.'));
+        const __NACHKOMMA = numberString.substring(numberString.lastIndexOf('.') + 1, numberString.length);
 
-        return getNumberString(__VORKOMMA) + "," + __NACHKOMMA;
+        return getNumberString(__VORKOMMA) + ',' + __NACHKOMMA;
     } else {
         // Kein Dezimalpunkt, fuege Tausender-Trennpunkte ein:
         // String umdrehen, nach jedem dritten Zeichen Punkt einfuegen, dann wieder umdrehen:
@@ -1451,7 +1537,7 @@ function getNumberString(numberString) {
 
         for (let i = 0; i < __TEMP.length; i++) {
             if ((i > 0) && (i % 3 === 0)) {
-                result += ".";
+                result += '.';
             }
             result += __TEMP.substr(i, 1);
         }
@@ -1461,6 +1547,8 @@ function getNumberString(numberString) {
 }
 
 // Dreht den uebergebenen String um
+// string: Eine Zeichenkette
+// return Dieselbe Zeichenkette rueckwaerts
 function reverseString(string) {
     let result = "";
 
@@ -1471,55 +1559,85 @@ function reverseString(string) {
     return result;
 }
 
+// Speichert einen String/Integer/Boolean-Wert unter einem Namen ab
+// name: GM.setValue()-Name, unter dem die Daten gespeichert werden
+// value: Zu speichernder String/Integer/Boolean-Wert
+// return Promise auf ein Objekt, das 'name' und 'value' der Operation enthaelt
+function storeValue(name, value) {
+    __LOG[4](name + " >> " + value);
+
+    return GM.setValue(name, value).then(voidValue => {
+            __LOG[5]("OK " + name + " >> " + value);
+
+            return Promise.resolve({
+                    'name'  : name,
+                    'value' : value
+                });
+        }, defaultCatch);
+}
+
+// Holt einen String/Integer/Boolean-Wert unter einem Namen zurueck
+// name: GM.getValue()-Name, unter dem die Daten gespeichert wurden
+// defValue: Default-Wert fuer den Fall, dass nichts gespeichert ist
+// return Promise fuer den String/Integer/Boolean-Wert, der unter dem Namen gespeichert war
+function summonValue(name, defValue = undefined) {
+    return GM.getValue(name, defValue).then(value => {
+            __LOG[4](name + " << " + value);
+
+            return Promise.resolve(value);
+        }, ex => {
+            __LOG[0](name + ": " + ex.message);
+
+            return Promise.reject(ex);
+        }, defaultCatch);
+}
+
 // Speichert einen beliebiegen (strukturierten) Wert unter einem Namen ab
-// name: GM_setValue-Name, unter dem die Daten gespeichert werden
+// name: GM.setValue()-Name, unter dem die Daten gespeichert werden
 // value: Beliebiger (strukturierter) Wert
-// return String-Darstellung des Wertes
+// return Promise auf ein Objekt, das 'name' und 'value' in der String-Darstellung des Wertes enthaelt
 function serialize(name, value) {
     const __STREAM = ((value !== undefined) ? safeStringify(value) : value);
 
-    __LOG[4](name + " >> " + __STREAM);
-
-    GM_setValue(name, __STREAM);
-
-    return __STREAM;
+    return storeValue(name, __STREAM);
 }
 
 // Holt einen beliebiegen (strukturierter) Wert unter einem Namen zurueck
-// name: GM_setValue-Name, unter dem die Daten gespeichert werden
+// name: GM.getValue()-Name, unter dem die Daten gespeichert wurden
 // defValue: Default-Wert fuer den Fall, dass nichts gespeichert ist
-// return Objekt, das unter dem Namen gespeichert war
+// return Promise fuer das Objekt, das unter dem Namen gespeichert war
 function deserialize(name, defValue = undefined) {
-    const __STREAM = GM_getValue(name);
+    return summonValue(name).then(stream => {
+            if (stream && stream.length) {
+                return JSON.parse(stream);
+            } else {
+                return defValue;
+            }
+        });
+}
 
-    __LOG[4](name + " << " + __STREAM);
-
-    if ((__STREAM !== undefined) && __STREAM.length) {
-        try {
-            return JSON.parse(__STREAM);
-        } catch (ex) {
-            __LOG[1](name + ": " + ex.message);
-        }
+// Setzt die Seite gemaess der Aenderungen zurueck...
+// reload: Seite wird ganz neu geladen
+function refreshPage(reload = true) {
+    if (reload) {
+        __LOG[2]("Seite wird neu geladen...");
+        window.location.reload();
     }
-
-    return defValue;
 }
 
 // Setzt eine Option dauerhaft und laedt die Seite neu
 // name: Name der Option als Speicherort
 // value: Zu setzender Wert
 // reload: Seite mit neuem Wert neu laden
+// serial: Serialization fuer komplexe Daten
+// onFulfilled: Reaktion auf Speicherung im resolve-Fall (1. Promise.then()-Parameter)
+// onRejected: Reaktion auf Speicherung im reject-Fall (2. Promise.then()-Parameter)
 // return Gespeicherter Wert fuer setOptValue()
-function setStored(name, value, reload = false, serial = false) {
-    if (serial) {
-        serialize(name, value);
-    } else {
-        GM_setValue(name, value);
-    }
-
-    if (reload) {
-        window.location.reload();
-    }
+function setStored(name, value, reload = false, serial = false, onFulfilled = undefined, onRejected = undefined) {
+    (serial ? serialize(name, value)
+            : storeValue(name, value))
+                .then(onFulfilled, onRejected)
+                .then(() => refreshPage(reload), defaultCatch);  // Ende der Kette...
 
     return value;
 }
@@ -1529,9 +1647,12 @@ function setStored(name, value, reload = false, serial = false) {
 // name: Name der Option als Speicherort
 // value: Vorher gesetzter Wert
 // reload: Seite mit neuem Wert neu laden
+// serial: Serialization fuer komplexe Daten
+// onFulfilled: Reaktion auf Speicherung im resolve-Fall (1. Promise.then()-Parameter)
+// onRejected: Reaktion auf Speicherung im reject-Fall (2. Promise.then()-Parameter)
 // return Gespeicherter Wert fuer setOptValue()
-function setNextStored(arr, name, value, reload = false, serial = false) {
-    return setStored(name, getNextValue(arr, value), reload, serial);
+function setNextStored(arr, name, value, reload = false, serial = false, onFulfilled = undefined, onRejected = undefined) {
+    return setStored(name, getNextValue(arr, value), reload, serial, onFulfilled, onRejected);
 }
 
 // Fuehrt die in einem Storage gespeicherte Operation aus
@@ -1559,7 +1680,7 @@ function getStoredCmds(memory = undefined) {
             try {
                 value = JSON.parse(value);
             } catch (ex) {
-                __LOG[1]("getStoredCmds(): " + __CMD + " '" + __KEY + "' hat illegalen Wert '" + value + "'");
+                __LOG[0]("getStoredCmds(): " + __CMD + " '" + __KEY + "' hat illegalen Wert '" + value + "'");
                 // ... meist kann man den String selber aber speichern, daher kein "return"...
             }
 
@@ -1580,11 +1701,12 @@ function getStoredCmds(memory = undefined) {
 
 // Fuehrt die in einem Storage gespeicherte Operation aus
 // storedCmds: Array von Objekten mit 'cmd' / 'key' / 'val' (siehe getStoredCmds())
-// optSet: Set mit den Optionen
+// optSet: Object mit den Optionen
 // beforeLoad: Angabe, ob nach der Speicherung noch loadOptions() aufgerufen wird
-// memory: __OPTMEM.normal = unbegrenzt gespeichert (localStorage), __OPTMEM.begrenzt = bis Browserende gespeichert (sessionStorage), __OPTMEM.inaktiv
-// return Array von Operationen (wie storedCmds), die fuer die naechste Phase uebrig bleiben
-function runStoredCmds(storedCmds, optSet = undefined, beforeLoad = undefined) {
+// onFulfilled: Reaktion auf Speicherung im resolve-Fall (1. Promise.then()-Parameter)
+// onRejected: Reaktion auf Speicherung im reject-Fall (2. Promise.then()-Parameter)
+// return Promise auf ein Array von Operationen (wie storedCmds), die fuer die naechste Phase uebrig bleiben
+async function runStoredCmds(storedCmds, optSet = undefined, beforeLoad = undefined, onFulfilled = undefined, onRejected = undefined) {
     const __BEFORELOAD = getValue(beforeLoad, true);
     const __STOREDCMDS = getValue(storedCmds, []);
     const __LOADEDCMDS = [];
@@ -1598,16 +1720,16 @@ function runStoredCmds(storedCmds, optSet = undefined, beforeLoad = undefined) {
 
         if (__BEFORELOAD) {
             if (__STOREDCMDS.length) {
-                invalidateOpts(optSet);  // alle Optionen invalidieren
+                await invalidateOpts(optSet);  // alle Optionen invalidieren
                 invalidated = true;
             }
             switch (__OPTACTION[__CMD]) {
             case __OPTACTION.SET : __LOG[4]("SET '" + __KEY + "' " + __VAL);
-                                   setStored(__KEY, __VAL, false, false);
+                                   setStored(__KEY, __VAL, false, false, onFulfilled, onRejected);
                                    break;
             case __OPTACTION.NXT : __LOG[4]("SETNEXT '" + __KEY + "' " + __VAL);
-                                   //setNextStored(__CONFIG.Choice, __KEY, __VAL, false, false);
-                                   setStored(__KEY, __VAL, false, false);
+                                   //setNextStored(__CONFIG.Choice, __KEY, __VAL, false, false, onFulfilled, onRejected);
+                                   setStored(__KEY, __VAL, false, false, onFulfilled, onRejected);
                                    break;
             case __OPTACTION.RST : __LOG[4]("RESET (delayed)");
                                    __LOADEDCMDS.push(__STORED);
@@ -1620,8 +1742,8 @@ function runStoredCmds(storedCmds, optSet = undefined, beforeLoad = undefined) {
             case __OPTACTION.NXT : __LOG[2]("SET/SETNEXT (undefined)");
                                    break;
             case __OPTACTION.RST : __LOG[4]("RESET");
-                                   resetOptions(optSet, false);
-                                   loadOptions(optSet);  // Reset auf umbenannte Optionen anwenden!
+                                   await resetOptions(optSet, false);
+                                   await loadOptions(optSet);  // Reset auf umbenannte Optionen anwenden!
                                    break;
             default :              break;
             }
@@ -1723,12 +1845,17 @@ function setOptValue(opt, value) {
 // load: Laedt die Option per loadOption(), falls noetig
 // force: Laedt auch Optionen mit 'AutoReset'-Attribut
 // return Gesetzter Wert
-function getOptValue(opt, defValue = undefined, load = true, force = false) {
+function getOptValue(opt, defValue = undefined, load = true, asyncLoad = false, force = false) {
     let value;
 
     if (opt !== undefined) {
         if (load && ! opt.Loaded) {
-            value = loadOption(opt, force);
+            if (! opt.Promise) {
+                loadOption(opt, force);
+            }
+            if (! asyncLoad) {
+                __LOG[0]("Warnung: getOptValue(" + getOptName(opt) + ") fordert zum Nachladen auf, daher nur Default-Wert!");
+            }
         } else {
             value = opt.Value;
         }
@@ -1849,10 +1976,10 @@ function getMemUsage(value = undefined, out = undefined, depth = -1, name = '$')
 
 // Restauriert den vorherigen Speicher (der in einer Option definiert ist)
 // opt: Option zur Wahl des Speichers
-// return Gesuchter Speicher oder Null-Speicher ('inaktiv')
-function restoreMemoryByOpt(opt) {
+// return Promise auf gesuchten Speicher oder Null-Speicher ('inaktiv')
+async function restoreMemoryByOpt(opt) {
     // Memory Storage fuer vorherige Speicherung...
-    const __STORAGE = getOptValue(opt, __MEMNORMAL, true, true);
+    const __STORAGE = await getOptValue(opt, __MEMNORMAL, true, true, true);
 
     return __OPTMEM[__STORAGE];
 }
@@ -1860,8 +1987,10 @@ function restoreMemoryByOpt(opt) {
 // Initialisiert den Speicher (der in einer Option definiert ist) und merkt sich diesen ggfs.
 // opt: Option zur Wahl des Speichers
 // saveOpt: Option zur Speicherung der Wahl des Speichers (fuer restoreMemoryByOpt)
+// onFulfilled: Reaktion auf Speicherung im resolve-Fall (1. Promise.then()-Parameter)
+// onRejected: Reaktion auf Speicherung im reject-Fall (2. Promise.then()-Parameter)
 // return Gesuchter Speicher oder Null-Speicher ('inaktiv'), falls speichern nicht moeglich ist
-function startMemoryByOpt(opt, saveOpt = undefined) {
+function startMemoryByOpt(opt, saveOpt = undefined, onFulfilled = undefined, onRejected = undefined) {
     // Memory Storage fuer naechste Speicherung...
     let storage = getOptValue(opt, __MEMNORMAL);
     let optMem = __OPTMEM[storage];
@@ -1874,7 +2003,7 @@ function startMemoryByOpt(opt, saveOpt = undefined) {
     }
 
     if (saveOpt !== undefined) {
-        setOpt(saveOpt, storage, false);
+        setOpt(saveOpt, storage, false, onFulfilled, onRejected);
     }
 
     return optMem;
@@ -1885,12 +2014,12 @@ function startMemoryByOpt(opt, saveOpt = undefined) {
 // ==================== Abschnitt fuer die Scriptdatenbank ====================
 
 // Initialisiert das Script-Modul und ermittelt die beschreibenden Daten
-// meta: Metadaten des Scripts (Default: GM_info.script)
+// meta: Metadaten des Scripts (Default: GM.info.script)
 // return Beschreibende Daten fuer __DBMOD
 function ScriptModule(meta) {
     'use strict';
 
-    const __META = getValue(meta, GM_info.script);
+    const __META = getValue(meta, GM.info.script);
     const __PROPS = {
                 'name'        : true,
                 'version'     : true,
@@ -1996,6 +2125,7 @@ function scriptDB(module, initValue = undefined) {
 // menuOff: Text zum Ausschalten im Menu
 // funOff: Funktion zum Ausschalten
 // keyOff: Hotkey zum Ausschalten im Menu
+// return Promise von GM.registerMenuCommand()
 function registerMenuOption(val, menuOn, funOn, keyOn, menuOff, funOff, keyOff) {
     const __ON  = (val ? '*' : "");
     const __OFF = (val ? "" : '*');
@@ -2003,9 +2133,9 @@ function registerMenuOption(val, menuOn, funOn, keyOn, menuOff, funOff, keyOff) 
     __LOG[3]("OPTION " + __ON + menuOn + __ON + " / " + __OFF + menuOff + __OFF);
 
     if (val) {
-        GM_registerMenuCommand(menuOff, funOff, keyOff);
+        return GM.registerMenuCommand(menuOff, funOff, keyOff).then(result => menuOn);
     } else {
-        GM_registerMenuCommand(menuOn, funOn, keyOn);
+        return GM.registerMenuCommand(menuOn, funOn, keyOn).then(result => menuOff);
     }
 }
 
@@ -2015,8 +2145,9 @@ function registerMenuOption(val, menuOn, funOn, keyOn, menuOff, funOff, keyOff) 
 // menu: Text zum Setzen im Menu ($ wird durch gesetzten Wert ersetzt)
 // fun: Funktion zum Setzen des naechsten Wertes
 // key: Hotkey zum Setzen des naechsten Wertes im Menu
+// return Promise von GM.registerMenuCommand()
 function registerNextMenuOption(val, arr, menu, fun, key) {
-    const __MENU = menu.replace('$', val);
+    const __MENU = substParam(menu, val);
     let options = "OPTION " + __MENU;
 
     for (let value of arr) {
@@ -2028,7 +2159,7 @@ function registerNextMenuOption(val, arr, menu, fun, key) {
     }
     __LOG[3](options);
 
-    GM_registerMenuCommand(__MENU, fun, key);
+    return GM.registerMenuCommand(__MENU, fun, key).then(result => __MENU);
 }
 
 // Zeigt den Eintrag im Menu einer Option, falls nicht hidden
@@ -2038,21 +2169,25 @@ function registerNextMenuOption(val, arr, menu, fun, key) {
 // key: Hotkey zum Setzen des naechsten Wertes im Menu
 // hidden: Angabe, ob Menupunkt nicht sichtbar sein soll (Default: sichtbar)
 // serial: Serialization fuer komplexe Daten
+// return Promise von GM.registerMenuCommand() (oder String-Version des Wertes)
 function registerDataOption(val, menu, fun, key, hidden = false, serial = true) {
     const __VALUE = ((serial && (val !== undefined)) ? safeStringify(val) : val);
-    const __MENU = getValue(menu, "").replace('$', __VALUE);
+    const __MENU = substParam(menu, __VALUE);
     const __OPTIONS = (hidden ? "HIDDEN " : "") + "OPTION " + __MENU +
                       getValue(__VALUE, "", " = " + __VALUE);
 
     __LOG[hidden ? 4 : 3](__OPTIONS);
 
-    if (! hidden) {
-        GM_registerMenuCommand(__MENU, fun, key);
+    if (hidden) {
+        return Promise.resolve(__VALUE);
+    } else {
+        return GM.registerMenuCommand(__MENU, fun, key).then(result => __MENU);
     }
 }
 
 // Zeigt den Eintrag im Menu einer Option
 // opt: Config und Value der Option
+// return Promise von GM.registerMenuCommand() (oder String-Version des Wertes)
 function registerOption(opt) {
     const __CONFIG = getOptConfig(opt);
     const __VALUE = getOptValue(opt);
@@ -2064,23 +2199,18 @@ function registerOption(opt) {
 
     if (! __CONFIG.HiddenMenu) {
         switch (__CONFIG.Type) {
-        case __OPTTYPES.MC : registerNextMenuOption(__VALUE, __CONFIG.Choice, __LABEL, __ACTION, __HOTKEY);
-                             break;
-        case __OPTTYPES.SW : registerMenuOption(__VALUE, __LABEL, __ACTION, __HOTKEY,
-                                                __CONFIG.AltLabel, __ACTION, __CONFIG.AltHotkey);
-                             break;
-        case __OPTTYPES.TF : registerMenuOption(__VALUE, __LABEL, __ACTION, __HOTKEY,
-                                                __CONFIG.AltLabel, opt.AltAction, __CONFIG.AltHotkey);
-                             break;
-        case __OPTTYPES.SD : registerDataOption(__VALUE, __LABEL, __ACTION, __HOTKEY, __HIDDEN, __SERIAL);
-                             break;
-        case __OPTTYPES.SI : registerDataOption(__VALUE, __LABEL, __ACTION, __HOTKEY, __HIDDEN, __SERIAL);
-                             break;
-        default :            break;
+        case __OPTTYPES.MC : return registerNextMenuOption(__VALUE, __CONFIG.Choice, __LABEL, __ACTION, __HOTKEY);
+        case __OPTTYPES.SW : return registerMenuOption(__VALUE, __LABEL, __ACTION, __HOTKEY,
+                                                       __CONFIG.AltLabel, __ACTION, __CONFIG.AltHotkey);
+        case __OPTTYPES.TF : return registerMenuOption(__VALUE, __LABEL, __ACTION, __HOTKEY,
+                                                       __CONFIG.AltLabel, opt.AltAction, __CONFIG.AltHotkey);
+        case __OPTTYPES.SD : return registerDataOption(__VALUE, __LABEL, __ACTION, __HOTKEY, __HIDDEN, __SERIAL);
+        case __OPTTYPES.SI : return registerDataOption(__VALUE, __LABEL, __ACTION, __HOTKEY, __HIDDEN, __SERIAL);
+        default :            return Promise.resolve(__VALUE);
         }
     } else {
         // Nur Anzeige im Log...
-        registerDataOption(__VALUE, __LABEL, __ACTION, __HOTKEY, __HIDDEN, __SERIAL);
+        return registerDataOption(__VALUE, __LABEL, __ACTION, __HOTKEY, __HIDDEN, __SERIAL);
     }
 }
 
@@ -2132,16 +2262,18 @@ function initOptAction(optAction, item = undefined, optSet = undefined, optConfi
 
         switch (optAction) {
         case __OPTACTION.SET : fun = function() {
-                                       return setOptByName(optSet, item, __CONFIG.SetValue, __RELOAD);
+                                       return setOptByName(optSet, item, __CONFIG.SetValue, __RELOAD).catch(defaultCatch);
                                    };
                                break;
         case __OPTACTION.NXT : fun = function() {
                                        return promptNextOptByName(optSet, item, __CONFIG.SetValue, __RELOAD,
-                                                  __CONFIG.FreeValue, __CONFIG.SelValue, __CONFIG.MinChoice);
+                                                  __CONFIG.FreeValue, __CONFIG.SelValue, __CONFIG.MinChoice).catch(defaultCatch);
                                    };
                                break;
         case __OPTACTION.RST : fun = function() {
-                                       return resetOptions(optSet, __RELOAD);
+                                       return resetOptions(optSet, __RELOAD).then(
+                                               result => __LOG[3]("RESETTING (" + result + ")..."),
+                                               defaultCatch);
                                    };
                                break;
         default :              break;
@@ -2196,7 +2328,7 @@ function getSharedConfig(optConfig, item = undefined) {
             config = { };  // Neu aufbauen...
             addProps(config, getOptConfig(__REF));
             addProps(config, optConfig);
-            config.setConst('SharedData', getOptValue(__REF));
+            config.setConst('SharedData', getOptValue(__REF), false);   // Wert muss schon da sein, NICHT nachladen, sonst ggfs. Promise
         } else {  // __OBJREF enthaelt die Daten selbst
             if (! config.Name) {
                 config.Name = __OBJREF.getPath();
@@ -2230,12 +2362,14 @@ function initOptions(optConfig, optSet = undefined, preInit = undefined) {
             const __ALTACTION = getValue(__CONFIG.AltAction, __CONFIG.Action);
             // Gab es vorher einen Aufruf, der einen Stub-Eintrag erzeugt hat, und wurden Daten geladen?
             const __LOADED = ((preInit === false) && optSet[opt].Loaded);
+            const __PROMISE = ((__LOADED || ! optSet[opt]) ? undefined : optSet[opt].Promise);
             const __VALUE = (__LOADED ? optSet[opt].Value : undefined);
 
             optSet[opt] = {
                 'Item'      : opt,
                 'Config'    : __CONFIG,
                 'Loaded'    : (__ISSHARED || __LOADED),
+                'Promise'   : __PROMISE,
                 'Value'     : initOptValue(__CONFIG, __VALUE),
                 'SetValue'  : __CONFIG.SetValue,
                 'ReadOnly'  : (__ISSHARED || __CONFIG.ReadOnly),
@@ -2247,6 +2381,7 @@ function initOptions(optConfig, optSet = undefined, preInit = undefined) {
                 'Item'      : opt,
                 'Config'    : __OPTCONFIG,
                 'Loaded'    : false,
+                'Promise'   : undefined,
                 'Value'     : initOptValue(__OPTCONFIG),
                 'ReadOnly'  : (__ISSHARED || __OPTCONFIG.ReadOnly)
             };
@@ -2279,21 +2414,21 @@ function initOptions(optConfig, optSet = undefined, preInit = undefined) {
 // Initialisiert die gesetzten Optionen und den Speicher und laedt die Optionen zum Start
 // optConfig: Konfiguration der Optionen
 // optSet: Platz fuer die gesetzten Optionen
-// return Gefuelltes Objekt mit den gesetzten Optionen
-function startOptions(optConfig, optSet = undefined, classification = undefined) {
+// return Promise auf gefuelltes Objekt mit den gesetzten Optionen
+async function startOptions(optConfig, optSet = undefined, classification = undefined) {
     optSet = initOptions(optConfig, optSet, true);  // PreInit
 
     // Memory Storage fuer vorherige Speicherung...
-    myOptMemSize = getMemSize(myOptMem = restoreMemoryByOpt(optSet.oldStorage));
+    myOptMemSize = getMemSize(myOptMem = await restoreMemoryByOpt(optSet.oldStorage));
 
     // Zwischengespeicherte Befehle auslesen...
     const __STOREDCMDS = getStoredCmds(myOptMem);
 
     // ... ermittelte Befehle ausfuehren...
-    const __LOADEDCMDS = runStoredCmds(__STOREDCMDS, optSet, true);  // BeforeLoad
+    const __LOADEDCMDS = await runStoredCmds(__STOREDCMDS, optSet, true);  // BeforeLoad
 
     // Bisher noch nicht geladenene Optionen laden...
-    loadOptions(optSet);
+    await loadOptions(optSet);
 
     // Memory Storage fuer naechste Speicherung...
     myOptMemSize = getMemSize(myOptMem = startMemoryByOpt(optSet.storage, optSet.oldStorage));
@@ -2305,11 +2440,11 @@ function startOptions(optConfig, optSet = undefined, classification = undefined)
 
     if (classification !== undefined) {
         // Umbenennungen durchfuehren...
-        classification.renameOptions();
+        await classification.renameOptions();
     }
 
     // ... ermittelte Befehle ausfuehren...
-    runStoredCmds(__LOADEDCMDS, optSet, false);  // Rest
+    await runStoredCmds(__LOADEDCMDS, optSet, false);  // Rest
 
     // Als globale Daten speichern...
     updateScriptDB(optSet);
@@ -2326,14 +2461,17 @@ function startOptions(optConfig, optSet = undefined, classification = undefined)
 // 'hideForm': Checkliste der auf der Seite unsichtbaren Optionen (true fuer unsichtbar)
 // 'formWidth': Anzahl der Elemente pro Zeile
 // 'formBreak': Elementnummer des ersten Zeilenumbruchs
+// return Liefert die gesetzten Optionen zurueck
 function showOptions(optSet = undefined, optParams = { 'hideMenu' : false }) {
     if (! optParams.hideMenu) {
-        buildMenu(optSet);
+        buildMenu(optSet).then(() => __LOG[3]("Menu OK"));
     }
 
     if ((optParams.menuAnchor !== undefined) && (myOptMem !== __OPTMEMINAKTIVE)) {
         buildForm(optParams.menuAnchor, optSet, optParams);
     }
+
+    return optSet;
 }
 
 // Setzt eine Option auf einen vorgegebenen Wert
@@ -2341,9 +2479,11 @@ function showOptions(optSet = undefined, optParams = { 'hideMenu' : false }) {
 // opt: Config und vorheriger Value der Option
 // value: (Bei allen Typen) Zu setzender Wert
 // reload: Seite mit neuem Wert neu laden
+// onFulfilled: Reaktion auf Speicherung im resolve-Fall (1. Promise.then()-Parameter)
+// onRejected: Reaktion auf Speicherung im reject-Fall (2. Promise.then()-Parameter)
 // return Gesetzter Wert
-function setOpt(opt, value, reload = false) {
-    return setOptValue(opt, setStored(getOptName(opt), value, reload, getOptConfig(opt).Serial));
+function setOpt(opt, value, reload = false, onFulfilled = undefined, onRejected = undefined) {
+    return setOptValue(opt, setStored(getOptName(opt), value, reload, getOptConfig(opt).Serial, onFulfilled, onRejected));
 }
 
 // Ermittelt die naechste moegliche Option
@@ -2370,9 +2510,11 @@ function getNextOpt(opt, value = undefined) {
 // opt: Config und Value der Option
 // value: Default fuer ggfs. zu setzenden Wert
 // reload: Seite mit neuem Wert neu laden
+// onFulfilled: Reaktion auf Speicherung im resolve-Fall (1. Promise.then()-Parameter)
+// onRejected: Reaktion auf Speicherung im reject-Fall (2. Promise.then()-Parameter)
 // return Gesetzter Wert
-function setNextOpt(opt, value = undefined, reload = false) {
-    return setOpt(opt, getNextOpt(opt, value), reload);
+function setNextOpt(opt, value = undefined, reload = false, onFulfilled = undefined, onRejected = undefined) {
+    return setOpt(opt, getNextOpt(opt, value), reload, onFulfilled, onRejected);
 }
 
 // Setzt die naechste moegliche Option oder fragt ab einer gewissen Anzahl interaktiv ab
@@ -2381,13 +2523,15 @@ function setNextOpt(opt, value = undefined, reload = false) {
 // reload: Seite mit neuem Wert neu laden
 // freeValue: Angabe, ob Freitext zugelassen ist (Default: false)
 // minChoice: Ab wievielen Auswahlmoeglichkeiten soll abgefragt werden? (Default: 3)
+// onFulfilled: Reaktion auf Speicherung im resolve-Fall (1. Promise.then()-Parameter)
+// onRejected: Reaktion auf Speicherung im reject-Fall (2. Promise.then()-Parameter)
 // return Gesetzter Wert
-function promptNextOpt(opt, value = undefined, reload = false, freeValue = false, selValue = true, minChoice = 3) {
+function promptNextOpt(opt, value = undefined, reload = false, freeValue = false, selValue = true, minChoice = 3, onFulfilled = undefined, onRejected = undefined) {
     const __CONFIG = getOptConfig(opt);
     const __CHOICE = __CONFIG.Choice;
 
     if (value || (! __CHOICE) || (__CHOICE.length < minChoice)) {
-        return setNextOpt(opt, value, reload);
+        return setNextOpt(opt, value, reload, onFulfilled, onRejected);
     }
 
     const __VALUE = getOptValue(opt, value);
@@ -2422,16 +2566,16 @@ function promptNextOpt(opt, value = undefined, reload = false, freeValue = false
 
             if (nextVal !== __VALUE) {
                 if (nextVal) {
-                    return setOpt(opt, nextVal, reload);
+                    return setOpt(opt, nextVal, reload, onFulfilled, onRejected);
                 }
 
-                const __LABEL = __CONFIG.Label.replace('$', __VALUE);
+                const __LABEL = substParam(__CONFIG.Label, __VALUE);
 
                 showAlert(__LABEL, "Ung\xFCltige Eingabe: " + __ANSWER);
             }
         }
     } catch (ex) {
-        __LOG[1]("promptNextOpt: " + ex.message);
+        __LOG[0]("promptNextOpt: " + ex.message);
     }
 
     return __VALUE;
@@ -2443,11 +2587,13 @@ function promptNextOpt(opt, value = undefined, reload = false, freeValue = false
 // item: Key der Option
 // value: (Bei allen Typen) Zu setzender Wert
 // reload: Seite mit neuem Wert neu laden
+// onFulfilled: Reaktion auf Speicherung im resolve-Fall (1. Promise.then()-Parameter)
+// onRejected: Reaktion auf Speicherung im reject-Fall (2. Promise.then()-Parameter)
 // return Gesetzter Wert
-function setOptByName(optSet, item, value, reload = false) {
+function setOptByName(optSet, item, value, reload = false, onFulfilled = undefined, onRejected = undefined) {
     const __OPT = getOptByName(optSet, item);
 
-    return setOpt(__OPT, value, reload);
+    return setOpt(__OPT, value, reload, onFulfilled, onRejected);
 }
 
 // Ermittelt die naechste moegliche Option (Version mit Key)
@@ -2466,11 +2612,13 @@ function getNextOptByName(optSet, item, value = undefined) {
 // item: Key der Option
 // value: Default fuer ggfs. zu setzenden Wert
 // reload: Seite mit neuem Wert neu laden
+// onFulfilled: Reaktion auf Speicherung im resolve-Fall (1. Promise.then()-Parameter)
+// onRejected: Reaktion auf Speicherung im reject-Fall (2. Promise.then()-Parameter)
 // return Gesetzter Wert
-function setNextOptByName(optSet, item, value = undefined, reload = false) {
+function setNextOptByName(optSet, item, value = undefined, reload = false, onFulfilled = undefined, onRejected = undefined) {
     const __OPT = getOptByName(optSet, item);
 
-    return setNextOpt(__OPT, value, reload);
+    return setNextOpt(__OPT, value, reload, onFulfilled, onRejected);
 }
 
 // Setzt die naechste moegliche Option oder fragt ab einer gewissen Anzahl interaktiv ab (Version mit Key)
@@ -2480,49 +2628,59 @@ function setNextOptByName(optSet, item, value = undefined, reload = false) {
 // reload: Seite mit neuem Wert neu laden
 // freeValue: Angabe, ob Freitext zugelassen ist (Default: false)
 // minChoice: Ab wievielen Auswahlmoeglichkeiten soll abgefragt werden? (Default: 3)
+// onFulfilled: Reaktion auf Speicherung im resolve-Fall (1. Promise.then()-Parameter)
+// onRejected: Reaktion auf Speicherung im reject-Fall (2. Promise.then()-Parameter)
 // return Gesetzter Wert
-function promptNextOptByName(optSet, item, value = undefined, reload = false, freeValue = false, selValue = true, minChoice = 3) {
+function promptNextOptByName(optSet, item, value = undefined, reload = false, freeValue = false, selValue = true, minChoice = 3, onFulfilled = undefined, onRejected = undefined) {
     const __OPT = getOptByName(optSet, item);
 
-    return promptNextOpt(__OPT, value, reload, freeValue, selValue, minChoice);
+    return promptNextOpt(__OPT, value, reload, freeValue, selValue, minChoice, onFulfilled, onRejected);
 }
 
-// Baut das Benutzermenu auf
+// Baut das Benutzermenu auf (asynchron im Hintergrund)
 // optSet: Gesetzte Optionen
-function buildMenu(optSet) {
+// return Promise auf void
+async function buildMenu(optSet) {
     __LOG[3]("buildMenu()");
 
     for (let opt in optSet) {
-        registerOption(optSet[opt]);
+        await registerOption(optSet[opt]).then(
+                result => __LOG[6](`REGISTEROPTION[${opt}] = ${result}`),
+                defaultCatch);
     }
 }
 
 // Invalidiert eine (ueber Menu) gesetzte Option
 // opt: Zu invalidierende Option
 // force: Invalidiert auch Optionen mit 'AutoReset'-Attribut
+// return Promise auf resultierenden Wert
 function invalidateOpt(opt, force = false) {
-    if (opt.Loaded && ! opt.ReadOnly) {
-        const __CONFIG = getOptConfig(opt);
+    return Promise.resolve(opt.Promise).then(value => {
+            if (opt.Loaded && ! opt.ReadOnly) {
+                const __CONFIG = getOptConfig(opt);
 
-        // Wert "ungeladen"...
-        opt.Loaded = (force || ! __CONFIG.AutoReset);
+                // Wert "ungeladen"...
+                opt.Loaded = (force || ! __CONFIG.AutoReset);
 
-        if (opt.Loaded && __CONFIG.AutoReset) {
-            // Nur zuruecksetzen, gilt als geladen...
-            setOptValue(opt, initOptValue(__CONFIG));
-        }
-    }
+                if (opt.Loaded && __CONFIG.AutoReset) {
+                    // Nur zuruecksetzen, gilt als geladen...
+                    setOptValue(opt, initOptValue(__CONFIG));
+                }
+            }
+
+            return getOptValue(opt);
+        }, defaultCatch);
 }
 
 // Invalidiert die (ueber Menu) gesetzten Optionen
-// optSet: Set mit den Optionen
+// optSet: Object mit den Optionen
 // force: Invalidiert auch Optionen mit 'AutoReset'-Attribut
-// return Set mit den geladenen Optionen
-function invalidateOpts(optSet, force = false) {
+// return Promise auf Object mit den geladenen Optionen
+async function invalidateOpts(optSet, force = false) {
     for (let opt in optSet) {
         const __OPT = optSet[opt];
 
-        invalidateOpt(__OPT, force);
+        await invalidateOpt(__OPT, force);
     }
 
     return optSet;
@@ -2531,57 +2689,86 @@ function invalidateOpts(optSet, force = false) {
 // Laedt eine (ueber Menu) gesetzte Option
 // opt: Zu ladende Option
 // force: Laedt auch Optionen mit 'AutoReset'-Attribut
-// return Gesetzter Wert der gelandenen Option
+// return Promise auf gesetzten Wert der gelandenen Option
 function loadOption(opt, force = false) {
-    const __CONFIG = getOptConfig(opt);
-    const __ISSHARED = getValue(__CONFIG.Shared, false, true);
-    const __NAME = getOptName(opt);
-    const __DEFAULT = getOptValue(opt, undefined, false, false);
-    let value;
+    if (! opt.Promise) {
+        const __CONFIG = getOptConfig(opt);
+        const __ISSHARED = getValue(__CONFIG.Shared, false, true);
+        const __NAME = getOptName(opt);
+        const __DEFAULT = getOptValue(opt, undefined, false, false, false);
+        let value;
 
-    if (opt.Loaded && ! __ISSHARED) {
-        __LOG[1]("Error: Oprion '" + __NAME + "' bereits geladen!");
+        if (opt.Loaded && ! __ISSHARED) {
+            const __ERROR = "Error: Oprion '" + __NAME + "' bereits geladen!";
+
+            __LOG[0](__MESSAGE);
+
+            return Promise.reject(__MESSAGE);
+        }
+
+        if (opt.ReadOnly || __ISSHARED) {
+            value = __DEFAULT;
+        } else if (! force && __CONFIG.AutoReset) {
+            value = initOptValue(__CONFIG);
+        } else {
+            value = (__CONFIG.Serial ?
+                            deserialize(__NAME, __DEFAULT) :
+                            GM.getValue(__NAME, __DEFAULT));
+        }
+
+        opt.Promise = Promise.resolve(value).then(value => {
+                // Paranoide Sicherheitsabfrage (das sollte nie passieren!)...
+                if (opt.Loaded || ! opt.Promise) {
+                    showAlert("Error", "Unerwarteter Widerspruch zwischen opt.Loaded und opt.Promise", safeStringify(opt));
+                }
+                __LOG[5]("LOAD " + __NAME + ": " + __LOG.changed(__DEFAULT, value));
+
+                // Wert intern setzen...
+                const __VAL = setOptValue(opt, value);
+
+                // Wert als geladen markieren...
+                opt.Promise = undefined;
+                opt.Loaded = true;
+
+                return __VAL;
+            }, defaultCatch);
     }
 
-    if (opt.ReadOnly || __ISSHARED) {
-        value = __DEFAULT;
-    } else if (! force && __CONFIG.AutoReset) {
-        value = initOptValue(__CONFIG);
-    } else {
-        value = (__CONFIG.Serial ?
-                        deserialize(__NAME, __DEFAULT) :
-                        GM_getValue(__NAME, __DEFAULT));
-    }
-
-    __LOG[5]("LOAD " + __NAME + ": " + __LOG.changed(__DEFAULT, value));
-
-    // Wert als geladen markieren...
-    opt.Loaded = true;
-
-    // Wert intern setzen...
-    return setOptValue(opt, value);
+    return opt.Promise;
 }
 
 // Laedt die (ueber Menu) gesetzten Optionen
-// optSet: Set mit den Optionen
+// optSet: Object mit den Optionen
 // force: Laedt auch Optionen mit 'AutoReset'-Attribut
-// return Set mit den geladenen Optionen
+// return Array mit Promises neuer Ladevorgaenge (fuer Objekte mit 'name' und 'value')
 function loadOptions(optSet, force = false) {
+    const __PROMISES = [];
+
     for (let opt in optSet) {
         const __OPT = optSet[opt];
 
         if (! __OPT.Loaded) {
-            loadOption(__OPT, force);
+            const __PROMISE = loadOption(__OPT, force).then(value => {
+                    __LOG[5]("LOADED " + opt + " << " + value);
+
+                    return Promise.resolve({
+                            'name'  : opt,
+                            'value' : value
+                        });
+                }, defaultCatch);
+
+            __PROMISES.push(__PROMISE);
         }
     }
 
-    return optSet;
+    return Promise.all(__PROMISES);
 }
 
 // Entfernt eine (ueber Menu) gesetzte Option (falls nicht 'Permanent')
 // opt: Gesetzte Option
 // force: Entfernt auch Optionen mit 'Permanent'-Attribut
 // reset: Setzt bei Erfolg auf Initialwert der Option (auch fuer nicht 'AutoReset')
+// return Promise von GM.deleteValue() (oder void)
 function deleteOption(opt, force = false, reset = true) {
     const __CONFIG = getOptConfig(opt);
 
@@ -2590,12 +2777,14 @@ function deleteOption(opt, force = false, reset = true) {
 
         __LOG[4]("DELETE " + __NAME);
 
-        GM_deleteValue(__NAME);
-
-        if (reset || __CONFIG.AutoReset) {
-            setOptValue(opt, initOptValue(__CONFIG));
-        }
+        return GM.deleteValue(__NAME).then(voidValue => {
+                if (reset || __CONFIG.AutoReset) {
+                    setOptValue(opt, initOptValue(__CONFIG));
+                }
+            }, defaultCatch);
     }
+
+    return Promise.resolve();
 }
 
 // Entfernt die (ueber Menu) gesetzten Optionen (falls nicht 'Permanent')
@@ -2603,15 +2792,18 @@ function deleteOption(opt, force = false, reset = true) {
 // optSelect: Liste von ausgewaehlten Optionen, true = entfernen, false = nicht entfernen
 // force: Entfernt auch Optionen mit 'Permanent'-Attribut
 // reset: Setzt bei Erfolg auf Initialwert der Option
-function deleteOptions(optSet, optSelect = undefined, force = false, reset = true) {
+// return Promise auf diesen Vorgang
+async function deleteOptions(optSet, optSelect = undefined, force = false, reset = true) {
     const __DELETEALL = ((optSelect === undefined) || (optSelect === true));
     const __OPTSELECT = getValue(optSelect, { });
 
     for (let opt in optSet) {
         if (getValue(__OPTSELECT[opt], __DELETEALL)) {
-            deleteOption(optSet[opt], force, reset);
+            await deleteOption(optSet[opt], force, reset);
         }
     }
+
+    return Promise.resolve();
 }
 
 // Benennt eine Option um und laedt sie ggfs. nach
@@ -2619,25 +2811,25 @@ function deleteOptions(optSet, optSelect = undefined, force = false, reset = tru
 // name: Neu zu setzender Name (Speicheradresse)
 // reload: Wert nachladen statt beizubehalten
 // force: Laedt auch Optionen mit 'AutoReset'-Attribut
-// return Umbenannte Option
-function renameOption(opt, name, reload = false, force = false) {
+// return Promise auf umbenannte Option
+async function renameOption(opt, name, reload = false, force = false) {
     const __NAME = getOptName(opt);
 
     if (__NAME !== name) {
-        deleteOption(opt, true, ! reload);
+        await deleteOption(opt, true, ! reload);
 
         setOptName(opt, name);
 
-        invalidateOpt(opt, opt.Loaded);
+        await invalidateOpt(opt, opt.Loaded);
 
         if (reload) {
             opt.Loaded = false;
 
-            loadOption(opt, force);
+            await loadOption(opt, force);
         }
     }
 
-    return opt;
+    return Promise.resolve(opt);
 }
 
 // Ermittelt einen neuen Namen mit einem Prefix. Parameter fuer renameOptions()
@@ -2665,16 +2857,17 @@ function postfixName(name, postfix) {
 // renameFun: function(name, param) zur Ermittlung des neuen Namens
 // - name: Neu zu setzender Name (Speicheradresse)
 // - param: Parameter "renameParam" von oben, z.B. Prefix oder Postfix
-function renameOptions(optSet, optSelect, renameParam = undefined, renameFun = prefixName) {
+// return Promise auf diesen Vorgang
+async function renameOptions(optSet, optSelect, renameParam = undefined, renameFun = prefixName) {
     if (renameFun === undefined) {
-        __LOG[1]("RENAME: Illegale Funktion!");
+        __LOG[0]("RENAME: Illegale Funktion!");
     }
     for (let opt in optSelect) {
         const __OPTPARAMS = optSelect[opt];
         const __OPT = optSet[opt];
 
         if (__OPT === undefined) {
-            __LOG[1]("RENAME: Option '" + opt + "' nicht gefunden!");
+            __LOG[0]("RENAME: Option '" + opt + "' nicht gefunden!");
         } else {
             const __NAME = getOptName(__OPT);
             const __NEWNAME = renameFun(__NAME, renameParam);
@@ -2684,7 +2877,7 @@ function renameOptions(optSet, optSelect, renameParam = undefined, renameFun = p
             // Laedt auch Optionen mit 'AutoReset'-Attribut?
             const __FORCE = (__ISSCALAR ? true : __OPTPARAMS.force);
 
-            renameOption(__OPT, __NEWNAME, __RELOAD, __FORCE);
+            await renameOption(__OPT, __NEWNAME, __RELOAD, __FORCE);
         }
     }
 }
@@ -2692,14 +2885,13 @@ function renameOptions(optSet, optSelect, renameParam = undefined, renameFun = p
 // Setzt die Optionen in optSet auf die "Werkseinstellungen" des Skripts
 // optSet: Gesetzte Optionen
 // reload: Seite mit "Werkseinstellungen" neu laden
-function resetOptions(optSet, reload = true) {
+// return Promise auf diesen Vorgang
+async function resetOptions(optSet, reload = true) {
     // Alle (nicht 'Permanent') gesetzten Optionen entfernen...
-    deleteOptions(optSet, true, false, ! reload);
+    await deleteOptions(optSet, true, false, ! reload);
 
-    if (reload) {
-        // ... und Seite neu laden (mit "Werkseinstellungen")...
-        window.location.reload();
-    }
+    // ... und ggfs. Seite neu laden (mit "Werkseinstellungen")...
+    refreshPage(reload);
 }
 
 // ==================== Abschnitt fuer diverse Utilities ====================
@@ -2709,11 +2901,11 @@ function resetOptions(optSet, reload = true) {
 // props: Map von name:value-Paaren
 // type: Typ der Input-Felder (Default: unsichtbare Daten)
 // return Ergaenztes Form-Konstrukt
-function addInputField(form, props, type = "hidden") {
+function addInputField(form, props, type = 'hidden') {
     for (let fieldName in props) {
         let field = form[fieldName];
         if (! field) {
-            field = document.createElement("input");
+            field = document.createElement('input');
             field.type = type;
             field.name = fieldName;
             form.appendChild(field);
@@ -2729,7 +2921,7 @@ function addInputField(form, props, type = "hidden") {
 // props: Map von name:value-Paaren
 // return Ergaenztes Form-Konstrukt
 function addHiddenField(form, props) {
-    return addInputField(form, props, "hidden");
+    return addInputField(form, props, 'hidden');
 }
 
 // Hilfsfunktion fuer alle Browser: Fuegt fuer ein Event eine Reaktion ein
@@ -2742,9 +2934,9 @@ function addEvent(obj, type, callback, capture = false) {
     if (obj.addEventListener) {
         return obj.addEventListener(type, callback, capture);
     } else if (obj.attachEvent) {
-        return obj.attachEvent("on" + type, callback);
+        return obj.attachEvent('on' + type, callback);
     } else {
-        __LOG[1]("Could not add " + type + " event:");
+        __LOG[0]("Could not add " + type + " event:");
         __LOG[2](callback);
 
         return false;
@@ -2761,9 +2953,9 @@ function removeEvent(obj, type, callback, capture = false) {
     if (obj.removeEventListener) {
         return obj.removeEventListener(type, callback, capture);
     } else if (obj.detachEvent) {
-        return obj.detachEvent("on" + type, callback);
+        return obj.detachEvent('on' + type, callback);
     } else {
-        __LOG[1]("Could not remove " + type + " event:");
+        __LOG[0]("Could not remove " + type + " event:");
         __LOG[2](callback);
 
         return false;
@@ -2811,7 +3003,7 @@ function getElement(name, index = 0, doc = document) {
 // tag: Tag des Elements ("table")
 // doc: Dokument (document)
 // return Gesuchtes Element oder undefined (falls nicht gefunden)
-function getTable(index, tag = "table", doc = document) {
+function getTable(index, tag = 'table', doc = document) {
     const __TAGS = doc.getElementsByTagName(tag);
     const __TABLE = (__TAGS ? __TAGS[index] : undefined);
 
@@ -2835,7 +3027,7 @@ function getElementRows(name, index = 0, doc = document) {
 // doc: Dokument (document)
 // return Gesuchte Zeilen oder undefined (falls nicht gefunden)
 function getRows(index, doc = document) {
-    const __TABLE = getTable(index, "table", doc);
+    const __TABLE = getTable(index, 'table', doc);
     const __ROWS = (__TABLE ? __TABLE.rows : undefined);
 
     return __ROWS;
@@ -2878,7 +3070,7 @@ function getFormAction(opt, isAlt = false, value = undefined, serial = undefined
                           };
         const __CONFIG = getOptConfig(opt);
         const __SERIAL = getValue(serial, getValue(__CONFIG.Serial, false));
-        const __THISVAL = ((__CONFIG.ValType === "String") ? "'\\x22' + this.value + '\\x22'" : "this.value");
+        const __THISVAL = ((__CONFIG.ValType === 'String') ? "'\\x22' + this.value + '\\x22'" : "this.value");
         const __TVALUE = getValue(__CONFIG.ValType, __THISVAL, "new " + __CONFIG.ValType + '(' + __THISVAL + ')');
         const __VALSTR = ((value !== undefined) ? safeStringify(value) : __SERIAL ? "JSON.stringify(" + __TVALUE + ')' : __TVALUE);
         const __ACTION = (isAlt ? getValue(__CONFIG.AltAction, __CONFIG.Action) : __CONFIG.Action);
@@ -2907,10 +3099,54 @@ function getFormAction(opt, isAlt = false, value = undefined, serial = undefined
 // serial: Serialization fuer String-Werte (Select, Textarea)
 // memory: __OPTMEM.normal = unbegrenzt gespeichert (localStorage), __OPTMEM.begrenzt = bis Browserende gespeichert (sessionStorage), __OPTMEM.inaktiv
 // return String mit dem (reinen) Funktionsaufruf
-function getFormActionEvent(opt, isAlt = false, value = undefined, type = "click", serial = undefined, memory = undefined) {
+function getFormActionEvent(opt, isAlt = false, value = undefined, type = 'click', serial = undefined, memory = undefined) {
     const __ACTION = getFormAction(opt, isAlt, value, serial, memory);
 
     return getValue(__ACTION, "", ' on' + type + '="' + __ACTION + '"');
+}
+
+// Hilfsfunktion: Wendet eine Konvertierung auf jede "Zeile" innerhalb eines Textes an
+// text: Urspruenglicher Text
+// convFun: function(line, index, arr): Konvertiert line in "Zeile" line des Arrays arr
+// separator: Zeilentrenner im Text (Default: '\n')
+// thisArg: optionaler this-Parameter fuer die Konvertierung
+// limit: optionale Begrenzung der Zeilen
+// return String mit dem neuen Text
+function eachLine(text, convFun, separator = '\n', thisArg = undefined, limit = undefined) {
+    const __ARR = text.split(separator, limit);
+    const __RES = __ARR.map(convFun, thisArg);
+
+    return __RES.join(separator);
+}
+
+// Hilfsfunktion: Ergaenzt einen HTML-Code um einen Titel (ToolTip)
+// html: Urspruenglicher HTML-Code (z.B. ein HTML-Element oder Text)
+// title: Im ToolTip angezeigter Text
+// separator: Zeilentrenner im Text (Default: '|')
+// limit: optionale Begrenzung der Zeilen
+// return String mit dem neuen HTML-Code
+function withTitle(html, title, separator = '|', limit = undefined) {
+    if (title && title.length) {
+        return eachLine(html, line => '<abbr title="' + title + '">' + line + '</abbr>', separator, undefined, limit);
+    } else {
+        return html;
+    }
+}
+
+// Hilfsfunktion: Ermittelt einen Label- oder FormLabel-Eintrag (Default)
+// label: Config-Eintrag fuer Label oder FormLabel
+// defLabel: Ersatzwert, falls label nicht angegeben
+// isSelect: Angabe, ob ein Parameter angezeigt wird (Default: false)
+// isForm: Angabe, ob ein FormLabel gesucht ist (Default: true)
+// return Vollstaendiger Label- oder FormLabel-Eintrag
+function formatLabel(label, defLabel = undefined, isSelect = false, isForm = true) {
+    const __LABEL = getValue(label, defLabel);
+
+    if (isSelect && __LABEL && (substParam(__LABEL, '_') === __LABEL)) {
+        return __LABEL + (isForm ? "|$" : " $");
+    } else {
+        return __LABEL;
+    }
 }
 
 // Zeigt eine Option auf der Seite als Auswahlbox an
@@ -2920,8 +3156,9 @@ function getOptionSelect(opt) {
     const __CONFIG = getOptConfig(opt);
     const __NAME = getOptName(opt);
     const __VALUE = getOptValue(opt);
-    const __ACTION = getFormActionEvent(opt, false, undefined, "change", undefined);
-    const __FORMLABEL = getValue(__CONFIG.FormLabel, __CONFIG.Label);
+    const __ACTION = getFormActionEvent(opt, false, undefined, 'change', undefined);
+    const __FORMLABEL = formatLabel(__CONFIG.FormLabel, __CONFIG.Label, true);
+    const __TITLE = substParam(getValue(__CONFIG.Title, __CONFIG.Label), __VALUE);
     const __LABEL = '<label for="' + __NAME + '">' + __FORMLABEL + '</label>';
     let element = '<select name="' + __NAME + '" id="' + __NAME + '"' + __ACTION + '>';
 
@@ -2935,7 +3172,7 @@ function getOptionSelect(opt) {
     }
     element += '\n</select>';
 
-    return __LABEL.replace('$', element);
+    return withTitle(substParam(__LABEL, element), __TITLE);
 }
 
 // Zeigt eine Option auf der Seite als Radiobutton an
@@ -2945,8 +3182,12 @@ function getOptionRadio(opt) {
     const __CONFIG = getOptConfig(opt);
     const __NAME = getOptName(opt);
     const __VALUE = getOptValue(opt, false);
-    const __ACTION = getFormActionEvent(opt, false, true, "click", false);
-    const __ALTACTION = getFormActionEvent(opt, true, false, "click", false);
+    const __ACTION = getFormActionEvent(opt, false, true, 'click', false);
+    const __ALTACTION = getFormActionEvent(opt, true, false, 'click', false);
+    const __FORMLABEL = formatLabel(__CONFIG.FormLabel); // nur nutzen, falls angegeben
+    const __TITLE = getValue(__CONFIG.Title, '$');
+    const __TITLEON = substParam(__TITLE, __CONFIG.Label);
+    const __TITLEOFF = substParam(getValue(__CONFIG.AltTitle, __TITLE), __CONFIG.AltLabel);
     const __ELEMENTON  = '<input type="radio" name="' + __NAME +
                          '" id="' + __NAME + 'ON" value="1"' +
                          (__VALUE ? ' CHECKED' : __ACTION) +
@@ -2957,8 +3198,13 @@ function getOptionRadio(opt) {
                          (__VALUE ? __ALTACTION : ' CHECKED') +
                          ' /><label for="' + __NAME + 'OFF">' +
                          __CONFIG.AltLabel + '</label>';
+    const __ELEMENT = [
+                          withTitle(__FORMLABEL, __VALUE ? __TITLEON : __TITLEOFF),
+                          withTitle(__ELEMENTON, __TITLEON),
+                          withTitle(__ELEMENTOFF, __TITLEOFF)
+                      ];
 
-    return [ __ELEMENTON, __ELEMENTOFF ];
+    return ((__FORMLABEL && __FORMLABEL.length) ? __ELEMENT : __ELEMENT.slice(1, 3));
 }
 
 // Zeigt eine Option auf der Seite als Checkbox an
@@ -2968,13 +3214,15 @@ function getOptionCheckbox(opt) {
     const __CONFIG = getOptConfig(opt);
     const __NAME = getOptName(opt);
     const __VALUE = getOptValue(opt, false);
-    const __ACTION = getFormActionEvent(opt, __VALUE, ! __VALUE, "click", false);
-    const __FORMLABEL = getValue(__CONFIG.FormLabel, __CONFIG.Label);
+    const __ACTION = getFormActionEvent(opt, __VALUE, ! __VALUE, 'click', false);
+    const __VALUELABEL = (__VALUE ? __CONFIG.Label : getValue(__CONFIG.AltLabel, __CONFIG.Label));
+    const __FORMLABEL = formatLabel(__CONFIG.FormLabel, __CONFIG.Label);
+    const __TITLE = substParam(getValue(__VALUE ? __CONFIG.Title : getValue(__CONFIG.AltTitle, __CONFIG.Title), '$'), __VALUELABEL);
 
-    return '<input type="checkbox" name="' + __NAME +
-           '" id="' + __NAME + '" value="' + __VALUE + '"' +
-           (__VALUE ? ' CHECKED' : "") + __ACTION + ' /><label for="' +
-           __NAME + '">' + __FORMLABEL + '</label>';
+    return withTitle('<input type="checkbox" name="' + __NAME +
+                     '" id="' + __NAME + '" value="' + __VALUE + '"' +
+                     (__VALUE ? ' CHECKED' : "") + __ACTION + ' /><label for="' +
+                     __NAME + '">' + __FORMLABEL + '</label>', __TITLE);
 }
 
 // Zeigt eine Option auf der Seite als Daten-Textfeld an
@@ -2984,17 +3232,18 @@ function getOptionTextarea(opt) {
     const __CONFIG = getOptConfig(opt);
     const __NAME = getOptName(opt);
     const __VALUE = getOptValue(opt);
-    const __ACTION = getFormActionEvent(opt, false, undefined, "submit", undefined);
+    const __ACTION = getFormActionEvent(opt, false, undefined, 'submit', undefined);
     const __SUBMIT = getValue(__CONFIG.Submit, "");
     //const __ONSUBMIT = (__SUBMIT.length ? ' onKeyDown="' + __SUBMIT + '"': "");
     const __ONSUBMIT = (__SUBMIT ? ' onKeyDown="' + __SUBMIT + '"': "");
-    const __FORMLABEL = getValue(__CONFIG.FormLabel, __CONFIG.Label);
+    const __FORMLABEL = formatLabel(__CONFIG.FormLabel, __CONFIG.Label);
+    const __TITLE = substParam(getValue(__CONFIG.Title, '$'), __FORMLABEL);
     const __ELEMENTLABEL = '<label for="' + __NAME + '">' + __FORMLABEL + '</label>';
     const __ELEMENTTEXT = '<textarea name="' + __NAME + '" id="' + __NAME + '" cols="' + __CONFIG.Cols +
                            '" rows="' + __CONFIG.Rows + '"' + __ONSUBMIT + __ACTION + '>' +
                            safeStringify(__VALUE, __CONFIG.Replace, __CONFIG.Space) + '</textarea>';
 
-    return [ __ELEMENTLABEL, __ELEMENTTEXT ];
+    return [ withTitle(__ELEMENTLABEL, __TITLE), __ELEMENTTEXT ];
 }
 
 // Zeigt eine Option auf der Seite als Button an
@@ -3004,14 +3253,15 @@ function getOptionButton(opt) {
     const __CONFIG = getOptConfig(opt);
     const __NAME = getOptName(opt);
     const __VALUE = getOptValue(opt, false);
-    const __ACTION = getFormActionEvent(opt, __VALUE, ! __VALUE, "click", false);
-    const __BUTTONLABEL = (__VALUE ? __CONFIG.AltLabel : __CONFIG.Label);
-    const __FORMLABEL = getValue(__CONFIG.FormLabel, __CONFIG.Label);
+    const __ACTION = getFormActionEvent(opt, __VALUE, ! __VALUE, 'click', false);
+    const __BUTTONLABEL = (__VALUE ? getValue(__CONFIG.AltLabel, __CONFIG.Label) : __CONFIG.Label);
+    const __FORMLABEL = formatLabel(__CONFIG.FormLabel, __BUTTONLABEL);
+    const __BUTTONTITLE = substParam(getValue(__VALUE ? getValue(__CONFIG.AltTitle, __CONFIG.Title) : __CONFIG.Title, '$'), __BUTTONLABEL);
 
-    return '<label for="' + __NAME + '">' + __FORMLABEL +
-           '</label><input type="button" name="' + __NAME +
-           '" id="' + __NAME + '" value="' + __BUTTONLABEL + '"' +
-           __ACTION + '/>';
+    return '<label for="' + __NAME + '">' + __FORMLABEL + '</label>' +
+           withTitle('<input type="button" name="" + ' + __NAME +
+                     '" id="' + __NAME + '" value="' + __BUTTONLABEL +
+                     '"' + __ACTION + '/>', __BUTTONTITLE);
 }
 
 // Zeigt eine Option auf der Seite an (je nach Typ)
@@ -3041,12 +3291,33 @@ function getOptionElement(opt) {
         default :            break;
         }
 
-        if (element.length === 2) {
-            element = '<div>' + element[0] + '<br />' + element[1] + '</div>';
+        if ((typeof element) !== 'string') {
+            element = '<div>' + Array.from(element).join('<br />') + '</div>';
         }
     }
 
     return element;
+}
+
+// Gruppiert die Daten eines Objects nach einem Kriterium
+// data: Object mit Daten
+// byFun: function(val), die das Kriterium ermittelt. Default: value
+// filterFun: function(key, index, arr), die das Kriterium key im Array arr an der Stelle index vergleicht. Default: Wert identisch
+// sortFun: function(a, b), nach der die Kriterien sortiert werden. Default: Array.sort()
+// return Neues Object mit Eintraegen der Form <Kriterium> : [ <alle Keys zu diesem Kriterium> ]
+function groupData(data, byFun, filterFun, sortFun) {
+    const __BYFUN = (byFun || (val => val));
+    const __FILTERFUN = (filterFun || ((key, index, arr) => (arr[index] === key)));
+    const __KEYS = Object.keys(data);
+    const __VALS = Object.values(data);
+    const __BYKEYS = __VALS.map(__BYFUN);
+    const __BYKEYSET = new Set(__BYKEYS);
+    const __BYKEYARRAY = [...__BYKEYSET];
+    const __SORTEDKEYS = __BYKEYARRAY.sort(sortFun);
+    const __GROUPEDKEYS = __SORTEDKEYS.map(byVal => __KEYS.filter((key, index, arr) => __FILTERFUN(byVal, index, __BYKEYS)));
+    const __ASSIGN = ((keyArr, valArr) => Object.assign({ }, ...keyArr.map((key, index) => ({ [key] : valArr[index] }))));
+
+    return __ASSIGN(__SORTEDKEYS, __GROUPEDKEYS);
 }
 
 // Baut das Benutzermenu auf der Seite auf
@@ -3063,25 +3334,28 @@ function getForm(optSet, optParams = { }) {
     const __FORMWIDTH = getValue(optParams.formWidth, 3);
     const __FORMBREAK = getValue(optParams.formBreak, __FORMWIDTH);
     const __SHOWFORM = getOptValue(optSet.showForm, true) ? optParams.showForm : { 'showForm' : true };
+    const __PRIOOPTS = groupData(optSet, opt => getOptConfig(opt).FormPrio);
     let form = __FORM;
     let count = 0;   // Bisher angezeigte Optionen
     let column = 0;  // Spalte der letzten Option (1-basierend)
 
-    for (let opt in optSet) {
-        if (checkItem(opt, __SHOWFORM, optParams.hideForm)) {
-            const __ELEMENT = getOptionElement(optSet[opt]);
-            const __TDOPT = ((~ __ELEMENT.indexOf('|')) ? "" : ' colspan="2"');
+    for (let optKeys of Object.values(__PRIOOPTS)) {
+        for (let optKey of optKeys) {
+            if (checkItem(optKey, __SHOWFORM, optParams.hideForm)) {
+                const __ELEMENT = getOptionElement(optSet[optKey]);
+                const __TDOPT = ((~ __ELEMENT.indexOf('|')) ? "" : ' colspan="2"');
 
-            if (__ELEMENT) {
-                if (++count > __FORMBREAK) {
-                    if (++column > __FORMWIDTH) {
-                        column = 1;
+                if (__ELEMENT) {
+                    if (++count > __FORMBREAK) {
+                        if (++column > __FORMWIDTH) {
+                            column = 1;
+                        }
                     }
+                    if (column === 1) {
+                        form += '</tr><tr>';
+                    }
+                    form += '\n<td' + __TDOPT + '>' + __ELEMENT.replace('|', '</td><td>') + '</td>';
                 }
-                if (column === 1) {
-                    form += '</tr><tr>';
-                }
-                form += '\n<td' + __TDOPT + '>' + __ELEMENT.replace('|', '</td><td>') + '</td>';
             }
         }
     }
@@ -3162,7 +3436,9 @@ Class.define(Classification, Object, {
 
                                           if (__PARAM !== undefined) {
                                               // Klassifizierte Optionen umbenennen...
-                                              renameOptions(this.optSet, this.optSelect, __PARAM, this.renameFun);
+                                              return renameOptions(this.optSet, this.optSelect, __PARAM, this.renameFun);
+                                          } else {
+                                              return Promise.resolve();
                                           }
                                       },
                     'deleteOptions' : function(ignList) {
@@ -3170,7 +3446,7 @@ Class.define(Classification, Object, {
 
                                           return deleteOptions(this.optSet, __OPTSELECT, true, true);
                                       }
-                } );
+                });
 
 // ==================== Ende Abschnitt fuer Klasse Classification ====================
 
@@ -3197,7 +3473,7 @@ Class.define(TeamClassification, Classification, {
                                                return undefined;
                                            }
                                        }
-                } );
+                });
 
 // ==================== Ende Abschnitt fuer Klasse TeamClassification ====================
 
@@ -3222,7 +3498,7 @@ Class.define(Team, Object, {
                                         'LdNr' : true,
                                         'LgNr' : true
                                     }
-                } );
+                });
 
 // ==================== Ende Abschnitt fuer Klasse Team ====================
 
@@ -3250,7 +3526,7 @@ Class.define(Verein, Team, {
                                         'Manager' : true,
                                         'Flags'   : true
                                     }
-                } );
+                });
 
 // ==================== Ende Abschnitt fuer Klasse Verein ====================
 
@@ -3448,7 +3724,7 @@ Class.define(TableManager, Object, {
                                    return 0;
                                }
                            }
-    } );
+    });
 
 // ==================== Ende Abschnitt fuer Klasse TableManager ====================
 
@@ -3472,16 +3748,18 @@ function getMyTeam(optSet = undefined, teamParams = undefined, myTeam = new Team
     if (teamParams !== undefined) {
         addProps(myTeam, teamParams, myTeam.__TEAMITEMS);
         __LOG[2]("Ermittelt: " + safeStringify(myTeam));
-        // ... und abspeichern...
-        setOpt(optSet.team, myTeam, false);
+        // ... und abspeichern, falls erweunscht...
+        if (optSet && optSet.team) {
+            setOpt(optSet.team, myTeam, false);
+        }
     } else {
-        const __TEAM = getOptValue(optSet.team);  // Gespeicherte Parameter
+        const __TEAM = ((optSet && optSet.team) ? getOptValue(optSet.team) : undefined);  // Gespeicherte Parameter
 
         if ((__TEAM !== undefined) && (__TEAM.Land !== undefined)) {
             addProps(myTeam, __TEAM, myTeam.__TEAMITEMS);
             __LOG[2]("Gespeichert: " + safeStringify(myTeam));
         } else {
-            __LOG[1]("Unbekannt: " + safeStringify(__TEAM));
+            __LOG[6]("Team nicht ermittelt: " + safeStringify(__TEAM));
         }
     }
 
@@ -3499,51 +3777,49 @@ function getMyTeam(optSet = undefined, teamParams = undefined, myTeam = new Team
 // 'hideForm': Checkliste der auf der Seite unsichtbaren Optionen (true fuer unsichtbar)
 // 'formWidth': Anzahl der Elemente pro Zeile
 // 'formBreak': Elementnummer des ersten Zeilenumbruchs
-// return Gefuelltes Objekt mit den gesetzten Optionen
+// return Promise auf gefuelltes Objekt mit den gesetzten Optionen
 function buildOptions(optConfig, optSet = undefined, optParams = { 'hideMenu' : false }) {
     // Klassifikation ueber Land und Liga des Teams...
     __TEAMCLASS.optSet = optSet;  // Classification mit optSet verknuepfen
     __TEAMCLASS.teamParams = optParams.teamParams;  // Ermittelte Parameter
 
-    optSet = startOptions(optConfig, optSet, __TEAMCLASS);
+    return startOptions(optConfig, optSet, __TEAMCLASS).then(optSet => {
+                    // Werte aus der HTML-Seite ermitteln...
+                    const __LIGA = getSelection('ligaauswahl');
+                    const __LAND = getSelection('landauswahl');
+                    const __TABTYP = getSelection('tabauswahl');
+                    const __PRUNDE = getSelection('stauswahl');
+                    const __OSCRUNDE = getSelection('runde');
+                    const __OSERUNDE = getSelection('runde');
+                    const __DEFSAISON = getOptValue(optSet.aktuelleSaison);
+                    const __SAISONS = getSelectionArray('saauswahl', 'Number', getSelectedValue);
+                    const __CURRSAISON = (__SAISONS ? Math.max(... __SAISONS) : __DEFSAISON);
+                    const __SAISON = getSelection('saauswahl', 'Number', getSelectedValue);
+                    const __LIGANR = getSelection('ligaauswahl', 'Number', getSelectedValue);
+                    const __LANDNR = getSelection('landauswahl', 'Number', getSelectedValue);
+                    const __TABTYPNR = getSelection('tabauswahl', 'Number', getSelectedValue);
+                    const __PRUNDNR = getSelection('stauswahl', 'Number', getSelectedValue);
+                    const __OSCRUNDNR = getSelection('runde', 'Number', getSelectedValue);
+                    const __OSERUNDNR = getSelection('runde', 'Number', getSelectedValue);
 
-    // Werte aus der HTML-Seite ermitteln...
-    const __LIGA = getSelection('ligaauswahl');
-    const __LAND = getSelection('landauswahl');
-    const __TABTYP = getSelection('tabauswahl');
-    const __PRUNDE = getSelection('stauswahl');
-    const __OSCRUNDE = getSelection('runde');
-    const __OSERUNDE = getSelection('runde');
-    const __DEFSAISON = getOptValue(optSet.aktuelleSaison);
-    const __SAISONS = getSelectionArray('saauswahl', 'Number', getSelectedValue);
-    const __CURRSAISON = (__SAISONS ? Math.max(... __SAISONS) : __DEFSAISON);
-    const __SAISON = getSelection('saauswahl', 'Number', getSelectedValue);
-    const __LIGANR = getSelection('ligaauswahl', 'Number', getSelectedValue);
-    const __LANDNR = getSelection('landauswahl', 'Number', getSelectedValue);
-    const __TABTYPNR = getSelection('tabauswahl', 'Number', getSelectedValue);
-    const __PRUNDNR = getSelection('stauswahl', 'Number', getSelectedValue);
-    const __OSCRUNDNR = getSelection('runde', 'Number', getSelectedValue);
-    const __OSERUNDNR = getSelection('runde', 'Number', getSelectedValue);
+                    // ... und abspeichern...
+                    setOpt(optSet.liga, __LIGA, false);
+                    setOpt(optSet.land, __LAND, false);
+                    setOpt(optSet.tabTyp, __TABTYP, false);
+                    setOpt(optSet.Prunde, __PRUNDE, false);
+                    setOpt(optSet.OSCrunde, __OSCRUNDE, false);
+                    setOpt(optSet.OSErunde, __OSERUNDE, false);
+                    setOpt(optSet.aktuelleSaison, __CURRSAISON, false);
+                    setOpt(optSet.saison, __SAISON, false);
+                    setOpt(optSet.ligaNr, __LIGANR, false);
+                    setOpt(optSet.landNr, __LANDNR, false);
+                    setOpt(optSet.tabTypNr, __TABTYPNR, false);
+                    setOpt(optSet.PrundenNr, __PRUNDNR, false);
+                    setOpt(optSet.OSCrundenNr, __OSCRUNDNR, false);
+                    setOpt(optSet.OSErundenNr, __OSERUNDNR, false);
 
-    // ... und abspeichern...
-    setOpt(optSet.liga, __LIGA, false);
-    setOpt(optSet.land, __LAND, false);
-    setOpt(optSet.tabTyp, __TABTYP, false);
-    setOpt(optSet.Prunde, __PRUNDE, false);
-    setOpt(optSet.OSCrunde, __OSCRUNDE, false);
-    setOpt(optSet.OSErunde, __OSERUNDE, false);
-    setOpt(optSet.aktuelleSaison, __CURRSAISON, false);
-    setOpt(optSet.saison, __SAISON, false);
-    setOpt(optSet.ligaNr, __LIGANR, false);
-    setOpt(optSet.landNr, __LANDNR, false);
-    setOpt(optSet.tabTypNr, __TABTYPNR, false);
-    setOpt(optSet.PrundenNr, __PRUNDNR, false);
-    setOpt(optSet.OSCrundenNr, __OSCRUNDNR, false);
-    setOpt(optSet.OSErundenNr, __OSERUNDNR, false);
-
-    showOptions(optSet, optParams);
-
-    return optSet;
+                    return showOptions(optSet, optParams);
+                }, defaultCatch);
 }
 
 // ==================== Ende Abschnitt fuer Optionen ====================
@@ -3561,7 +3837,23 @@ const __GAMETYPENRN = {    // "Blind FSS gesucht!"
         'OSEQ'       :  4,
         'OSE'        :  5,
         'OSCQ'       :  6,
-        'OSC'        :  7
+        'OSC'        :  7,
+        'Supercup'   : 10
+    };
+
+const __GAMETYPEALIASES = {
+        'unbekannt'  :  "unbekannt",
+        'reserviert' :  undefined,
+        'Frei'       :  undefined,
+        'spielfrei'  :  "",
+        'Friendly'   :  "FSS",
+        'Liga'       :  undefined,
+        'LP'         :  "Pokal",
+        'OSEQ'       :  undefined,
+        'OSE'        :  undefined,
+        'OSCQ'       :  undefined,
+        'OSC'        :  undefined,
+        'Supercup'   : "Super"
     };
 const __GAMETYPES = reverseMapping(__GAMETYPENRN);
 
@@ -3696,17 +3988,24 @@ const __LANDTLAS = reverseMapping(__TLALAND);
 // Gibt die ID fuer den Namen eines Wettbewerbs zurueck
 // gameType: Name des Wettbewerbs eines Spiels
 // defValue: Default-Wert
-// return OS2-ID fuer den Spieltyp (1 bis 7), 0 fuer spielfrei/Frei/reserviert, -1 fuer ungueltig
+// return OS2-ID fuer den Spieltyp (1 bis 7 oder 10), 0 fuer "spielfrei"/"Frei"/"reserviert", -1 fuer ungueltig
 function getGameTypeID(gameType, defValue = __GAMETYPENRN.unbekannt) {
     return getValue(__GAMETYPENRN[gameType], defValue);
 }
 
 // Gibt den Namen eines Wettbewerbs zurueck
-// id: OS2-ID des Wettbewerbs eines Spiels (1 bis 7, 0 fuer spielfrei/Frei/reserviert, -1 fuer ungueltig)
+// id: OS2-ID des Wettbewerbs eines Spiels (1 bis 7 oder 10), 0 fuer "spielfrei"/"Frei"/"reserviert", -1 fuer ungueltig
 // defValue: Default-Wert
 // return Spieltyp fuer die uebergebene OS2-ID
 function getGameType(id, defValue) {
     return getValue(__GAMETYPES[id], defValue);
+}
+
+// Gibt den alternativen (Kurznamen) fuer den Namen eines Wettbewerbs zurueck
+// gameType: Name des Wettbewerbs eines Spiels
+// return Normalerweise den uebergebenen Parameter, in Einzelfaellen eine Kurzversion
+function getGameTypeAlias(gameType) {
+    return getValue(__GAMETYPEALIASES[gameType], getValue(gameType, __GAMETYPEALIASES.unbekannt));
 }
 
 // Gibt den Namen des Landes mit dem uebergebenen Kuerzel (TLA) zurueck.
@@ -3735,8 +4034,9 @@ function getLigaNr(liga, defValue = __LIGANRN.unbekannt) {
 
 // Kehrt das Mapping eines Objekts um und liefert ein neues Objekt zurueck.
 // obj: Objekt mit key => value
+// convFun: Konvertierfunktion fuer die Werte
 // return Neues Objekt mit value => key (doppelte value-Werte fallen heraus!)
-function reverseMapping(obj) {
+function reverseMapping(obj, convFun) {
     if (! obj) {
         return obj;
     }
@@ -3746,97 +4046,13 @@ function reverseMapping(obj) {
     for (let key in obj) {
         const __VALUE = obj[key];
 
-        __RET[__VALUE] = key;
+        __RET[__VALUE] = (convFun ? convFun(key) : key);
     }
 
     return __RET;
 }
 
 // ==================== Abschnitt fuer sonstige Parameter ====================
-
-const __TEAMSEARCHHAUPT = {  // Parameter zum Team "<b>Willkommen im Managerb&uuml;ro von TEAM</b><br>LIGA LAND<a href=..."
-        'Zeile'  : 0,
-        'Spalte' : 1,
-        'start'  : " von ",
-        'middle' : "</b><br>",
-        'liga'   : ". Liga",
-        'land'   : ' ',
-        'end'    : "<a href="
-    };
-
-const __TEAMSEARCHTEAM = {  // Parameter zum Team "<b>TEAM - LIGA <a href=...>LAND</a></b>"
-        'Zeile'  : 0,
-        'Spalte' : 0,
-        'start'  : "<b>",
-        'middle' : " - ",
-        'liga'   : ". Liga",
-        'land'   : 'target="_blank">',
-        'end'    : "</a></b>"
-    };
-
-// Ermittelt, wie das eigene Team heisst und aus welchem Land bzw. Liga es kommt (zur Unterscheidung von Erst- und Zweitteam)
-// cell: Tabellenzelle mit den Parametern zum Team "startTEAMmiddleLIGA...landLANDend", LIGA = "#liga[ (A|B|C|D)]"
-// teamSeach: Muster fuer die Suche, die Eintraege fuer 'start', 'middle', 'liga', 'land' und 'end' enthaelt
-// return Im Beispiel { 'Team' : "TEAM", 'Liga' : "LIGA", 'Land' : "LAND", 'LdNr' : LAND-NUMMER, 'LgNr' : LIGA-NUMMER },
-//        z.B. { 'Team' : "Choromonets Odessa", 'Liga' : "1. Liga", 'Land' : "Ukraine", 'LdNr' : 20, 'LgNr' : 1 }
-function getTeamParamsFromTable(table, teamSearch = undefined) {
-    const __TEAMSEARCH   = getValue(teamSearch, __TEAMSEARCHHAUPT);
-    const __TEAMCELLROW  = getValue(__TEAMSEARCH.Zeile, 0);
-    const __TEAMCELLCOL  = getValue(__TEAMSEARCH.Spalte, 0);
-    const __TEAMCELLSTR  = (table === undefined) ? "" : table.rows[__TEAMCELLROW].cells[__TEAMCELLCOL].innerHTML;
-    const __SEARCHSTART  = __TEAMSEARCH.start;
-    const __SEARCHMIDDLE = __TEAMSEARCH.middle;
-    const __SEARCHLIGA   = __TEAMSEARCH.liga;
-    const __SEARCHLAND   = __TEAMSEARCH.land;
-    const __SEARCHEND    = __TEAMSEARCH.end;
-    const __INDEXSTART   = __TEAMCELLSTR.indexOf(__SEARCHSTART);
-    const __INDEXEND     = __TEAMCELLSTR.indexOf(__SEARCHEND);
-
-    let teamParams = __TEAMCELLSTR.substring(__INDEXSTART + __SEARCHSTART.length, __INDEXEND);
-    const __INDEXLIGA = teamParams.indexOf(__SEARCHLIGA);
-    const __INDEXMIDDLE = teamParams.indexOf(__SEARCHMIDDLE);
-
-    let land = ((~ __INDEXLIGA) ? teamParams.substring(__INDEXLIGA + __SEARCHLIGA.length) : undefined);
-    const __TEAMNAME = ((~ __INDEXMIDDLE) ? teamParams.substring(0, __INDEXMIDDLE) : undefined);
-    let liga = (((~ __INDEXLIGA) && (~ __INDEXMIDDLE)) ? teamParams.substring(__INDEXMIDDLE + __SEARCHMIDDLE.length) : undefined);
-
-    if (land !== undefined) {
-        if (land.charAt(2) === ' ') {    // Land z.B. hinter "2. Liga A " statt "1. Liga "
-            land = land.substr(2);
-        }
-        if (liga !== undefined) {
-            liga = liga.substring(0, liga.length - land.length);
-        }
-        const __INDEXLAND = land.indexOf(__SEARCHLAND);
-        if (~ __INDEXLAND) {
-            land = land.substr(__INDEXLAND + __SEARCHLAND.length);
-        }
-    }
-
-    const __TEAM = new Team(__TEAMNAME, land, liga);
-
-    return __TEAM;
-}
-
-// Verarbeitet die URL der Seite und ermittelt die Nummer der gewuenschten Unterseite
-// url: Adresse der Seite
-// leafs: Liste von Filenamen mit der Default-Seitennummer (falls Query-Parameter nicht gefunden)
-// item: Query-Parameter, der die Nummer der Unterseite angibt
-// return Parameter aus der URL der Seite als Nummer
-function getPageIdFromURL(url, leafs, item = "page") {
-    const __URI = new URI(url);
-    const __LEAF = __URI.getLeaf();
-
-    for (let leaf in leafs) {
-        if (__LEAF === leaf) {
-            const __DEFAULT = leafs[leaf];
-
-            return getValue(__URI.getQueryPar(item), __DEFAULT);
-        }
-    }
-
-    return -1;
-}
 
 // Formatiert eine Zelle um (mit einfachen Parametern)
 // cell: Zu formatierende Zelle
@@ -3920,6 +4136,92 @@ function getSelectedOptionText(element) {
 // return Wert der Selektion ('value')
 function getSelectedValue(element) {
     return getValue(element, { }).value;
+}
+
+// ==================== Ende Abschnitt fuer sonstige Parameter ====================
+
+const __TEAMSEARCHHAUPT = {  // Parameter zum Team "<b>Willkommen im Managerb&uuml;ro von TEAM</b><br>LIGA LAND<a href=..."
+        'Zeile'  : 0,
+        'Spalte' : 1,
+        'start'  : " von ",
+        'middle' : "</b><br>",
+        'liga'   : ". Liga",
+        'land'   : ' ',
+        'end'    : "<a href="
+    };
+
+const __TEAMSEARCHTEAM = {  // Parameter zum Team "<b>TEAM - LIGA <a href=...>LAND</a></b>"
+        'Zeile'  : 0,
+        'Spalte' : 0,
+        'start'  : "<b>",
+        'middle' : " - ",
+        'liga'   : ". Liga",
+        'land'   : 'target="_blank">',
+        'end'    : "</a></b>"
+    };
+
+// Ermittelt, wie das eigene Team heisst und aus welchem Land bzw. Liga es kommt (zur Unterscheidung von Erst- und Zweitteam)
+// cell: Tabellenzelle mit den Parametern zum Team "startTEAMmiddleLIGA...landLANDend", LIGA = "#liga[ (A|B|C|D)]"
+// teamSeach: Muster fuer die Suche, die Eintraege fuer 'start', 'middle', 'liga', 'land' und 'end' enthaelt
+// return Im Beispiel { 'Team' : "TEAM", 'Liga' : "LIGA", 'Land' : "LAND", 'LdNr' : LAND-NUMMER, 'LgNr' : LIGA-NUMMER },
+//        z.B. { 'Team' : "Choromonets Odessa", 'Liga' : "1. Liga", 'Land' : "Ukraine", 'LdNr' : 20, 'LgNr' : 1 }
+function getTeamParamsFromTable(table, teamSearch = undefined) {
+    const __TEAMSEARCH   = getValue(teamSearch, __TEAMSEARCHHAUPT);
+    const __TEAMCELLROW  = getValue(__TEAMSEARCH.Zeile, 0);
+    const __TEAMCELLCOL  = getValue(__TEAMSEARCH.Spalte, 0);
+    const __TEAMCELLSTR  = (table === undefined) ? "" : table.rows[__TEAMCELLROW].cells[__TEAMCELLCOL].innerHTML;
+    const __SEARCHSTART  = __TEAMSEARCH.start;
+    const __SEARCHMIDDLE = __TEAMSEARCH.middle;
+    const __SEARCHLIGA   = __TEAMSEARCH.liga;
+    const __SEARCHLAND   = __TEAMSEARCH.land;
+    const __SEARCHEND    = __TEAMSEARCH.end;
+    const __INDEXSTART   = __TEAMCELLSTR.indexOf(__SEARCHSTART);
+    const __INDEXEND     = __TEAMCELLSTR.indexOf(__SEARCHEND);
+
+    let teamParams = __TEAMCELLSTR.substring(__INDEXSTART + __SEARCHSTART.length, __INDEXEND);
+    const __INDEXLIGA = teamParams.indexOf(__SEARCHLIGA);
+    const __INDEXMIDDLE = teamParams.indexOf(__SEARCHMIDDLE);
+
+    let land = ((~ __INDEXLIGA) ? teamParams.substring(__INDEXLIGA + __SEARCHLIGA.length) : undefined);
+    const __TEAMNAME = ((~ __INDEXMIDDLE) ? teamParams.substring(0, __INDEXMIDDLE) : undefined);
+    let liga = (((~ __INDEXLIGA) && (~ __INDEXMIDDLE)) ? teamParams.substring(__INDEXMIDDLE + __SEARCHMIDDLE.length) : undefined);
+
+    if (land !== undefined) {
+        if (land.charAt(2) === ' ') {    // Land z.B. hinter "2. Liga A " statt "1. Liga "
+            land = land.substr(2);
+        }
+        if (liga !== undefined) {
+            liga = liga.substring(0, liga.length - land.length);
+        }
+        const __INDEXLAND = land.indexOf(__SEARCHLAND);
+        if (~ __INDEXLAND) {
+            land = land.substr(__INDEXLAND + __SEARCHLAND.length);
+        }
+    }
+
+    const __TEAM = new Team(__TEAMNAME, land, liga);
+
+    return __TEAM;
+}
+
+// Verarbeitet die URL der Seite und ermittelt die Nummer der gewuenschten Unterseite
+// url: Adresse der Seite
+// leafs: Liste von Filenamen mit der Default-Seitennummer (falls Query-Parameter nicht gefunden)
+// item: Query-Parameter, der die Nummer der Unterseite angibt
+// return Parameter aus der URL der Seite als Nummer
+function getPageIdFromURL(url, leafs, item = 'page') {
+    const __URI = new URI(url);
+    const __LEAF = __URI.getLeaf();
+
+    for (let leaf in leafs) {
+        if (__LEAF === leaf) {
+            const __DEFAULT = leafs[leaf];
+
+            return getValue(__URI.getQueryPar(item), __DEFAULT);
+        }
+    }
+
+    return -1;
 }
 
 // Ermittelt das Spiel-Ergebnis aus einer Tabellenzelle, etwa "2 : 1", und liefert zwei Werte zurueck
@@ -4199,12 +4501,23 @@ function saveQualiData(optSet, data, saison) {
 function initFairplaySaisonData(saisonData, fpTyp, teamIds, laender) {
     const __QUALI = getGameTypeID(fpTyp);
 
+    for (let land in saisonData) {
+        const __LDATA = getProp(saisonData, land, { });
+
+        delete __LDATA.FP;
+    }
+
     for (let i = 0; i < teamIds.length; i++) {
         const __TEAMID = teamIds[i];
         const __LAND = laender[__TEAMID];
-        const __LDATA = getProp(saisonData, __LAND, { });
 
-        __LDATA.FP = [ __TEAMID, __QUALI, __QUALI ];
+        if (__LAND) {
+            const __LDATA = getProp(saisonData, __LAND, { });
+
+            __LDATA.FP = [ __TEAMID, __QUALI, __QUALI ];
+        } else {
+            __LOG[0]("initFairplaySaisonData(): #" + __TEAMID + " " + __LAND);
+        }
     }
 }
 
@@ -4221,7 +4534,8 @@ function initFairplayData(data, laender) {
                           7 : [  440,  439,   32 ],
                           8 : [  896, 1415,  610 ],
                           9 : [  145,  840,  442 ],
-                         10 : [ 1715,   99,  534 ]
+                         10 : [ 1715,   99,  534 ],
+                         11 : [  927, 1646,  888 ]
                      };
 
     for (let saison in __FPDATA) {
@@ -4325,18 +4639,16 @@ function calcEuropaPlaetze(landData, laender) {
     return landData;
 }
 
-// ==================== Ende Abschnitt fuer sonstige Parameter ====================
-
 // ==================== Hauptprogramm ====================
 
 // Verarbeitet Ansicht "Haupt" (Managerbuero) zur Ermittlung des aktuellen ZATs
 function procHaupt() {
     const __TEAMPARAMS = getTeamParamsFromTable(getTable(1), __TEAMSEARCHHAUPT);  // Link mit Team, Liga, Land...
 
-    buildOptions(__OPTCONFIG, __OPTSET, {
-                     'teamParams' : __TEAMPARAMS,
-                     'hideMenu'   : true
-                 });
+    return buildOptions(__OPTCONFIG, __OPTSET, {
+                            'teamParams' : __TEAMPARAMS,
+                            'hideMenu'   : true
+                        });
 }
 
 // Verarbeitet Ansicht "Fairplaytabelle"
@@ -4354,121 +4666,121 @@ function procFairplay() {
             'Punkte'  : 7
         };
 
-    buildOptions(__OPTCONFIG, __OPTSET, {
-                     'menuAnchor' : getTable(0, "div"),
-                     'hideForm'   : {
-                                        'saison'        : true,
-                                        'liga'          : true,
-                                        'land'          : true,
-                                        'tabTyp'        : true,
-                                        'Prunde'        : true,
-                                        'OSCrunde'      : true,
-                                        'OSErunde'      : true,
-                                        'ligaNr'        : true,
-                                        'landNr'        : true,
-                                        'tabTypNr'      : true,
-                                        'PrundenNr'     : true,
-                                        'OSCrundenNr'   : true,
-                                        'OSErundenNr'   : true,
-                                        'data'          : true,
-                                        'dataStats'     : true,
-                                        'manager'       : true,
-                                        'ligen'         : true
-                                    },
-                     'formWidth'  : 1
-                 });
+    return buildOptions(__OPTCONFIG, __OPTSET, {
+                            'menuAnchor' : getTable(0, 'div'),
+                            'hideForm'   : {
+                                               'saison'        : true,
+                                               'liga'          : true,
+                                               'land'          : true,
+                                               'tabTyp'        : true,
+                                               'Prunde'        : true,
+                                               'OSCrunde'      : true,
+                                               'OSErunde'      : true,
+                                               'ligaNr'        : true,
+                                               'landNr'        : true,
+                                               'tabTypNr'      : true,
+                                               'PrundenNr'     : true,
+                                               'OSCrundenNr'   : true,
+                                               'OSErundenNr'   : true,
+                                               'data'          : true,
+                                               'dataStats'     : true,
+                                               'manager'       : true,
+                                               'ligen'         : true
+                                           },
+                            'formWidth'  : 1
+                        }).then(optSet => {
+            const __CURRSAISON = getOptValue(__OPTSET.aktuelleSaison);
+            const __EINFAERBUNG = getOptValue(__OPTSET.zeigeQuali, true);
+            const __SHOWTITLES = getOptValue(__OPTSET.zeigeTitel, true);
+            const __LAENDER = getOptValue(__OPTSET.laender, []);
+            const __DATA = getOptValue(__OPTSET.data, []);
 
-    const __CURRSAISON = getOptValue(__OPTSET.aktuelleSaison);
-    const __EINFAERBUNG = getOptValue(__OPTSET.zeigeQuali, true);
-    const __SHOWTITLES = getOptValue(__OPTSET.zeigeTitel, true);
-    const __LAENDER = getOptValue(__OPTSET.laender, []);
-    const __DATA = getOptValue(__OPTSET.data, []);
+            const __TABLEMAN = new TableManager(__OPTSET, __COLUMNINDEX, getRowsById('fairplay'), __ROWOFFSETUPPER, __ROWOFFSETLOWER);
 
-    const __TABLEMAN = new TableManager(__OPTSET, __COLUMNINDEX, getRowsById('fairplay'), __ROWOFFSETUPPER, __ROWOFFSETLOWER);
+            __TABLEMAN.isAbschluss = true;  // Vorschau der Fairplay-Tabelle auf Saisonende!
+            __TABLEMAN.saison = __CURRSAISON;  // Fairplay-Tabelle gilt fuer die aktuelle Saison!
 
-    __TABLEMAN.isAbschluss = true;  // Vorschau der Fairplay-Tabelle auf Saisonende!
-    __TABLEMAN.saison = __CURRSAISON;  // Fairplay-Tabelle gilt fuer die aktuelle Saison!
+            const __SDATA = getProp(__DATA, __CURRSAISON, { });
+            const __ANZFAIRPLAY = 3;  // Nur unter gewissen Umstaenden mehr als 3!
+            const __LANDSHOWN = { };
+            const __ENTRIES = { };
+            const __TITEL = { };
 
-    const __SDATA = getProp(__DATA, __CURRSAISON, { });
-    const __ANZFAIRPLAY = 3;  // Nur unter gewissen Umstaenden mehr als 3!
-    const __LANDSHOWN = { };
-    const __ENTRIES = { };
-    const __TITEL = { };
+            const __TYPEN = {
+                        'P2'   : 'Pokalfinalist',
+                        'P'    : 'Pokalsieger',
+                        'OSE'  : 'OSE-Sieger',
+                        'OSC'  : 'OSC-Sieger',
+                        '1'    : 'Meister',       // Ab hier nur Markierungen, kein Eintrag!
+                        '2'    : 'Vizemeister',
+                        'OSE2' : 'OSE-Finalist',
+                        'OSC2' : 'OSC-Finalist',
+                        'FP'   : 'Fairplay'
+                    };
 
-    const __TYPEN = {
-                'P2'   : 'Pokalfinalist',
-                'P'    : 'Pokalsieger',
-                'OSE'  : 'OSE-Sieger',
-                'OSC'  : 'OSC-Sieger',
-                '1'    : 'Meister',       // Ab hier nur Markierungen, kein Eintrag!
-                '2'    : 'Vizemeister',
-                'OSE2' : 'OSE-Finalist',
-                'OSC2' : 'OSC-Finalist',
-                'FP'   : 'Fairplay'
-            };
+            for (let i = 0; i < __TABLEMAN.ligaSize; i++) {
+                const __VEREIN = __TABLEMAN.vereine[i];
+                const __TEAMID = __VEREIN.ID;
+                const __LAND = __LAENDER[__TEAMID];
 
-    for (let i = 0; i < __TABLEMAN.ligaSize; i++) {
-        const __VEREIN = __TABLEMAN.vereine[i];
-        const __TEAMID = __VEREIN.ID;
-        const __LAND = __LAENDER[__TEAMID];
+                __LANDSHOWN[__LAND] = true;
+            }
 
-        __LANDSHOWN[__LAND] = true;
-    }
+            for (let land in __LANDSHOWN) {
+                const __LDATA = getProp(__SDATA, land, { });
 
-    for (let land in __LANDSHOWN) {
-        const __LDATA = getProp(__SDATA, land, { });
+                // Eventuell vorhandenen Eintrag entfernen (wird weiter unten neu ermittelt)...
+                delete __LDATA.FP;
 
-        // Eventuell vorhandenen Eintrag entfernen (wird weiter unten neu ermittelt)...
-        delete __LDATA.FP;
+                for (let typ in __LDATA) {
+                    const __ENTRY = getValue(__LDATA[typ], []);
+                    const __TEAMID = __ENTRY[0];
+                    const __TYP = __ENTRY[2];
 
-        for (let typ in __LDATA) {
-            const __ENTRY = getValue(__LDATA[typ], []);
-            const __TEAMID = __ENTRY[0];
-            const __TYP = __ENTRY[2];
+                    if (__TEAMID) {
+                        const __TYPNAME = __TYPEN[typ];
 
-            if (__TEAMID) {
-                const __TYPNAME = __TYPEN[typ];
+                        if (__TYPNAME) {
+                            getProp(__TITEL, __TEAMID, []).push(__TYPEN[typ]);
+                        }
 
-                if (__TYPNAME) {
-                    getProp(__TITEL, __TEAMID, []).push(__TYPEN[typ]);
-                }
-
-                if (__TYP) {
-                    __ENTRIES[__TEAMID] = __ENTRY;
+                        if (__TYP) {
+                            __ENTRIES[__TEAMID] = __ENTRY;
+                        }
+                    }
                 }
             }
-        }
-    }
 console.log(__ENTRIES);
 console.log(__TITEL);
-    for (let i = 0, count = __ANZFAIRPLAY; i < __TABLEMAN.ligaSize; i++) {
-        const __VEREIN = __TABLEMAN.vereine[i];
-        const __TEAMID = __VEREIN.ID;
-        const __ENTRY = __ENTRIES[__TEAMID];
+            for (let i = 0, count = __ANZFAIRPLAY; i < __TABLEMAN.ligaSize; i++) {
+                const __VEREIN = __TABLEMAN.vereine[i];
+                const __TEAMID = __VEREIN.ID;
+                const __ENTRY = __ENTRIES[__TEAMID];
 
-        if (__ENTRY) {
-            if (__EINFAERBUNG) {
-                const __TYP = __ENTRY[2];
+                if (__ENTRY) {
+                    if (__EINFAERBUNG) {
+                        const __TYP = __ENTRY[2];
 
-                __TABLEMAN.setClass(i, __TYP);
+                        __TABLEMAN.setClass(i, __TYP);
+                    }
+                } else if (count-- > 0) {
+                    const __LAND = __LAENDER[__TEAMID];
+                    const __LDATA = getProp(__SDATA, __LAND, { });
+                    const __QUALI = getGameTypeID((__CURRSAISON < 7) ? 'OSE' : 'OSEQ');
+
+                    __LDATA.FP = [ __TEAMID, __QUALI, __QUALI ];
+                    getProp(__TITEL, __TEAMID, []).push(__TYPEN.FP);
+                }
+
+                if (__SHOWTITLES) {
+                    const __TIT = __TITEL[__TEAMID];
+
+                    __TABLEMAN.addTitel(i, __TIT, ", ");
+                }
             }
-        } else if (count-- > 0) {
-            const __LAND = __LAENDER[__TEAMID];
-            const __LDATA = getProp(__SDATA, __LAND, { });
-            const __QUALI = getGameTypeID((__CURRSAISON < 7) ? 'OSE' : 'OSEQ');
 
-            __LDATA.FP = [ __TEAMID, __QUALI, __QUALI ];
-            getProp(__TITEL, __TEAMID, []).push(__TYPEN.FP);
-        }
-
-        if (__SHOWTITLES) {
-            const __TIT = __TITEL[__TEAMID];
-
-            __TABLEMAN.addTitel(i, __TIT, ", ");
-        }
-    }
-
-    saveQualiData(__OPTSET, __DATA, __CURRSAISON);
+            saveQualiData(__OPTSET, __DATA, __CURRSAISON);
+        });
 }
 
 // Verarbeitet Ansichten "OS Championscup FR" und "OS Europacup"
@@ -4497,72 +4809,72 @@ function procEuropa(typ, finale) {
             'KomR'   : 18
         };
 
-    buildOptions(__OPTCONFIG, __OPTSET, {
-                     'menuAnchor' : getTable(0, "div"),
-                     'hideForm'   : {
-                                        'land'          : true,
-                                        'liga'          : true,
-                                        'tabTyp'        : true,
-                                        'Prunde'        : true,
-                                        'OSCrunde'      : (typ === 'OSC'),
-                                        'OSErunde'      : (typ === 'OSE'),
-                                        'landNr'        : true,
-                                        'ligaNr'        : true,
-                                        'tabTypNr'      : true,
-                                        'PrundenNr'     : true,
-                                        'OSCrundenNr'   : (typ === 'OSC'),
-                                        'OSErundenNr'   : (typ === 'OSE')
-                                    },
-                     'formWidth'  : 1
-                 });
+    return buildOptions(__OPTCONFIG, __OPTSET, {
+                            'menuAnchor' : getTable(0, 'div'),
+                            'hideForm'   : {
+                                               'land'          : true,
+                                               'liga'          : true,
+                                               'tabTyp'        : true,
+                                               'Prunde'        : true,
+                                               'OSCrunde'      : (typ === 'OSC'),
+                                               'OSErunde'      : (typ === 'OSE'),
+                                               'landNr'        : true,
+                                               'ligaNr'        : true,
+                                               'tabTypNr'      : true,
+                                               'PrundenNr'     : true,
+                                               'OSCrundenNr'   : (typ === 'OSC'),
+                                               'OSErundenNr'   : (typ === 'OSE')
+                                           },
+                            'formWidth'  : 1
+                        }).then(optSet => {
+            const __RUNDE = getOptValue(__OPTSET[typ + 'rundenNr']);
+            const __FINALE = (__RUNDE === finale);
+            const __ROWS = getRows(0);
 
-    const __RUNDE = getOptValue(__OPTSET[typ + 'rundenNr']);
-    const __FINALE = (__RUNDE === finale);
-    const __ROWS = getRows(0);
+            if (__FINALE && __ROWS.length) {
+                const __CELLS = __ROWS[0].cells;  // Finalspiel
+                const __SAISON = getOptValue(__OPTSET.saison);
+                const __VEREINE = getOptValue(__OPTSET.vereine, []);
+                const __LAENDER = getOptValue(__OPTSET.laender, []);
+                const __DATA = getOptValue(__OPTSET.data, []);
+                const __HEIMLAND = getLandNameFromCell(__CELLS[__COLUMNINDEX.LandH]);
+                const __TEAMHEIMCELL = __CELLS[__COLUMNINDEX.TeamH];
+                const __HEIMNAME = getTeamNameFromCell(__TEAMHEIMCELL);
+                const __HEIMID = getTeamIdFromCell(__TEAMHEIMCELL);
+                const __HEIM = new Verein(__HEIMNAME, __HEIMLAND, undefined, __HEIMID, undefined, undefined);
+                const __GASTLAND = getLandNameFromCell(__CELLS[__COLUMNINDEX.LandA]);
+                const __TEAMGASTCELL = __CELLS[__COLUMNINDEX.TeamA];
+                const __GASTNAME = getTeamNameFromCell(__TEAMGASTCELL);
+                const __GASTID = getTeamIdFromCell(__TEAMGASTCELL);
+                const __GAST = new Verein(__GASTNAME, __GASTLAND, undefined, __GASTID, undefined, undefined);
+                const __ERGEBNIS = setErgebnisFromCell({ }, __CELLS[__COLUMNINDEX.Erg]);
+                const __HEIMSIEG = ((__ERGEBNIS.gFor > -1) ? (__ERGEBNIS.gFor > __ERGEBNIS.gAga) : undefined);
+                const __WINNER =  (__HEIMSIEG ? __HEIM : __GAST);
+                const __LOSER = (__HEIMSIEG ? __GAST : __HEIM);
+                const __WID = __WINNER.ID;
+                const __LID = __LOSER.ID;
+                const __WLAND = __WINNER.Land;
+                const __LLAND = __LOSER.Land;
+                const __SDATA = getProp(__DATA, __SAISON, { });
+                const __LDATA = getProp(__SDATA, __WLAND, { });
+                const __LDATA2 = getProp(__SDATA, __LLAND, { });
 
-    if (__FINALE && __ROWS.length) {
-        const __CELLS = __ROWS[0].cells;  // Finalspiel
-        const __SAISON = getOptValue(__OPTSET.saison);
-        const __VEREINE = getOptValue(__OPTSET.vereine, []);
-        const __LAENDER = getOptValue(__OPTSET.laender, []);
-        const __DATA = getOptValue(__OPTSET.data, []);
-        const __HEIMLAND = getLandNameFromCell(__CELLS[__COLUMNINDEX.LandH]);
-        const __TEAMHEIMCELL = __CELLS[__COLUMNINDEX.TeamH];
-        const __HEIMNAME = getTeamNameFromCell(__TEAMHEIMCELL);
-        const __HEIMID = getTeamIdFromCell(__TEAMHEIMCELL);
-        const __HEIM = new Verein(__HEIMNAME, __HEIMLAND, undefined, __HEIMID, undefined, undefined);
-        const __GASTLAND = getLandNameFromCell(__CELLS[__COLUMNINDEX.LandA]);
-        const __TEAMGASTCELL = __CELLS[__COLUMNINDEX.TeamA];
-        const __GASTNAME = getTeamNameFromCell(__TEAMGASTCELL);
-        const __GASTID = getTeamIdFromCell(__TEAMGASTCELL);
-        const __GAST = new Verein(__GASTNAME, __GASTLAND, undefined, __GASTID, undefined, undefined);
-        const __ERGEBNIS = setErgebnisFromCell({ }, __CELLS[__COLUMNINDEX.Erg]);
-        const __HEIMSIEG = ((__ERGEBNIS.gFor > -1) ? (__ERGEBNIS.gFor > __ERGEBNIS.gAga) : undefined);
-        const __WINNER =  (__HEIMSIEG ? __HEIM : __GAST);
-        const __LOSER = (__HEIMSIEG ? __GAST : __HEIM);
-        const __WID = __WINNER.ID;
-        const __LID = __LOSER.ID;
-        const __WLAND = __WINNER.Land;
-        const __LLAND = __LOSER.Land;
-        const __SDATA = getProp(__DATA, __SAISON, { });
-        const __LDATA = getProp(__SDATA, __WLAND, { });
-        const __LDATA2 = getProp(__SDATA, __LLAND, { });
+                __VEREINE[__HEIMID] = __HEIM.Team;
+                __LAENDER[__HEIMID] = __HEIM.Land;
+                __VEREINE[__GASTID] = __GAST.Team;
+                __LAENDER[__GASTID] = __GAST.Land;
 
-        __VEREINE[__HEIMID] = __HEIM.Team;
-        __LAENDER[__HEIMID] = __HEIM.Land;
-        __VEREINE[__GASTID] = __GAST.Team;
-        __LAENDER[__GASTID] = __GAST.Land;
+                if (__HEIMSIEG !== undefined) {
+                    __LDATA[typ] = [ __WID, getGameTypeID(typ) ];
+                    __LDATA2[typ + '2'] = [ __LID ];
 
-        if (__HEIMSIEG !== undefined) {
-            __LDATA[typ] = [ __WID, getGameTypeID(typ) ];
-            __LDATA2[typ + '2'] = [ __LID ];
+                    saveQualiData(__OPTSET, __DATA, __SAISON);
+                }
 
-            saveQualiData(__OPTSET, __DATA, __SAISON);
-        }
-
-        setOpt(__OPTSET.vereine, __VEREINE, false);
-        setOpt(__OPTSET.laender, __LAENDER, false);
-    }
+                setOpt(__OPTSET.vereine, __VEREINE, false);
+                setOpt(__OPTSET.laender, __LAENDER, false);
+            }
+        });
 }
 
 // Verarbeitet Ansicht "Landespokale"
@@ -4583,48 +4895,47 @@ function procPokal(finale) {
             'Kom'    : 11
         };
 
-    buildOptions(__OPTCONFIG, __OPTSET, {
-                     'menuAnchor' : getTable(0, "div"),
-                     'hideForm'   : {
-                                        'liga'          : true,
-                                        'tabTyp'        : true,
-                                        'OSCrunde'      : true,
-                                        'OSErunde'      : true,
-                                        'ligaNr'        : true,
-                                        'tabTypNr'      : true,
-                                        'OSCrundenNr'   : true,
-                                        'OSErundenNr'   : true
-                                    },
-                     'formWidth'  : 1
-                 });
+    return buildOptions(__OPTCONFIG, __OPTSET, {
+                            'menuAnchor' : getTable(0, 'div'),
+                            'hideForm'   : {
+                                               'liga'          : true,
+                                               'tabTyp'        : true,
+                                               'OSCrunde'      : true,
+                                               'OSErunde'      : true,
+                                               'ligaNr'        : true,
+                                               'tabTypNr'      : true,
+                                               'OSCrundenNr'   : true,
+                                               'OSErundenNr'   : true
+                                           },
+                            'formWidth'  : 1
+                        }).then(optSet => {
+            const __RUNDE = getOptValue(__OPTSET.PrundenNr);
+            const __FINALE = (__RUNDE === finale);
+            const __ROWS = getRows(0);
 
-    const __RUNDE = getOptValue(__OPTSET.PrundenNr);
-    const __FINALE = (__RUNDE === finale);
-    const __ROWS = getRows(0);
-
-    if (__FINALE && __ROWS.length) {
-        const __CELLS = __ROWS[0].cells;  // Finalspiel
-        const __SAISON = getOptValue(__OPTSET.saison);
-        const __LAND = getOptValue(__OPTSET.land);
-        const __VEREINE = getOptValue(__OPTSET.vereine, []);
-        const __LAENDER = getOptValue(__OPTSET.laender, []);
-        const __DATA = getOptValue(__OPTSET.data, []);
-        const __HEIMTEAMCELL = __CELLS[__COLUMNINDEX.TeamH];
-        const __HEIMNAME = getTeamNameFromCell(__HEIMTEAMCELL);
-        const __HEIMID = getTeamIdFromCell(__HEIMTEAMCELL);
-        const __HEIM = new Verein(__HEIMNAME, __LAND, undefined, __HEIMID, undefined, undefined);
-        const __GASTTEAMCELL = __CELLS[__COLUMNINDEX.TeamA];
-        const __GASTNAME = getTeamNameFromCell(__GASTTEAMCELL);
-        const __GASTID = getTeamIdFromCell(__GASTTEAMCELL);
-        const __GAST = new Verein(__GASTNAME, __LAND, undefined, __GASTID, undefined, undefined);
-        const __ERGEBNIS = setErgebnisFromCell({ }, __CELLS[__COLUMNINDEX.Erg]);
-        const __HEIMSIEG = ((__ERGEBNIS.gFor > -1) ? (__ERGEBNIS.gFor > __ERGEBNIS.gAga) : undefined);
-        const __WINNER =  (__HEIMSIEG ? __HEIM : __GAST);
-        const __LOSER = (__HEIMSIEG ? __GAST : __HEIM);
-        const __WID = __WINNER.ID;
-        const __LID = __LOSER.ID;
-        const __SDATA = getProp(__DATA, __SAISON, { });
-        const __LDATA = getProp(__SDATA, __LAND, { });
+            if (__FINALE && __ROWS.length) {
+                const __CELLS = __ROWS[0].cells;  // Finalspiel
+                const __SAISON = getOptValue(__OPTSET.saison);
+                const __LAND = getOptValue(__OPTSET.land);
+                const __VEREINE = getOptValue(__OPTSET.vereine, []);
+                const __LAENDER = getOptValue(__OPTSET.laender, []);
+                const __DATA = getOptValue(__OPTSET.data, []);
+                const __HEIMTEAMCELL = __CELLS[__COLUMNINDEX.TeamH];
+                const __HEIMNAME = getTeamNameFromCell(__HEIMTEAMCELL);
+                const __HEIMID = getTeamIdFromCell(__HEIMTEAMCELL);
+                const __HEIM = new Verein(__HEIMNAME, __LAND, undefined, __HEIMID, undefined, undefined);
+                const __GASTTEAMCELL = __CELLS[__COLUMNINDEX.TeamA];
+                const __GASTNAME = getTeamNameFromCell(__GASTTEAMCELL);
+                const __GASTID = getTeamIdFromCell(__GASTTEAMCELL);
+                const __GAST = new Verein(__GASTNAME, __LAND, undefined, __GASTID, undefined, undefined);
+                const __ERGEBNIS = setErgebnisFromCell({ }, __CELLS[__COLUMNINDEX.Erg]);
+                const __HEIMSIEG = ((__ERGEBNIS.gFor > -1) ? (__ERGEBNIS.gFor > __ERGEBNIS.gAga) : undefined);
+                const __WINNER =  (__HEIMSIEG ? __HEIM : __GAST);
+                const __LOSER = (__HEIMSIEG ? __GAST : __HEIM);
+                const __WID = __WINNER.ID;
+                const __LID = __LOSER.ID;
+                const __SDATA = getProp(__DATA, __SAISON, { });
+                const __LDATA = getProp(__SDATA, __LAND, { });
 
 console.log(__HEIMTEAMCELL);
 console.log(__GASTTEAMCELL);
@@ -4632,21 +4943,22 @@ console.log(__HEIM);
 console.log(__GAST);
 console.log(__ERGEBNIS);
 
-        __VEREINE[__HEIMID] = __HEIM.Team;
-        __LAENDER[__HEIMID] = __HEIM.Land;
-        __VEREINE[__GASTID] = __GAST.Team;
-        __LAENDER[__GASTID] = __GAST.Land;
+                __VEREINE[__HEIMID] = __HEIM.Team;
+                __LAENDER[__HEIMID] = __HEIM.Land;
+                __VEREINE[__GASTID] = __GAST.Team;
+                __LAENDER[__GASTID] = __GAST.Land;
 
-        if (__HEIMSIEG !== undefined) {
-            __LDATA.P = [ __WID, getGameTypeID('OSE') ];
-            __LDATA.P2 = [ __LID ];
+                if (__HEIMSIEG !== undefined) {
+                    __LDATA.P = [ __WID, getGameTypeID('OSE') ];
+                    __LDATA.P2 = [ __LID ];
 
-            saveQualiData(__OPTSET, __DATA, __SAISON);
-        }
+                    saveQualiData(__OPTSET, __DATA, __SAISON);
+                }
 
-        setOpt(__OPTSET.vereine, __VEREINE, false);
-        setOpt(__OPTSET.laender, __LAENDER, false);
-    }
+                setOpt(__OPTSET.vereine, __VEREINE, false);
+                setOpt(__OPTSET.laender, __LAENDER, false);
+            }
+        });
 }
 
 // Verarbeitet Ansicht "Ligatabelle"
@@ -4668,271 +4980,277 @@ function procTabelle() {
             'Punkte' : 10
         };
 
-    buildOptions(__OPTCONFIG, __OPTSET, {
-                     'menuAnchor' : getTable(0, "div"),
-                     'hideForm'   : {
-                                        'Prunde'        : true,
-                                        'OSCrunde'      : true,
-                                        'OSErunde'      : true,
-                                        'PrundenNr'     : true,
-                                        'OSCrundenNr'   : true,
-                                        'OSErundenNr'   : true
-                                    },
-                     'formWidth'  : 1
-                 });
+    return buildOptions(__OPTCONFIG, __OPTSET, {
+                            'menuAnchor' : getTable(0, 'div'),
+                            'hideForm'   : {
+                                               'Prunde'        : true,
+                                               'OSCrunde'      : true,
+                                               'OSErunde'      : true,
+                                               'PrundenNr'     : true,
+                                               'OSCrundenNr'   : true,
+                                               'OSErundenNr'   : true
+                                           },
+                            'formWidth'  : 1
+                        }).then(optSet => {
+            const __TABLEMAN = new TableManager(__OPTSET, __COLUMNINDEX, getRowsById('kader1'), __ROWOFFSETUPPER, __ROWOFFSETLOWER);
 
-    const __TABLEMAN = new TableManager(__OPTSET, __COLUMNINDEX, getRowsById('kader1'), __ROWOFFSETUPPER, __ROWOFFSETLOWER);
+            const __SAISON = __TABLEMAN.saison;
+            const __LAND = __TABLEMAN.land;
+            const __EINFAERBUNG = getOptValue(__OPTSET.zeigeQuali, true);
+            const __SHOWTITLES = getOptValue(__OPTSET.zeigeTitel, true);
+            const __SHOWCURRTITLES = getOptValue(__OPTSET.zeigeAktuelleTitel, true);
+            const __SHOWQUALITITLES = getOptValue(__OPTSET.zeigeQualiTitel, true);
+            const __VEREINE = getOptValue(__OPTSET.vereine, []);
+            const __LAENDER = getOptValue(__OPTSET.laender, []);
+            //const __MANAGER = getOptValue(__OPTSET.manager, []);
+            const __LIGEN = getOptValue(__OPTSET.ligen, []);
+            const __DATA = getOptValue(__OPTSET.data, []);
+            const __SDATA = getProp(__DATA, __SAISON, { });
+            const __LDATA = getProp(__SDATA, __LAND, { });
 
-    const __SAISON = __TABLEMAN.saison;
-    const __LAND = __TABLEMAN.land;
-    const __EINFAERBUNG = getOptValue(__OPTSET.zeigeQuali, true);
-    const __SHOWTITLES = getOptValue(__OPTSET.zeigeTitel, true);
-    const __SHOWCURRTITLES = getOptValue(__OPTSET.zeigeAktuelleTitel, true);
-    const __SHOWQUALITITLES = getOptValue(__OPTSET.zeigeQualiTitel, true);
-    const __VEREINE = getOptValue(__OPTSET.vereine, []);
-    const __LAENDER = getOptValue(__OPTSET.laender, []);
-    //const __MANAGER = getOptValue(__OPTSET.manager, []);
-    const __LIGEN = getOptValue(__OPTSET.ligen, []);
-    const __DATA = getOptValue(__OPTSET.data, []);
-    const __SDATA = getProp(__DATA, __SAISON, { });
-    const __LDATA = getProp(__SDATA, __LAND, { });
+            if (getOptValue(__OPTSET.setFPdata, false)) {
+                initFairplayData(__DATA, __LAENDER);
 
-    if (getOptValue(__OPTSET.setFPdata, false)) {
-        initFairplayData(__DATA, __LAENDER);
-
-        setOpt(__OPTSET.setFPdata, false, false);
-    }
-
-    for (let i = 0; i < __TABLEMAN.ligaSize; i++) {
-        const __VEREIN = __TABLEMAN.vereine[i];
-        const __TEAMID = __VEREIN.ID;
-
-        __VEREINE[__TEAMID] = __VEREIN.Team;
-        __LAENDER[__TEAMID] = __VEREIN.Land;
-        //__MANAGER[__TEAMID] = __VEREIN.Manager;
-        __LIGEN[__TEAMID] = __VEREIN.LgNr;
-
-        if (__TABLEMAN.isErsteLiga) {
-            const __QUALI = __TABLEMAN.getQuali(i);
-            const __ENTRY = [ __TEAMID ];
-
-            if (__QUALI) {
-                __ENTRY.push(__QUALI);
+                setOpt(__OPTSET.setFPdata, false, false);
             }
 
-            __LDATA[i + 1] = __ENTRY;
-        }
-    }
-
-    __TABLEMAN.formatAllCols([
-                                 [
-                                     {
-                                         'textAlign' : 'center'
-                                     },
-                                     'Anz',
-                                     'Punkte'
-                                 ],
-                                 [
-                                     {
-                                         'textAlign' : 'right',
-                                         'padding'   : "0px .75em"
-                                     },
-                                     'TorF'
-                                 ],
-                                 [
-                                     {
-                                         'textAlign' : 'left',
-                                         'padding'   : "0px .75em"
-                                     },
-                                     'TorA'
-                                 ]
-                             ]);
-
-    setOpt(__OPTSET.vereine, __VEREINE, false);
-    setOpt(__OPTSET.laender, __LAENDER, false);
-    //setOpt(__OPTSET.manager, __MANAGER, false);
-    setOpt(__OPTSET.ligen, __LIGEN, false);
-
-    if (__TABLEMAN.isErsteLiga) {
-        calcEuropaPlaetze(__LDATA);
-
-        saveQualiData(__OPTSET, __DATA, __SAISON);
-
-        if (__EINFAERBUNG) {
             for (let i = 0; i < __TABLEMAN.ligaSize; i++) {
-                const __ENTRY = getProp(__LDATA, i + 1, []);
-                const __TYP = __ENTRY[2];
+                const __VEREIN = __TABLEMAN.vereine[i];
+                const __TEAMID = __VEREIN.ID;
 
-                __TABLEMAN.setClass(i, __TYP);
-            }
-        }
-    }
+                __VEREINE[__TEAMID] = __VEREIN.Team;
+                __LAENDER[__TEAMID] = __VEREIN.Land;
+                //__MANAGER[__TEAMID] = __VEREIN.Manager;
+                __LIGEN[__TEAMID] = __VEREIN.LgNr;
 
-    if (__EINFAERBUNG || __SHOWTITLES || __SHOWCURRTITLES || __SHOWQUALITITLES) {
-        const __ENTRIES = { };
-        const __TITEL = { };
-        const __LTITEL = { };
-
-        const __LEGENDE = getTable(1);
-        const __ROWS = (__LEGENDE ? __LEGENDE.getElementsByTagName("tr") : { });
-        const __TABCOLORS = getStyleFromElements(__ROWS, "backgroundColor", getUpperClassNameFromElement);  // Faerbungen aus Legende ermitteln
-/*
-        const __TABCOLORS = {
-                'OSC'  : 'darkgreen',
-                'OSCQ' : 'olivedrab',
-                'OSE'  : 'darkOlivegreen',
-                'OSEQ' : '#88864E'
-            };
-*/
-        const __TYPEN = {
-                'P'    : 'Pokalsieger',
-                'P2'   : 'Pokalfinalist',
-                'OSE'  : 'OSE-Sieger',
-                'OSC'  : 'OSC-Sieger',
-                'FP'   : 'Fairplay',
-                '1'    : 'Meister',       // Ab hier nur Markierungen, kein Eintrag!
-                '2'    : 'Vizemeister',
-                'OSE2' : 'OSE-Finalist',
-                'OSC2' : 'OSC-Finalist'
-            };
-
-        const __FLAGTYPEN = {
-                'M'    : 'Meister',
-                'P'    : 'Pokalsieger',
-                'N'    : 'Aufsteiger',
-                'A'    : 'abgestiegen',  // 'Absteiger' wird leicht verwechselt!
-                'Z'    : 'Zwangsabsteiger',
-                'OSE'  : 'OSE-Sieger',
-                'OSC'  : 'OSC-Sieger'
-            };
-
-        const __ADDTYPEN = {
-                'P2'   : true,
-                'FP'   : true,
-                '2'    : true,
-                'OSE2' : true,
-                'OSC2' : true
-            };
-
-        if (__SAISON > 1) {
-            const __SLDATA = getProp(__DATA, __SAISON - 1, { });
-            const __LLDATA = getProp(__SLDATA, __LAND, { });
-            const __HASCURRTITLES = (__SHOWCURRTITLES && __TABLEMAN.isCurrSaison && ! __TABLEMAN.isAbschluss);
-
-            if (__SHOWQUALITITLES || __SHOWCURRTITLES) {
-                for (let typ in __LLDATA) {
-                    const __ENTRY = getValue(__LLDATA[typ], []);
-                    const __TEAMID = __ENTRY[0];
-                    const __QUALI = __ENTRY[2];
-                    const __TTYP = __TYPEN[typ];
-                    const __ADDTTYP = (__HASCURRTITLES ? __ADDTYPEN[typ] : false);
+                if (__TABLEMAN.isErsteLiga) {
+                    const __QUALI = __TABLEMAN.getQuali(i);
+                    const __ENTRY = [ __TEAMID ];
 
                     if (__QUALI) {
-                        const __LTYP = getGameType(__QUALI);
-
-                        getProp(__LTITEL, __TEAMID, []).push(__LTYP);
+                        __ENTRY.push(__QUALI);
                     }
 
-                    if (__TTYP && __ADDTTYP) {
-                        getProp(__TITEL, __TEAMID, []).push(__TTYP);
+                    __LDATA[i + 1] = __ENTRY;
+                }
+            }
+
+            __TABLEMAN.formatAllCols([
+                                         [
+                                             {
+                                                 'textAlign' : 'center'
+                                             },
+                                             'Anz',
+                                             'Punkte'
+                                         ],
+                                         [
+                                             {
+                                                 'textAlign' : 'right',
+                                                 'padding'   : "0px .75em"
+                                             },
+                                             'TorF'
+                                         ],
+                                         [
+                                             {
+                                                 'textAlign' : 'left',
+                                                 'padding'   : "0px .75em"
+                                             },
+                                             'TorA'
+                                         ]
+                                     ]);
+
+            setOpt(__OPTSET.vereine, __VEREINE, false);
+            setOpt(__OPTSET.laender, __LAENDER, false);
+            //setOpt(__OPTSET.manager, __MANAGER, false);
+            setOpt(__OPTSET.ligen, __LIGEN, false);
+
+            if (__TABLEMAN.isErsteLiga) {
+                calcEuropaPlaetze(__LDATA);
+
+                saveQualiData(__OPTSET, __DATA, __SAISON);
+
+                if (__EINFAERBUNG) {
+                    for (let i = 0; i < __TABLEMAN.ligaSize; i++) {
+                        const __ENTRY = getProp(__LDATA, i + 1, []);
+                        const __TYP = __ENTRY[2];
+
+                        __TABLEMAN.setClass(i, __TYP);
                     }
                 }
             }
 
-            if (__HASCURRTITLES) {
-                for (let i = 0; i < __TABLEMAN.ligaSize; i++) {
-                    const __VEREIN = __TABLEMAN.vereine[i];
-                    const __TEAMID = __VEREIN.ID;
-                    const __FLAGS = __VEREIN.Flags;
+            if (__EINFAERBUNG || __SHOWTITLES || __SHOWCURRTITLES || __SHOWQUALITITLES) {
+                const __ENTRIES = { };
+                const __TITEL = { };
+                const __LTITEL = { };
 
-                    for (let j = 0; j < __FLAGS.length; j++) {
-                        const __FLAG = __FLAGS[j];
-                        const __TYP = __FLAGTYPEN[__FLAG];
+                const __LEGENDE = getTable(1);
+                const __ROWS = (__LEGENDE ? __LEGENDE.getElementsByTagName("tr") : { });
+                const __TABCOLORS = getStyleFromElements(__ROWS, "backgroundColor", getUpperClassNameFromElement);  // Faerbungen aus Legende ermitteln
+/*
+                const __TABCOLORS = {
+                        'OSC'  : 'darkgreen',
+                        'OSCQ' : 'olivedrab',
+                        'OSE'  : 'darkOlivegreen',
+                        'OSEQ' : '#88864E'
+                    };
+*/
+                const __TYPEN = {
+                        'P'    : 'Pokalsieger',
+                        'P2'   : 'Pokalfinalist',
+                        'OSE'  : 'OSE-Sieger',
+                        'OSC'  : 'OSC-Sieger',
+                        'FP'   : 'Fairplay',
+                        '1'    : 'Meister',       // Ab hier nur Markierungen, kein Eintrag!
+                        '2'    : 'Vizemeister',
+                        'OSE2' : 'OSE-Finalist',
+                        'OSC2' : 'OSC-Finalist'
+                    };
 
-                        getProp(__TITEL, __TEAMID, []).push(__TYP);
+                const __FLAGTYPEN = {
+                        'M'    : 'Meister',
+                        'P'    : 'Pokalsieger',
+                        'N'    : 'Aufsteiger',
+                        'A'    : 'abgestiegen',  // 'Absteiger' wird leicht verwechselt!
+                        'Z'    : 'Zwangsabsteiger',
+                        'OSE'  : 'OSE-Sieger',
+                        'OSC'  : 'OSC-Sieger'
+                    };
+
+                const __ADDTYPEN = {
+                        'P2'   : true,
+                        'FP'   : true,
+                        '2'    : true,
+                        'OSE2' : true,
+                        'OSC2' : true
+                    };
+
+                if (__SAISON > 1) {
+                    const __SLDATA = getProp(__DATA, __SAISON - 1, { });
+                    const __LLDATA = getProp(__SLDATA, __LAND, { });
+                    const __HASCURRTITLES = (__SHOWCURRTITLES && __TABLEMAN.isCurrSaison && ! __TABLEMAN.isAbschluss);
+
+                    if (__SHOWQUALITITLES || __SHOWCURRTITLES) {
+                        for (let typ in __LLDATA) {
+                            const __ENTRY = getValue(__LLDATA[typ], []);
+                            const __TEAMID = __ENTRY[0];
+                            const __QUALI = __ENTRY[2];
+                            const __TTYP = __TYPEN[typ];
+                            const __ADDTTYP = (__HASCURRTITLES ? __ADDTYPEN[typ] : false);
+
+                            if (__QUALI) {
+                                const __LTYP = getGameType(__QUALI);
+
+                                getProp(__LTITEL, __TEAMID, []).push(__LTYP);
+                            }
+
+                            if (__TTYP && __ADDTTYP) {
+                                getProp(__TITEL, __TEAMID, []).push(__TTYP);
+                            }
+                        }
+                    }
+
+                    if (__HASCURRTITLES) {
+                        for (let i = 0; i < __TABLEMAN.ligaSize; i++) {
+                            const __VEREIN = __TABLEMAN.vereine[i];
+                            const __TEAMID = __VEREIN.ID;
+                            const __FLAGS = __VEREIN.Flags;
+
+                            for (let j = 0; j < __FLAGS.length; j++) {
+                                const __FLAG = __FLAGS[j];
+                                const __TYP = __FLAGTYPEN[__FLAG];
+
+                                getProp(__TITEL, __TEAMID, []).push(__TYP);
+                            }
+                        }
                     }
                 }
-            }
-        }
 
-        const __LTITELSIZE = (__SHOWQUALITITLES ? Object.keys(__LTITEL).length : 0);
+                const __LTITELSIZE = (__SHOWQUALITITLES ? Object.keys(__LTITEL).length : 0);
 
-        for (let typ in __TYPEN) {
-            const __ENTRY = getValue(__LDATA[typ], []);
-            const __TEAMID = __ENTRY[0];
-            const __QUALI = __ENTRY[2];
+                for (let typ in __TYPEN) {
+                    const __ENTRY = getValue(__LDATA[typ], []);
+                    const __TEAMID = __ENTRY[0];
+                    const __QUALI = __ENTRY[2];
 
-            if (__TEAMID) {
-                if (__TABLEMAN.isAbschluss) {
-                    getProp(__TITEL, __TEAMID, []).push(__TYPEN[typ]);
+                    if (__TEAMID) {
+                        if (__TABLEMAN.isAbschluss) {
+                            getProp(__TITEL, __TEAMID, []).push(__TYPEN[typ]);
+                        }
+
+                        if (__QUALI) {
+                            __ENTRIES[__TEAMID] = __ENTRY;
+                        }
+                    }
                 }
-
-                if (__QUALI) {
-                    __ENTRIES[__TEAMID] = __ENTRY;
-                }
-            }
-        }
 console.log(__LDATA);
 console.log(__ENTRIES);
 console.log(__TITEL);
 console.log(__LTITEL);
-        for (let i = 0; i < __TABLEMAN.ligaSize; i++) {
-            const __VEREIN = __TABLEMAN.vereine[i];
-            const __TEAMID = __VEREIN.ID;
+                for (let i = 0; i < __TABLEMAN.ligaSize; i++) {
+                    const __VEREIN = __TABLEMAN.vereine[i];
+                    const __TEAMID = __VEREIN.ID;
 
-            if (__EINFAERBUNG) {
-                const __ENTRY = __ENTRIES[__TEAMID];
+                    if (__EINFAERBUNG) {
+                        const __ENTRY = __ENTRIES[__TEAMID];
 
-                if (__ENTRY) {
-                    const __TYP = __ENTRY[2];
+                        if (__ENTRY) {
+                            const __TYP = __ENTRY[2];
 
-                    __TABLEMAN.setClass(i, __TYP);
+                            __TABLEMAN.setClass(i, __TYP);
+                        }
+                    }
+
+                    if (__SHOWCURRTITLES) {
+                        __TABLEMAN.delFlags(i);
+                    }
+
+                    if (__SHOWTITLES || __SHOWCURRTITLES || __SHOWQUALITITLES) {
+                        const __LTIT = __LTITEL[__TEAMID];
+                        const __TIT = __TITEL[__TEAMID];
+                        const __LFILL = ((__LTITELSIZE && __TIT) ? [] : undefined);
+                        const __LTITSHOWN = (__SHOWQUALITITLES ? __LTIT : undefined);
+
+                        const __OSBLAU = "#111166";
+                        const __LCOLOR = (__LTIT ? __TABCOLORS[__LTIT] : __OSBLAU);
+                        const __TCOLOR = ((__TABLEMAN.isCurrSaison && ! __TABLEMAN.isAbschluss) ? __LCOLOR : undefined);
+
+                        __TABLEMAN.addTitel(i, getValue(__LTITSHOWN, __LFILL), ", ", __LCOLOR);
+                        __TABLEMAN.addTitel(i, __TIT, ", ", __TCOLOR);
+                    }
                 }
             }
+        });
+}
 
-            if (__SHOWCURRTITLES) {
-                __TABLEMAN.delFlags(i);
+(() => {
+    (async () => {
+        try {
+            // Verzweige in unterschiedliche Verarbeitungen je nach aufgerufener Seite:
+            switch (getPageIdFromURL(window.location.href, {
+                                                               'haupt.php' : 0,  // Ansicht "Haupt" (Managerbuero)
+                                                               'lp.php'    : 1,  // Ansicht "Landespokale" (Pokalfinale)
+                                                               'lt.php'    : 2,  // Ansicht "Ligatabelle" (Gesamttabelle)
+                                                               'oscfr.php' : 3,  // Ansicht "OS Championscup FR" (OSC-Finale)
+                                                               'ose.php'   : 4,  // Ansicht "OS Europacup" (OSE-Finale)
+                                                               'fpt.php'   : 5   // Ansicht "Fairplaytabelle"
+                                                           })) {
+                case 0  : await procHaupt().catch(defaultCatch); break;
+                case 1  : await procPokal(7).catch(defaultCatch); break;
+                case 2  : await procTabelle().catch(defaultCatch); break;
+                case 3  : await procEuropa('OSC', 9).catch(defaultCatch); break;
+                case 4  : await procEuropa('OSE', 8).catch(defaultCatch); break;
+                case 5  : await procFairplay().catch(defaultCatch); break;
+                default : break;
             }
 
-            if (__SHOWTITLES || __SHOWCURRTITLES || __SHOWQUALITITLES) {
-                const __LTIT = __LTITEL[__TEAMID];
-                const __TIT = __TITEL[__TEAMID];
-                const __LFILL = ((__LTITELSIZE && __TIT) ? [] : undefined);
-                const __LTITSHOWN = (__SHOWQUALITITLES ? __LTIT : undefined);
-
-                const __OSBLAU = "#111166";
-                const __LCOLOR = (__LTIT ? __TABCOLORS[__LTIT] : __OSBLAU);
-                const __TCOLOR = ((__TABLEMAN.isCurrSaison && ! __TABLEMAN.isAbschluss) ? __LCOLOR : undefined);
-
-                __TABLEMAN.addTitel(i, getValue(__LTITSHOWN, __LFILL), ", ", __LCOLOR);
-                __TABLEMAN.addTitel(i, __TIT, ", ", __TCOLOR);
-            }
+            return 'OK';
+        } catch (ex) {
+            return defaultCatch(ex);
         }
-    }
-}
-
-try {
-    // Verzweige in unterschiedliche Verarbeitungen je nach aufgerufener Seite:
-    switch (getPageIdFromURL(window.location.href, {
-                                                       'haupt.php' : 0,  // Ansicht "Haupt" (Managerbuero)
-                                                       'lp.php'    : 1,  // Ansicht "Landespokale" (Pokalfinale)
-                                                       'lt.php'    : 2,  // Ansicht "Ligatabelle" (Gesamttabelle)
-                                                       'oscfr.php' : 3,  // Ansicht "OS Championscup FR" (OSC-Finale)
-                                                       'ose.php'   : 4,  // Ansicht "OS Europacup" (OSE-Finale)
-                                                       'fpt.php'   : 5   // Ansicht "Fairplaytabelle"
-                                                   })) {
-        case 0  : procHaupt(); break;
-        case 1  : procPokal(7); break;
-        case 2  : procTabelle(); break;
-        case 3  : procEuropa('OSC', 9); break;
-        case 4  : procEuropa('OSE', 8); break;
-        case 5  : procFairplay(); break;
-        default : break;
-    }
-} catch (ex) {
-    showAlert('[' + ex.lineNumber + "] " + __DBMOD.Name, ex.message, ex);
-} finally {
-    __LOG[2]("SCRIPT END");
-}
+    })().then(rc => {
+            __LOG[1]('SCRIPT END', __DBMOD.Name, '(' + rc + ')');
+        })
+})();
 
 // *** EOF ***
