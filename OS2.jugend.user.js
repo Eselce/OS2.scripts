@@ -1,26 +1,12 @@
 // ==UserScript==
 // @name         OS2.jugend
 // @namespace    http://os.ongapo.com/
-// @version      0.51
+// @version      0.52
 // @copyright    2013+
 // @author       Andreas Eckes (Strindheim BK) / Sven Loges (SLC)
 // @description  Jugendteam-Script fuer Online Soccer 2.0
-// @include      http*://os.ongapo.com/haupt.php
-// @include      http*://os.ongapo.com/haupt.php?changetosecond=*
-// @include      http*://os.ongapo.com/ju.php
-// @include      http*://os.ongapo.com/ju.php?page=*
-// @include      http*://www.os.ongapo.com/haupt.php
-// @include      http*://www.os.ongapo.com/haupt.php?changetosecond=*
-// @include      http*://www.os.ongapo.com/ju.php
-// @include      http*://www.os.ongapo.com/ju.php?page=*
-// @include      http*://online-soccer.eu/haupt.php
-// @include      http*://online-soccer.eu/haupt.php?changetosecond=*
-// @include      http*://online-soccer.eu/ju.php
-// @include      http*://online-soccer.eu/ju.php?page=*
-// @include      http*://www.online-soccer.eu/haupt.php
-// @include      http*://www.online-soccer.eu/haupt.php?changetosecond=*
-// @include      http*://www.online-soccer.eu/ju.php
-// @include      http*://www.online-soccer.eu/ju.php?page=*
+// @include      /^https?://(www\.|)(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/haupt\.php(\?changetosecond=\w+|)$/
+// @include      /^https?://(www\.|)(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/ju\.php(\?page=\d+|)$/
 // @grant        GM_getValue
 // @grant        GM_setValue
 // @grant        GM_deleteValue
@@ -266,6 +252,17 @@ const __OPTCONFIG = {
                    'Hotkey'    : 'M',
                    'FormLabel' : "MW:|beste $"
                },
+    'ersetzeSkills' : {   // Auswahl fuer prognostizierte Einzelskills mit Ende 18 statt der aktuellen (true = Ende 18, false = aktuell)
+                   'Name'      : "substSkills",
+                   'Type'      : __OPTTYPES.SW,
+                   'Default'   : false,
+                   'Action'    : __OPTACTION.NXT,
+                   'Label'     : "Skills Ende",
+                   'Hotkey'    : 'k',
+                   'AltLabel'  : "Skills aktuell",
+                   'AltHotkey' : 'k',
+                   'FormLabel' : "Einzelwerte ersetzen \u03A9"
+               },
     'zeigeTrainiertEnde' : {  // Spaltenauswahl fuer die trainierten Skills mit Ende 18 (true = anzeigen, false = nicht anzeigen)
                    'Name'      : "showTrainiertEnde",
                    'Type'      : __OPTTYPES.SW,
@@ -442,6 +439,20 @@ const __OPTCONFIG = {
                    'Replace'   : null,
                    'Space'     : 0,
                    'Label'     : "Daten-ZAT:"
+               },
+    'foerderung' : {      // Jugendfoerderung
+                   'Name'      : "donation",
+                   'Type'      : __OPTTYPES.MC,
+                   'ValType'   : "Number",
+                   'Permanent' : true,
+                   'SelValue'  : false,
+                   'Choice'    : [ 500, 1000, 1500, 2000, 2500, 3000, 3500, 4000, 4500, 5000,
+                                  5500, 6000, 6500, 7000, 7500, 8000, 8500, 9000, 9500, 10000 ],
+                   'Default'   : 10000,
+                   'Action'    : __OPTACTION.NXT,
+                   'Label'     : "F\xF6rderung: $",
+                   'Hotkey'    : 'F',
+                   'FormLabel' : "F\xF6rderung:|$"
                },
     'team' : {            // Datenspeicher fuer Daten des Erst- bzw. Zweitteams
                    'Name'      : "team",
@@ -1349,6 +1360,10 @@ function getMulValue(valueA, valueB, digits = 0, defValue = NaN) {
 
     if ((valueA !== undefined) && (valueB !== undefined)) {
         product = parseFloat(valueA) * parseFloat(valueB);
+    }
+
+    if (isNaN(product)) {
+        product = defValue;
     }
 
     return parseFloat(product.toFixed(digits));
@@ -3325,6 +3340,7 @@ function init(playerRows, optSet, colIdx, offsetUpper = 1, offsetLower = 0, relo
 
     const __SAISON = getOptValue(optSet.saison);
     const __CURRZAT = getOptValue(optSet.aktuellerZat);
+    const __DONATION = getOptValue(optSet.foerderung);
     const __BIRTHDAYS = getOptValue(optSet.birthdays, []);
     const __TCLASSES = getOptValue(optSet.tClasses, []);
     const __PROGRESSES = getOptValue(optSet.progresses, []);
@@ -3340,7 +3356,7 @@ function init(playerRows, optSet, colIdx, offsetUpper = 1, offsetLower = 0, relo
         const __ISGOALIE = isGoalieFromHTML(__CELLS, colIdx.Age);
         const __NEWPLAYER = new PlayerRecord(__AGE, getValue(__SKILLS[j], []), __ISGOALIE);
 
-        __NEWPLAYER.initPlayer(__SAISON, __CURRZAT, __BIRTHDAYS[j], __TCLASSES[j], __PROGRESSES[j]);
+        __NEWPLAYER.initPlayer(__SAISON, __CURRZAT, __DONATION, __BIRTHDAYS[j], __TCLASSES[j], __PROGRESSES[j]);
 
         if (reloadData) {
             __NEWPLAYER.setZusatz(__ZATAGES[j], __TRAINIERT[j], __POSITIONS[j]);
@@ -3462,6 +3478,7 @@ function ColumnManager(optSet, colIdx, showCol) {
     this.pos = (__EINZELSKILLS && __POSITIONS && getValue(__SHOWCOL.zeigePosition, __SHOWALL) && getOptValue(optSet.zeigePosition));
     this.anzOpti = ((__EINZELSKILLS && getValue(__SHOWCOL.zeigeOpti, __SHOWALL)) ? getOptValue(optSet.anzahlOpti) : 0);
     this.anzMw =  ((__PROJECTION && getValue(__SHOWCOL.zeigeMW, __SHOWALL)) ? getOptValue(optSet.anzahlMW) : 0);
+    this.substSkills = (__PROJECTION && getValue(__SHOWCOL.ersetzeSkills, __SHOWALL) && getOptValue(optSet.ersetzeSkills));
     this.trE = (__PROJECTION && __TRAINIERT && getValue(__SHOWCOL.zeigeTrainiertEnde, __SHOWALL) && getOptValue(optSet.zeigeTrainiertEnde));
     this.antHptE = (__PROJECTION && getValue(__SHOWCOL.zeigeAnteilPriEnde, __SHOWALL) && getOptValue(optSet.zeigeAnteilPriEnde));
     this.antNebE = (__PROJECTION && getValue(__SHOWCOL.zeigeAnteilSecEnde, __SHOWALL) && getOptValue(optSet.zeigeAnteilSecEnde));
@@ -3473,7 +3490,7 @@ function ColumnManager(optSet, colIdx, showCol) {
 }
 
 Class.define(ColumnManager, Object, {
-        'toString'       : function() {
+        'toString'       : function() {  // Bisher nur die noetigsten Parameter ausgegeben...
                                let result = "Skillschnitt\t\t" + this.skill + '\n';
                                result += "Beste Position\t" + this.pos + '\n';
                                result += "Optis\t\t\t" + this.anzOpti + '\n';
@@ -3488,7 +3505,7 @@ Class.define(ColumnManager, Object, {
                                tableRow.insertCell(-1);
                                return tableRow.cells.length - 1;
                            },
-        'addAndFillCell' : function(tableRow, value, color, digits = 2) {
+        'addAndFillCell' : function(tableRow, value, color, align, digits = 2) {
                                let text = value;
 
                                if (value && isFinite(value) && (value !== true) && (value !== false)) {
@@ -3503,8 +3520,13 @@ Class.define(ColumnManager, Object, {
                                }
 
                                // String, Boolean oder Zahl einfuegen...
-                               tableRow.cells[this.addCell(tableRow)].textContent = text;
-                               tableRow.cells[tableRow.cells.length - 1].style.color = color;
+                               tableRow.cells[this.addCell(tableRow)].innerHTML = text;
+                               if (color) {
+                                   tableRow.cells[tableRow.cells.length - 1].style.color = color;
+                               }
+                               if (align) {
+                                   tableRow.cells[tableRow.cells.length - 1].align = align;
+                               }
                            },
         'addAndBarCell'  : function(tableRow, value, scale = 100, offset = 0, width = 100, height = 10) {
                                const __VALUE = ((scale && isFinite(value)) ? (value - offset) * 100 / scale : 0);
@@ -3514,7 +3536,7 @@ Class.define(ColumnManager, Object, {
                                tableRow.cells[tableRow.cells.length - 1].align = 'left';
                            },
         'getBarImg'      : function(value, width = 100, height = 10) {
-                               const __VALUE = floorValue(Math.max(0, Math.min(99, value)));
+                               const __VALUE = Math.max(0, Math.min(99, getMulValue(value, 1, 0, 0)));
 
                                // HTML-Code fuer Anteilsbalken...
                                return '<img src="images/balken/' + __VALUE + '.GIF" width="' + (__VALUE * width / 100) + '" height=' + height + '>';
@@ -3598,8 +3620,9 @@ Class.define(ColumnManager, Object, {
                                }
                            },  // Ende addTitles()
         'addValues'      : function(player, playerRow, color = "#FFFFFF") {
-                               const __COLOR = (player.isGoalie ? getColor("TOR") : color);
-                               const __POS1COLOR = getColor(player.getPos());
+                               const __COLALERT = getColor('STU');  // rot
+                               const __COLOR = ((player.zatLeft < 1) ? __COLALERT : player.isGoalie ? getColor('TOR') : color);
+                               const __POS1COLOR = getColor((player.getPosPercent() > 99.99) ? 'LEI' : player.getPos());
 
                                // Aktuelle Werte
                                if (this.bar) {
@@ -3609,38 +3632,46 @@ Class.define(ColumnManager, Object, {
                                    this.addAndFillCell(playerRow, player.getTalent(), __COLOR);
                                }
                                if (this.quo) {
-                                   this.addAndFillCell(playerRow, player.getAufwertungsSchnitt(), __COLOR, 2);
+                                   this.addAndFillCell(playerRow, player.getAufwertungsSchnitt(), __COLOR, null, 2);
+                               }
+                               if (this.colIdx.Auf) {
+                                   convertStringFromHTML(playerRow.cells, this.colIdx.Auf, function(aufwert) {
+                                                                                               return player.boldPriSkillNames(aufwert);
+                                                                                           });
                                }
                                if (this.aufw) {
-                                   this.addAndFillCell(playerRow, player.getAufwert(), __COLOR);
+                                   this.addAndFillCell(playerRow, player.boldPriSkillNames(player.getAufwert()), __COLOR, 'left');
                                }
                                if (this.geb) {
-                                   this.addAndFillCell(playerRow, player.getGeb(), __COLOR, 0);
+                                   this.addAndFillCell(playerRow, player.getGeb(), __COLOR, null, 0);
                                }
                                if (this.substAge) {
                                    convertStringFromHTML(playerRow.cells, this.colIdx.Age, function(unused) {
                                                                                                return parseFloat(player.getAge()).toFixed(2);
                                                                                            });
                                } else if (this.alter) {
-                                   this.addAndFillCell(playerRow, player.getAge(), __COLOR, 2);
+                                   this.addAndFillCell(playerRow, player.getAge(), __COLOR, null, 2);
+                               }
+                               if (player.zatLeft < 6) {  // Abrechnungszeitraum vor dem letztmoeglichen Ziehen...
+                                   formatCell(playerRow.cells[this.colIdx.Age], true, __COLALERT, null);
                                }
                                if (this.fix) {
-                                   this.addAndFillCell(playerRow, player.getFixSkills(), __COLOR, 0);
+                                   this.addAndFillCell(playerRow, player.getFixSkills(), __COLOR, null, 0);
                                }
                                if (this.tr) {
-                                   this.addAndFillCell(playerRow, player.getTrainableSkills(), __COLOR, 0);
+                                   this.addAndFillCell(playerRow, player.getTrainableSkills(), __COLOR, null, 0);
                                }
                                if (this.antHpt) {
-                                   this.addAndFillCell(playerRow, player.getPriPercent(player.getPos()), __COLOR, 0);
+                                   this.addAndFillCell(playerRow, player.getPriPercent(player.getPos()), __COLOR, null, 0);
                                }
                                if (this.antNeb) {
-                                   this.addAndFillCell(playerRow, player.getSecPercent(player.getPos()), __COLOR, 0);
+                                   this.addAndFillCell(playerRow, player.getSecPercent(player.getPos()), __COLOR, null, 0);
                                }
                                if (this.pri) {
-                                   this.addAndFillCell(playerRow, player.getPrios(player.getPos()), __COLOR, 1);
+                                   this.addAndFillCell(playerRow, player.getPrios(player.getPos()), __COLOR, null, 1);
                                }
                                if (this.skill) {
-                                   this.addAndFillCell(playerRow, player.getSkill(), __COLOR, 2);
+                                   this.addAndFillCell(playerRow, player.getSkill(), __COLOR, null, 2);
                                }
                                if (this.pos) {
                                    this.addAndFillCell(playerRow, player.getPos(), __POS1COLOR);
@@ -3652,7 +3683,7 @@ Class.define(ColumnManager, Object, {
                                    if (i <= this.anzOpti) {
                                        if ((i === 1) || ! player.isGoalie) {
                                            // Opti anzeigen
-                                           this.addAndFillCell(playerRow, player.getOpti(__POSI), __COLI, 2);
+                                           this.addAndFillCell(playerRow, player.getOpti(__POSI), __COLI, null, 2);
                                        } else {
                                            // TOR, aber nicht bester Opti -> nur Zelle hinzufuegen
                                            this.addCell(playerRow);
@@ -3661,7 +3692,7 @@ Class.define(ColumnManager, Object, {
                                    if (i <= this.anzMw) {
                                        if ((i === 1) || ! player.isGoalie) {
                                            // MW anzeigen
-                                           this.addAndFillCell(playerRow, player.getMarketValue(__POSI), __COLI, 0);
+                                           this.addAndFillCell(playerRow, player.getMarketValue(__POSI), __COLI, null, 0);
                                        } else {
                                            // TOR, aber nicht bester MW -> nur Zelle hinzufuegen
                                            this.addCell(playerRow);
@@ -3670,20 +3701,31 @@ Class.define(ColumnManager, Object, {
                                }
 
                                // Werte mit Ende 18
+                               if (this.substSkills) {
+                                   const __IDXPRI = getIdxPriSkills(player.getPos());
+                                   const __OSBLAU = getColor("");
+
+                                   convertArrayFromHTML(playerRow.cells, this.colIdx.Einz, player.skillsEnd, function(value, cell, unused, index) {
+                                                                                                                 if (~ __IDXPRI.indexOf(index)) {
+                                                                                                                     formatCell(cell, true, __OSBLAU, __POS1COLOR);
+                                                                                                                 }
+                                                                                                                 return value;
+                                                                                                             });
+                               }
                                if (this.trE) {
-                                   this.addAndFillCell(playerRow, player.getTrainableSkills(player.__TIME.end), __COLOR, 1);
+                                   this.addAndFillCell(playerRow, player.getTrainableSkills(player.__TIME.end), __COLOR, null, 1);
                                }
                                if (this.antHptE) {
-                                   this.addAndFillCell(playerRow, player.getPriPercent(player.getPos(), player.__TIME.end), __COLOR, 0);
+                                   this.addAndFillCell(playerRow, player.getPriPercent(player.getPos(), player.__TIME.end), __COLOR, null, 0);
                                }
                                if (this.antNebE) {
-                                   this.addAndFillCell(playerRow, player.getSecPercent(player.getPos(), player.__TIME.end), __COLOR, 0);
+                                   this.addAndFillCell(playerRow, player.getSecPercent(player.getPos(), player.__TIME.end), __COLOR, null, 0);
                                }
                                if (this.priE) {
-                                   this.addAndFillCell(playerRow, player.getPrios(player.getPos(), player.__TIME.end), __COLOR, 1);
+                                   this.addAndFillCell(playerRow, player.getPrios(player.getPos(), player.__TIME.end), __COLOR, null, 1);
                                }
                                if (this.skillE) {
-                                   this.addAndFillCell(playerRow, player.getSkill(player.__TIME.end), __COLOR, 2);
+                                   this.addAndFillCell(playerRow, player.getSkill(player.__TIME.end), __COLOR, null, 2);
                                }
                                for (let i = 1; i <= 6; i++) {
                                    const __POSI = ((i === 1) ? player.getPos() : player.getPos(i));
@@ -3692,7 +3734,7 @@ Class.define(ColumnManager, Object, {
                                    if (i <= this.anzOptiE) {
                                        if ((i === 1) || ! player.isGoalie) {
                                            // Opti anzeigen
-                                           this.addAndFillCell(playerRow, player.getOpti(__POSI, player.__TIME.end), __COLI, 2);
+                                           this.addAndFillCell(playerRow, player.getOpti(__POSI, player.__TIME.end), __COLI, null, 2);
                                        } else {
                                            // TOR, aber nicht bester Opti -> nur Zelle hinzufuegen
                                            this.addCell(playerRow);
@@ -3701,7 +3743,7 @@ Class.define(ColumnManager, Object, {
                                    if (i <= this.anzMwE) {
                                        if ((i === 1) || ! player.isGoalie) {
                                            // MW anzeigen
-                                           this.addAndFillCell(playerRow, player.getMarketValue(__POSI, player.__TIME.end), __COLI, 0);
+                                           this.addAndFillCell(playerRow, player.getMarketValue(__POSI, player.__TIME.end), __COLI, null, 0);
                                        } else {
                                            // TOR, aber nicht bester MW -> nur Zelle hinzufuegen
                                            this.addCell(playerRow);
@@ -3728,11 +3770,17 @@ function PlayerRecord(age, skills, isGoalie) {
     // this.talent: Talent als Zahl (-1=wenig, 0=normal, +1=hoch)
     // this.aufwert: Aufwertungsstring
     // this.mwFormel: Benutzte MW-Formel, siehe __MWFORMEL
-    // this.positions[][]: Positionstext und Opti; TOR-Index ist 5
+    // this.positions[][]: Positionstexte und Optis; TOR-Index ist 5
     // this.skillsEnd[]: Berechnet aus this.skills, this.age und aktuellerZat
+    // this.zatLeft: ZATs bis zum Ende 18 (letzte Ziehmoeglichkeit)
+    // this.restEnd: Korrekturterm zum Ausgleich von Rundungsfehlern mit Ende 18
+    //               (also Skills, die nicht explizit in this.skillsEnd stehen)
 
-    // in this calcZusatz()/setZusatz() definiert:
+    // in this.calcZusatz()/setZusatz() definiert:
     // this.trainiert: Anzahl der erfolgreichen Trainingspunkte
+    // indirekt this.zatAge und this.bestPos
+
+    // in this.getPos() definiert:
     // this.bestPos: erster (bester) Positionstext
 }
 
@@ -3747,7 +3795,7 @@ Class.define(PlayerRecord, Object, {
                                       'alt' : 0,  // Marktwertformel bis Saison 9 inklusive
                                       'S10' : 1   // Marktwertformel MW5 ab Saison 10
                                   },
-        'toString'              : function() {
+        'toString'              : function() {  // Bisher nur die noetigsten Werte ausgegeben...
                                       let result = "Alter\t\t" + this.age + "\n\n";
                                       result += "Aktuelle Werte\n";
                                       result += "Skillschnitt\t" + this.getSkill().toFixed(2) + '\n';
@@ -3771,7 +3819,7 @@ Class.define(PlayerRecord, Object, {
 
                                       return result;
                                   },  // Ende this.toString()
-        'initPlayer'            : function(saison, currZAT, gebZAT, tclass, progresses) {
+        'initPlayer'            : function(saison, currZAT, donation, gebZAT, tclass, progresses) {
                                       // Berechnet die Opti-Werte, sortiert das Positionsfeld und berechnet die Einzelskills mit Ende 18
                                       this.zatGeb = gebZAT;
                                       this.zatAge = this.calcZatAge(currZAT);
@@ -3779,7 +3827,7 @@ Class.define(PlayerRecord, Object, {
                                       this.aufwert = progresses;
                                       this.mwFormel = ((saison < 10) ? this.__MWFORMEL.alt : this.__MWFORMEL.S10);
 
-                                      const __POSREIHEN = [ "ABW", "DMI", "MIT", "OMI", "STU", "TOR" ];
+                                      const __POSREIHEN = [ 'ABW', 'DMI', 'MIT', 'OMI', 'STU', 'TOR' ];
                                       this.positions = [];
                                       for (let index = 0; index < __POSREIHEN.length; index++) {
                                           const __REIHE = __POSREIHEN[index];
@@ -3794,9 +3842,9 @@ Class.define(PlayerRecord, Object, {
                                       this.skillsEnd = [];
 
                                       const __ZATDONE = this.getZatDone();
-                                      const __ZATTOGO = this.getZatDone(this.__TIME.end) - __ZATDONE;
+                                      const __ZATTOGO = (this.zatLeft = this.getZatDone(this.__TIME.end) - __ZATDONE);
                                       const __ADDRATIO = (__ZATDONE ? __ZATTOGO / __ZATDONE : 0);
-                                      let addSkill = (__ADDRATIO ? __ADDRATIO * this.getTrainiert() : __ZATTOGO * (1 + this.talent / 3.6));
+                                      let addSkill = (__ADDRATIO ? __ADDRATIO * this.getTrainiert() : __ZATTOGO * (1 + this.talent / 3.6) * donation / 10000);
 
                                       for (let i in this.skills) {
                                           const __SKILL = this.skills[i];
@@ -3824,12 +3872,12 @@ Class.define(PlayerRecord, Object, {
                                       // Ermittelt Nebenwerte fuer den Spieler und gibt sie alle zurueck (nach initPlayer())
                                       // this.zatAge und this.skills bereits in initPlayer() berechnet
                                       this.trainiert = this.getTrainiert(true);  // neu berechnet aus Skills
-                                      this.bestPos = this.getPos(-1);  // hier: -1 explizit angeben, da neu ermittelt (this.bestPos noch nicht belegt)
+                                      let bestPos = this.getPos(-1);  // hier: -1 explizit angeben, damit neu ermittelt (falls this.bestPos noch nicht belegt)
 
                                       return {
                                                  'zatAge'     : this.zatAge,
                                                  'trainiert'  : this.trainiert,
-                                                 'bestPos'    : this.bestPos
+                                                 'bestPos'    : bestPos
                                              };
                                   },
         'getGeb'                : function() {
@@ -3877,20 +3925,44 @@ Class.define(PlayerRecord, Object, {
         'getAufwertungsSchnitt' : function() {
                                       return parseFloat(this.getTrainiert() / this.getZatDone());
                                   },
-        'getPos'                : function(idx = undefined) {
+        'getPos'                : function(idx = 0) {
                                       const __IDXOFFSET = 1;
 
-                                      switch (getValue(idx, 0)) {
+                                      switch (idx) {
                                       case -1 : return (this.bestPos = this.positions[this.isGoalie ? 5 : 0][0]);
                                       case  0 : return this.bestPos;
                                       default : return this.positions[idx - __IDXOFFSET][0];
                                       }
+                                  },
+        'getPosPercent'         : function(idx = 0) {
+                                      const __IDXOFFSET = 1;
+                                      const __OPTI = this.positions[this.isGoalie ? 5 : 0][1];
+                                      let optiSec = __OPTI;
+
+                                      switch (idx) {
+                                      case -1 : break;  // __OPTI
+                                      case  0 : optiSec = (this.isGoalie ? 0 : this.positions[1][1]);  // Backup-Wert (TOR: keiner)
+                                                break;
+                                      default : optiSec = this.positions[idx - __IDXOFFSET][1];
+                                      }
+
+                                      return parseFloat(100 * optiSec / __OPTI);
                                   },
         'getTalent'             : function() {
                                       return (this.talent < 0) ? "wenig" : (this.talent > 0) ? "hoch" : "normal";
                                   },
         'getAufwert'            : function() {
                                       return this.aufwert;
+                                  },
+        'boldPriSkillNames'     : function(text) {
+                                      const __PRISKILLNAMES = this.getPriSkillNames();
+
+                                      return (! text) ? text : text.replace(/\w+/g, function(name) {
+                                                                                        return ((~ __PRISKILLNAMES.indexOf(name)) ? '<b>' + name + '</b>' : name);
+                                                                                    });
+                                  },
+        'getPriSkillNames'      : function(pos = undefined) {
+                                      return getSkillNameArray(getIdxPriSkills(pos ? pos : this.getPos()), this.isGoalie);
                                   },
         'getSkillSum'           : function(when = this.__TIME.now, idxSkills = undefined, restRate = 15) {
                                       let cachedItem;
@@ -4046,7 +4118,7 @@ function getSkillsFromHTML(cells, colIdx) {
 // colIdxClass: Spaltenindex einer fuer TOR eingefaerbten Zelle
 // return Angabe, der Spieler Torwart oder Feldspieler ist
 function isGoalieFromHTML(cells, colIdxClass) {
-    return (cells[colIdxClass].className === "TOR");
+    return (cells[colIdxClass].className === 'TOR');
 }
 
 // Liest einen String aus der Spalte einer Zeile der Tabelle aus, nachdem dieser konvertiert wurde
@@ -4056,13 +4128,38 @@ function isGoalieFromHTML(cells, colIdxClass) {
 // return Spalteneintrag als String ("" fuer "nicht gefunden")
 function convertStringFromHTML(cells, colIdxStr, convertFun = sameValue) {
     const __CELL = getValue(cells[colIdxStr], { });
-    const __TEXT = convertFun(__CELL.textContent, __CELL);
+    const __TEXT = convertFun(__CELL.textContent, __CELL, colIdxStr, 0);
 
     if (__TEXT !== undefined) {
         __CELL.innerHTML = __TEXT;
     }
 
     return getValue(__TEXT.toString(), "");
+}
+
+// Liest ein Array von String-Werten aus den Spalten ab einer Zeile der Tabelle aus, nachdem diese konvertiert wurden
+// cells: Die Zellen einer Zeile
+// colIdxArr: Erster Spaltenindex der gesuchten Werte
+// arrOrLength: Entweder ein Datenarray zum Fuellen oder die Anzahl der zu lesenden Werte
+// convertFun: Funktion, die die Werte konvertiert
+// return Array mit Spalteneintraegen als String ("" fuer "nicht gefunden")
+function convertArrayFromHTML(cells, colIdxArr, arrOrLength = 1, convertFun = sameValue) {
+    const __ARR = ((typeof arrOrSize === 'number') ? { } : arrOrLength);
+    const __LENGTH = getValue(__ARR.length, arrOrLength);
+    const __RET = [];
+
+    for (let index = 0, colIdx = colIdxArr; index < __LENGTH; index++, colIdx++) {
+        const __CELL = getValue(cells[colIdx], { });
+        const __TEXT = convertFun(getValue(__ARR[index], __CELL.textContent), __CELL, colIdx, index);
+
+        if (__TEXT !== undefined) {
+            __CELL.innerHTML = __TEXT;
+        }
+
+        __RET.push(getValue(__TEXT, "").toString());
+    }
+
+    return __RET;
 }
 
 // Konvertiert den Aufwertungstext einer Zelle auf der Jugend-Teamuebersicht
@@ -4073,12 +4170,38 @@ function convertAufwertung(value, cell = undefined) {
     if (value !== undefined) {
         value = value.replace(/\+2 (\w+)/, "$1 $1").replace(/\+1 /g, "");
 
-        if (cell && (cell.className === "TOR")) {
-            value = convertGoalieSkill(value);
+        if (cell) {
+            if (cell.className === 'TOR') {
+                value = convertGoalieSkill(value);
+            }
+
+            cell.align = 'left';
         }
     }
 
     return value;
+}
+
+// Formatiert eine Zelle um (mit einfachen Parametern)
+// cell: Zu formatierende Zelle
+// bold: Inhalt fett darstellen (true = ja, false = nein)
+// color: Falls angegeben, die Schriftfarbe
+// bgColor: Falls angegeben, die Hintergrundfarbe
+// return Die formatierte Zelle
+function formatCell(cell, bold = true, color = undefined, bgColor = undefined) {
+    if (cell) {
+        if (bold) {
+            cell.style.fontWeight = 'bold';
+        }
+        if (color) {
+            cell.style.color = color;
+        }
+        if (bgColor) {
+            cell.style.backgroundColor = bgColor;
+        }
+    }
+
+    return cell;
 }
 
 // Konvertiert die allgemeinen Skills in die eines Torwarts
@@ -4115,9 +4238,8 @@ function getGoalieSkill(name) {
 // return Konvertierte Aufwertungen (kurze oder lange Form, aber in jedem Fall fuer Torwart konvertiert)
 function getAufwertFromHTML(cells, colIdxAuf, shortForm = true) {
     const __ISGOALIE = isGoalieFromHTML(cells, colIdxAuf);
-    const __TEXT = convertStringFromHTML(cells, colIdxAuf, (shortForm ? convertAufwertung : __ISGOALIE ? convertGoalieSkill : undefined));
 
-    return (__ISGOALIE ? __TEXT.replace(/\w+/g, getGoalieSkill) : __TEXT);
+    return convertStringFromHTML(cells, colIdxAuf, (shortForm ? convertAufwertung : __ISGOALIE ? convertGoalieSkill : undefined));
 }
 
 // Identitaetsfunktion. Konvertiert nichts, sondern liefert einfach den Wert zurueck
@@ -4219,6 +4341,29 @@ function isTrainableSkill(idx) {
     return result;
 }
 
+// Gibt alle Skill-Namen zurueck
+function getAllSkillNames(isGoalie = false) {
+    if (isGoalie) {
+        return [ 'ABS', 'STS', 'FAN', 'STB', 'SPL', 'REF', 'FUQ', 'ERF', 'AGG', 'PAS', 'AUS', 'UEB', 'WID', 'SEL', 'DIS', 'ZUV', 'EIN' ];
+    } else {
+        return [ 'SCH', 'BAK', 'KOB', 'ZWK', 'DEC', 'GES', 'FUQ', 'ERF', 'AGG', 'PAS', 'AUS', 'UEB', 'WID', 'SEL', 'DIS', 'ZUV', 'EIN' ];
+    }
+}
+
+// Gibt den Skill-Namen zu einem Index zurueck
+function getSkillName(idx, isGoalie = false) {
+    const __ALLNAMES = getAllSkillNames(isGoalie);
+
+    return __ALLNAMES[idx];
+}
+
+// Gibt den Skill-Namen zu einem Index-Array zurueck
+function getSkillNameArray(idxArr, isGoalie = false) {
+    return (idxArr ? idxArr.map(function(item) {
+                                    return getSkillName(item, isGoalie);
+                                }) : idxArr);
+}
+
 // Gibt die Indizes aller Skills zurueck
 function getIdxAllSkills() {
     return [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 ];
@@ -4237,12 +4382,12 @@ function getIdxFixSkills() {
 // Gibt die Indizes der Primaerskills zurueck
 function getIdxPriSkills(pos) {
     switch (pos) {
-        case "TOR" : return [ 2, 3, 4, 5 ];
-        case "ABW" : return [ 2, 3, 4, 15 ];
-        case "DMI" : return [ 1, 4, 9, 11 ];
-        case "MIT" : return [ 1, 3, 9, 11 ];
-        case "OMI" : return [ 1, 5, 9, 11 ];
-        case "STU" : return [ 0, 2, 3, 5 ];
+        case 'TOR' : return [ 2, 3, 4, 5 ];
+        case 'ABW' : return [ 2, 3, 4, 15 ];
+        case 'DMI' : return [ 1, 4, 9, 11 ];
+        case 'MIT' : return [ 1, 3, 9, 11 ];
+        case 'OMI' : return [ 1, 5, 9, 11 ];
+        case 'STU' : return [ 0, 2, 3, 5 ];
         default :    return [];
     }
 }
@@ -4250,12 +4395,12 @@ function getIdxPriSkills(pos) {
 // Gibt die Indizes der (trainierbaren) Sekundaerskills zurueck
 function getIdxSecSkills(pos) {
     switch (pos) {
-        case "TOR" : return [ 0, 1, 8, 9, 10, 11, 15 ];
-        case "ABW" : return [ 0, 1, 5, 8, 9, 10, 11 ];
-        case "DMI" : return [ 0, 2, 3, 5, 8, 10, 15 ];
-        case "MIT" : return [ 0, 2, 4, 5, 8, 10, 15 ];
-        case "OMI" : return [ 0, 2, 3, 4, 8, 10, 15 ];
-        case "STU" : return [ 1, 4, 8, 9, 10, 11, 15 ];
+        case 'TOR' : return [ 0, 1, 8, 9, 10, 11, 15 ];
+        case 'ABW' : return [ 0, 1, 5, 8, 9, 10, 11 ];
+        case 'DMI' : return [ 0, 2, 3, 5, 8, 10, 15 ];
+        case 'MIT' : return [ 0, 2, 4, 5, 8, 10, 15 ];
+        case 'OMI' : return [ 0, 2, 3, 4, 8, 10, 15 ];
+        case 'STU' : return [ 1, 4, 8, 9, 10, 11, 15 ];
         default :    return [];
     }
 }
@@ -4263,13 +4408,14 @@ function getIdxSecSkills(pos) {
 // Gibt die zur Position gehoerige Farbe zurueck
 function getColor(pos) {
     switch (pos) {
-        case "TOR" : return "#FFFF00";
-        case "ABW" : return "#00FF00";
-        case "DMI" : return "#3366FF";
-        case "MIT" : return "#66FFFF";
-        case "OMI" : return "#FF66FF";
-        case "STU" : return "#FF0000";
-        case "LEI" : return "#FFFFFF";
+        case 'TOR' : return "#FFFF00";
+        case 'ABW' : return "#00FF00";
+        case 'DMI' : return "#3366FF";
+        case 'MIT' : return "#66FFFF";
+        case 'OMI' : return "#FF66FF";
+        case 'STU' : return "#FF0000";
+        case 'LEI' : return "#FFFFFF";
+        case "" :    return "#111166";  // osBlau
         default :    return "";
     }
 }
@@ -4280,16 +4426,16 @@ function getColor(pos) {
 
 const __GAMETYPES = {    // "Blind FSS gesucht!"
         'unbekannt'  : -1,
-        "reserviert" :  0,
-        "Frei"       :  0,
-        "spielfrei"  :  0,
-        "Friendly"   :  1,
-        "Liga"       :  2,
-        "LP"         :  3,
-        "OSEQ"       :  4,
-        "OSE"        :  5,
-        "OSCQ"       :  6,
-        "OSC"        :  7
+        'reserviert' :  0,
+        'Frei'       :  0,
+        'spielfrei'  :  0,
+        'Friendly'   :  1,
+        'Liga'       :  2,
+        'LP'         :  3,
+        'OSEQ'       :  4,
+        'OSE'        :  5,
+        'OSCQ'       :  6,
+        'OSC'        :  7
     };
 
 const __LIGANRN = {
@@ -4555,6 +4701,7 @@ function procTeamuebersicht() {
                                             'sepWidth'           : true,
                                             'saison'             : true,
                                             'aktuellerZat'       : true,
+                                            'foerderung'         : true,
                                             'team'               : true,
                                             'zeigeBalken'        : true,
                                             'ersetzeAlter'       : true,
@@ -4588,11 +4735,12 @@ function procTeamuebersicht() {
 
         const __ROWS = getRows(1);
         const __HEADERS = __ROWS[0];
-        const __TITLECOLOR = getColor("LEI");  // "#FFFFFF"
+        const __TITLECOLOR = getColor('LEI');  // "#FFFFFF"
 
         const __PLAYERS = init(__ROWS, __OPTSET, __COLUMNINDEX, __ROWOFFSETUPPER, __ROWOFFSETLOWER, true);
         const __COLMAN = new ColumnManager(__OPTSET, __COLUMNINDEX, {
                                             'Default'            : true,
+                                            'ersetzeSkills'      : false,
                                             'zeigeGeb'           : false,
                                             'zeigeSkill'         : false,
                                             'zeigeTal'           : false,
@@ -4666,7 +4814,7 @@ function procSpielereinzelwerte() {
 
         const __ROWS = getRows(1);
         const __HEADERS = __ROWS[0];
-        const __TITLECOLOR = getColor("LEI");  // "#FFFFFF"
+        const __TITLECOLOR = getColor('LEI');  // "#FFFFFF"
 
         const __PLAYERS = init(__ROWS, __OPTSET, __COLUMNINDEX, __ROWOFFSETUPPER, __ROWOFFSETLOWER, false);
         const __COLMAN = new ColumnManager(__OPTSET, __COLUMNINDEX, true);
