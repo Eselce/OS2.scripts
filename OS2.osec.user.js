@@ -1,34 +1,21 @@
 // ==UserScript==
-// @name OS2.osec
-// @namespace  http://os.ongapo.com/
-// @version    0.1
-// @copyright  2013+, Sven Loges (SLC)
-// @description Europapokal-Script fuer Online Soccer 2.0
-// @include http://os.ongapo.com/oscfr.php*
-// @include http://os.ongapo.com/oschr.php*
-// @include http://os.ongapo.com/oscq.php*
-// @include http://os.ongapo.com/osczr.php*
-// @include http://os.ongapo.com/ose.php*
-// @include http://os.ongapo.com/oseq.php*
-// @include http://www.os.ongapo.com/oscfr.php*
-// @include http://www.os.ongapo.com/oschr.php*
-// @include http://www.os.ongapo.com/oscq.php*
-// @include http://www.os.ongapo.com/osczr.php*
-// @include http://www.os.ongapo.com/ose.php*
-// @include http://www.os.ongapo.com/oseq.php*
-// @include http://online-soccer.eu/oscfr.php*
-// @include http://online-soccer.eu/oschr.php*
-// @include http://online-soccer.eu/oscq.php*
-// @include http://online-soccer.eu/osczr.php*
-// @include http://online-soccer.eu/ose.php*
-// @include http://online-soccer.eu/oseq.php*
-// @include http://www.online-soccer.eu/oscfr.php*
-// @include http://www.online-soccer.eu/oschr.php*
-// @include http://www.online-soccer.eu/oscq.php*
-// @include http://www.online-soccer.eu/osczr.php*
-// @include http://www.online-soccer.eu/ose.php*
-// @include http://www.online-soccer.eu/oseq.php*
+// @name         OS2.osec
+// @namespace    http://os.ongapo.com/
+// @version      1.0
+// @copyright    2013+
+// @author       Sven Loges (SLC)
+// @description  Europapokal-Script fuer Online Soccer 2.0
+// @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/(os(eq?|c(q|[hzf]r)))\.php(\?\S+(&\S+)*)?$/
+// @grant        GM_getValue
+// @grant        GM_setValue
+// @grant        GM_deleteValue
+// @grant        GM_registerMenuCommand
+// @grant        GM_info
 // ==/UserScript==
+
+// ECMAScript 6: Erlaubt 'const', 'let', ...
+/* jshint esnext: true */
+/* jshint moz: true */
 
 // Script wird angewendet auf
 // - OSE(Q) und OSC(Q) Ergebnisse
@@ -57,13 +44,13 @@ var teams;
 teams = parseGames();
 procContent(beforeTable, teams);
 
-// Liefert eine auf 0 zurückgesetzten Stats
+// Liefert eine auf 0 zurueckgesetzten Stats
 function emptyStats() {
     return [ 0, "", "", 0, 0, 0, 0, 0 ];
 }
 
-// Fügt für Ergebnis das Team und Hin- und Rückspiel in die Stats ein
-// stats Enthält alle Stats
+// Fuegt fuer Ergebnis das Team und Hin- und Rueckspiel in die Stats ein
+// stats Enthaelt alle Stats
 // ergebnis Spielergebnis [ Eigene Tore, Gegentore ]
 function addResultToStats(stats, id, kue, name, oppId, heim, ergHin, ergRueck) {
     var entry;
@@ -186,7 +173,7 @@ function parseGames() {
     return teams;
 }
 
-// Fügt Übersicht ein
+// Fuegt Uebersicht ein
 function procContent(beforeNode, teams) {
     var div = document.createElement("div");
     var br = document.createElement("br");
@@ -215,7 +202,7 @@ function procContent(beforeNode, teams) {
     appendCell(rowResults, "Heim", color);
     appendCell(rowResults, "(H)", color);
     appendCell(rowResults, "(A)", color);
-    appendCell(rowResults, "Auswärts", color);
+    appendCell(rowResults, "Ausw\xE4rts", color);
     appendCell(rowResults, "-", color);
     appendCell(rowResults, "HH", color);
     appendCell(rowResults, "AH", color);
@@ -252,7 +239,7 @@ function appendCell(row, content, color) {
 
 // Fuegt eine Zeile ans Ende der Tabelle hinzu und fuellt sie
 // table: Tabelle, die verlaengert wird
-// team: Inhalt für das Team
+// team: Inhalt fuer das Team
 // color: Schriftfarbe der neuen Zelle (z.B. "#FFFFFF" fuer weiss)
 function appendTeam(table, team, color) {
     var row = table.insertRow(-1);
@@ -263,8 +250,8 @@ function appendTeam(table, team, color) {
 
 // Fuegt eine Zeile ans Ende der Tabelle hinzu und fuellt sie
 // table: Tabelle, die verlaengert wird
-// teamHome: Inhalt für das Heimteam
-// teamAway: Inhalt für das Auswärtsteam
+// teamHome: Inhalt fuer das Heimteam
+// teamAway: Inhalt fuer das Auswaertsteam
 // color: Schriftfarbe der neuen Zelle (z.B. "#FFFFFF" fuer weiss)
 function appendResult(table, teamHome, teamAway, color) {
     var winCol = color;
