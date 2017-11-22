@@ -20,10 +20,10 @@
 registerMenu();
 
 // Optionen (hier editieren):
-var sepMonths = true;//GM_getValue("sepMonths", true);    // Im Spielplan Striche zwischen den Monaten
-var shortKom  = true;//GM_getValue("shortKom",  true);    // Vorbericht(e) & Kommentar(e) nicht ausschreiben
-var showStats = true;//GM_getValue("showStats", true);    // Ergebnisse aufaddieren und Stand anzeigen
-var longStats = false;//GM_getValue("longStats", false);   // Detailliertere Ausgabe des Stands
+var sepMonths = GM_getValue("sepMonths", true);    // Im Spielplan Striche zwischen den Monaten
+var shortKom  = GM_getValue("shortKom",  true);    // Vorbericht(e) & Kommentar(e) nicht ausschreiben
+var showStats = GM_getValue("showStats", true);    // Ergebnisse aufaddieren und Stand anzeigen
+var longStats = GM_getValue("longStats", false);   // Detailliertere Ausgabe des Stands
 
 var borderString = "solid white 1px";              // Format der Trennlinie zwischen den Monaten
 
@@ -120,9 +120,9 @@ function registerMenuOption(opt, menuOn, funOn, keyOn, menuOff, funOff, keyOff) 
 function registerMenu() {
     console.log("registerMenu()");
     registerMenuOption(longStats, 'Lange Stats', setLongStats, 'L', 'Kurze Stats', setShortStats, 'K');
-    registerMenuOption(showStats, 'Stats ein', setShowStats, 'e', 'Stats aus', setShowNoStats, 'a');
-    registerMenuOption(shortKom, 'Kurze Links', setShortKom, 'u', 'Lange Links', setFullKom, 'g');
-    registerMenuOption(sepMonths, 'Monate trennen', setSepMonths, 't', 'Keine Monate', setNoSepMonths, 'i');
+    registerMenuOption(showStats, 'Stats ein', setShowStats, 'S', 'Stats aus', setShowNoStats, 'S');
+    registerMenuOption(shortKom, 'Kurze Texte', setShortKom, 'T', 'Lange Texte', setFullKom, 'T');
+    registerMenuOption(sepMonths, 'Monate trennen', setSepMonths, 'M', 'Keine Monate', setNoSepMonths, 'M');
 }
 
 // Setzt das Stats-Format neu auf short
