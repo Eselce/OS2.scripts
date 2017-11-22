@@ -17,15 +17,15 @@
 // @grant GM_registerMenuCommand
 // ==/UserScript==
 
-// Optionen (hier editieren):
-var sepMonths = GM_getValue("sepMonths", true);    // Im Spielplan Striche zwischen den Monaten
-var shortKom  = GM_getValue("shortKom",  true);    // Vorbericht(e) & Kommentar(e) nicht ausschreiben
-var showStats = GM_getValue("showStats", true);    // Ergebnisse aufaddieren und Stand anzeigen
-var longStats = GM_getValue("longStats", false);   // Detailliertere Ausgabe des Stands
-
-var borderString = "solid white 1px";
-
 registerMenu();
+
+// Optionen (hier editieren):
+var sepMonths = true;//GM_getValue("sepMonths", true);    // Im Spielplan Striche zwischen den Monaten
+var shortKom  = true;//GM_getValue("shortKom",  true);    // Vorbericht(e) & Kommentar(e) nicht ausschreiben
+var showStats = true;//GM_getValue("showStats", true);    // Ergebnisse aufaddieren und Stand anzeigen
+var longStats = false;//GM_getValue("longStats", false);   // Detailliertere Ausgabe des Stands
+
+var borderString = "solid white 1px";              // Format der Trennlinie zwischen den Monaten
 
 // Verarbeitet die URL der Seite und ermittelt die Nummer der gewuenschten Unterseite
 // url Adresse der Seite
@@ -66,40 +66,63 @@ function getSaisonFromComboBox(saisons) {
     return saison;
 }
 
-// Baut das User-Menue auf
-function registerMenu() {
-    GM_registerMenuCommand("Short format", setShortStats, "S");
-    GM_registerMenuCommand("Long format", setLongStats, "L");
-    GM_registerMenuCommand("No stats", setShowNoStats, "N");
-    GM_registerMenuCommand("Show stats", setShowStats, "h");
-    GM_registerMenuCommand("Short links", setShortKom, "l");
-    GM_registerMenuCommand("Full links", setFullKom, "F");
-    GM_registerMenuCommand("Mark months", setSepMonths, "M");
-    GM_registerMenuCommand("Unmark months", setNoSepMonths, "U");
+// Setzt eine Option dauerhaft und lädt die Seite neu
+// name Name der Option als Speicherort
+// value Zu setzender Wert
+// return Gesetzter Wert
+function setOption(name, value) {
+    GM_setValue(name, value);
+    window.location.reload();
+    return value;
 }
 
 // Setzt das Stats-Format neu auf short/long
 function setLongStatsFormat(long) {
-    longStats = long;
-    GM_setValue("longStats", longStats);
+    longStats = setOption("longStats", long);
 }
 
 // Setzt das Stats-Format neu auf an/aus
 function setStatsShown(visible) {
-    showStats = visible;
-    GM_setValue("showStats", showStats);
+    showStats = setOption("showStats", visible);
 }
 
-// Setzt das Kommentar-Link neu auf gekürzt/lang
+// Setzt das Kommentar-Link neu auf gekÃ¼rzt/lang
 function setKomLength(isShort) {
-    shortKom = isShort;
-    GM_setValue("shortKom", shortKom);
+    shortKom = setOption("shortKom", isShort);
 }
 
 // Setzt die Trennung der Monate neu auf an/aus
 function setMonthsSeparated(on) {
-    sepMonths = on;
-    GM_setValue("sepMonths", sepMonths);
+    sepMonths = setOption("sepMonths", on);
+}
+
+// Zeigt den Eintrag im Menu einer Option
+// option Derzeitiger Wert der Option
+// menuOn Text zum Setzen im Menu
+// funOn Funktion zum Setzen
+// keyOn Hotkey zum Setzen im Menu
+// menuOff Text zum Ausschalten im Menu
+// funOff Funktion zum Ausschalten
+// keyOff Hotkey zum Ausschalten im Menu
+function registerMenuOption(opt, menuOn, funOn, keyOn, menuOff, funOff, keyOff) {
+    var on  = (opt ? "*" : "");
+    var off = (opt ? "" : "*");
+
+    console.log("OPTION " + on + menuOn + on + " / " + off + menuOff + off);
+    if (opt) {
+        GM_registerMenuCommand(menuOff, funOff, keyOff);
+    } else {
+        GM_registerMenuCommand(menuOn, funOn, keyOn);
+    }
+}
+
+// Baut das User-Menue auf
+function registerMenu() {
+    console.log("registerMenu()");
+    registerMenuOption(longStats, 'Lange Stats', setLongStats, 'L', 'Kurze Stats', setShortStats, 'K');
+    registerMenuOption(showStats, 'Stats ein', setShowStats, 'e', 'Stats aus', setShowNoStats, 'a');
+    registerMenuOption(shortKom, 'Kurze Links', setShortKom, 'u', 'Lange Links', setFullKom, 'g');
+    registerMenuOption(sepMonths, 'Monate trennen', setSepMonths, 't', 'Keine Monate', setNoSepMonths, 'i');
 }
 
 // Setzt das Stats-Format neu auf short
@@ -122,7 +145,7 @@ function setShowStats() {
     setStatsShown(true);
 }
 
-// Setzt das Kommentar-Link neu auf gekürzt
+// Setzt das Kommentar-Link neu auf kurz
 function setShortKom() {
     setKomLength(true);
 }
@@ -132,7 +155,7 @@ function setFullKom() {
     setKomLength(false);
 }
 
-// Setzt zwischen den Monaten Trennungslinien
+// Setzt Trennungslinien zwischen die Monate
 function setSepMonths() {
     setMonthsSeparated(true);
 }
@@ -203,7 +226,7 @@ function getSpielArtFromCell(cell) {
 
 // Gibt die ID fuer den Namen eines Wettbewerbs zurueck
 // gameType Name des Wettbewerbs eines Spiels
-// return OS2-ID fÃ¼r den Spieltyp (1 bis 7)
+// return OS2-ID fÃÂ¼r den Spieltyp (1 bis 7)
 function getGameTypeID(gameType) {
     var ID = -1;
 
@@ -225,14 +248,14 @@ function getGameTypeID(gameType) {
 // cell Tabellenzelle mit Link auf den Spielberichts-Link
 // gameType Name des Wettbewerbs eines Spiels
 // label Anzuklickender Text des neuen Links
-// return HTML-Link auf die Preview-Seite fÃ¼r diesen Spielbericht
+// return HTML-Link auf die Preview-Seite fÃÂ¼r diesen Spielbericht
 function getBilanzLinkFromCell(cell, gameType, label) {
     var bericht = cell.textContent;
     var gameTypeID = getGameTypeID(gameType);
     var ret = "";
 
     if (bericht != "Vorschau") {   // Nur falls Link nicht bereits vorhanden
-        if (gameTypeID > 1) {      // nicht mÃ¶glich fÃ¼r "Friendly" bzw. "spielfrei"
+        if (gameTypeID > 1) {      // nicht mÃÂ¶glich fÃÂ¼r "Friendly" bzw. "spielfrei"
             var searchFun = "javascript:os_bericht(";
             var paarung = cell.innerHTML.substr(cell.innerHTML.indexOf(searchFun) + searchFun.length);
             paarung = paarung.substr(0, paarung.indexOf(")"));
@@ -265,7 +288,7 @@ function procSpielplan(sepMonths, shortKom, showStats) {
     var qualiRunden = [ "Quali 1", "Quali 2", "Quali 3" ];
     var oscRunden = [ "Viertelfinale", "Halbfinale", "Finale" ];
     var oseRunden = [ "Runde 1", "Runde 2", "Runde 3", "Runde 4", "Achtelfinale", "Viertelfinale", "Halbfinale", "Finale" ];
-    var hinrueck = [ " Hin", " Rück", "" ];
+    var hinrueck = [ " Hin", " RÃ¼ck", "" ];
 
     var table = document.getElementsByTagName("table")[2];
     var saisons = document.getElementsByTagName("option");
