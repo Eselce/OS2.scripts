@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         OS2.haupt
 // @namespace    http://os.ongapo.com/
-// @version      0.31
+// @version      0.40
 // @copyright    2016+
 // @author       Sven Loges (SLC)
 // @description  Managerbuero-Abschnitt aus dem Master-Script fuer Online Soccer 2.0
@@ -26,6 +26,8 @@
 
 // ==================== Konfigurations-Abschnitt fuer Optionen ====================
 
+const __LOGLEVEL = 3;
+
 // Options-Typen
 const __OPTTYPES = {
     'MC' : "multiple choice",
@@ -44,15 +46,15 @@ const __OPTACTION = {
 
 const __OPTMEM = {
     'normal' : {
-                   'Name'      : "Session",
-                   'Value'     : sessionStorage,
-                   'Display'   : "sessionStorage",
-                   'Prefix'    : 'run'
-               },
-    'unbegrenzt' : {
                    'Name'      : "Browser",
                    'Value'     : localStorage,
                    'Display'   : "localStorage",
+                   'Prefix'    : 'run'
+               },
+    'begrenzt' : {
+                   'Name'      : "Session",
+                   'Value'     : sessionStorage,
+                   'Display'   : "sessionStorage",
                    'Prefix'    : 'run'
                },
     'inaktiv' : {
@@ -69,6 +71,8 @@ const __OPTCONFIG = {
                    'Name'      : "saison",
                    'Type'      : __OPTTYPES.MC,
                    'ValType'   : "Number",
+                   'FreeValue' : true,
+                   'SelValue'  : false,
                    'Choice'    : [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ],
                    'Default'   : 10,
                    'Action'    : __OPTACTION.NXT,
@@ -91,7 +95,7 @@ const __OPTCONFIG = {
                    'Name'      : "dataZAT",
                    'Type'      : __OPTTYPES.SD,
                    'ValType'   : "Number",
-                   'Hidden'    : false,
+                   'Hidden'    : true,
                    'Serial'    : true,
                    'AutoReset' : true,
                    'Permanent' : true,
@@ -159,6 +163,666 @@ const __OPTCONFIG = {
 };
 
 // ==================== Invarianter Abschnitt fuer Optionen ====================
+
+// Kompatibilitaetsfunktion zur Ermittlung des Namens einer Funktion (falle <Function>.name nicht vorhanden ist)
+if (Function.prototype.name === undefined) {
+    Object.defineProperty(Function.prototype, 'name', {
+            get : function() {
+                      return /function ([^(\s]*)/.exec(this.toString())[1];
+                  }
+        });
+}
+
+// Ein Satz von Logfunktionen, die je nach Loglevel zur Verfuegung stehen. Aufruf: __LOG[level](text)
+const __LOG = {
+                  'logFun'   : [
+                                   console.error,  // [0] Alert
+                                   console.error,  // [1] Error
+                                   console.log,    // [2] Log: Release
+                                   console.log,    // [3] Log: Info
+                                   console.log,    // [4] Log: Debug
+                                   console.log,    // [5] Log: Verbose
+                                   console.log     // [6] Log: Very verbose
+                               ],
+                  'init'     : function(win, logLevel = 1) {
+                                   for (level = 0; level < this.logFun.length; level++) {
+                                       this[level] = ((level > logLevel) ? function() { } : this.logFun[level]);
+                                   }
+                               },
+                  'changed'  : function(oldVal, newVal) {
+                                   const __OLDVAL = safeStringify(oldVal);
+                                   const __NEWVAL = safeStringify(newVal);
+
+                                   return ((__OLDVAL !== __NEWVAL) ? __OLDVAL + " => " : "") + __NEWVAL;
+                               }
+              };
+
+__LOG.init(window, __LOGLEVEL);
+
+// Gibt eine Meldung in der Console aus und oeffnet ein Bestaetigungsfenster mit der Meldung
+// label: Eine Ueberschrift
+// message: Der Meldungs-Text
+// data: Ein Wert. Ist er angegeben, wird er in der Console ausgegeben
+function showAlert(label, message, data = undefined) {
+    __LOG[1](label + ": " + message);
+
+    if (data !== undefined) {
+        __LOG[2](data);
+    }
+
+    alert(label + "\n\n" + message);
+}
+
+// ==================== Abschnitt fuer Klasse Class ====================
+
+function Class(className, baseClass, initFun) {
+    'use strict';
+
+    try {
+        const __BASE = ((baseClass !== undefined) ? baseClass : Object);
+        const __BASEPROTO = (__BASE ? __BASE.prototype : undefined);
+        const __BASECLASS = (__BASEPROTO ? __BASEPROTO.__class : undefined);
+
+        this.className = (className || '?');
+        this.baseClass = __BASECLASS;
+        Object.setConst(this, 'baseProto', __BASEPROTO, false);
+
+        if (! initFun) {
+            const __BASEINIT = (__BASECLASS || { }).init;
+
+            if (__BASEINIT) {
+                initFun = function() {
+                              // Basisklassen-Init aufrufen...
+                              return __BASEINIT.call(this, arguments);
+                          };
+            } else {
+                initFun = function() {
+                              // Basisklassen-Init fehlt (und Basisklasse ist nicht Object)...
+                              return false;
+                          };
+            }
+        }
+
+        console.assert((__BASE === null) || ((typeof __BASE) === 'function'), "No function:", __BASE);
+        console.assert((typeof initFun) === 'function', "No function:", initFun);
+
+        this.init = initFun;
+    } catch (ex) {
+        showAlert('[' + ex.lineNumber + "] Error in Class " + className, ex.message, ex);
+    }
+}
+
+Class.define = function(subClass, baseClass, members = undefined, initFun = undefined, createProto = true) {
+        return (subClass.prototype = subClass.subclass(baseClass, members, initFun, createProto));
+    };
+
+Object.setConst = function(obj, item, value, config) {
+        return Object.defineProperty(obj, item, {
+                        enumerable   : false,
+                        configurable : (config || true),
+                        writable     : false,
+                        value        : value
+                    });
+    };
+
+Object.setConst(Object.prototype, 'subclass', function(baseClass, members, initFun, createProto) {
+        'use strict';
+
+        try {
+            const __MEMBERS = (members || { });
+            const __CREATEPROTO = ((createProto === undefined) ? true : createProto);
+
+            console.assert((typeof this) === 'function');
+            console.assert((typeof __MEMBERS) === 'object');
+
+            const __CLASS = new Class(this.name || __MEMBERS.__name, baseClass, initFun || __MEMBERS.__init);
+            const __PROTO = (__CREATEPROTO ? Object.create(__CLASS.baseProto) : this.prototype);
+
+            for (let item in __MEMBERS) {
+                if ((item !== '__name') && (item !== '__init')) {
+                    Object.setConst(__PROTO, item, __MEMBERS[item]);
+                }
+            }
+
+            Object.setConst(__PROTO, '__class', __CLASS, ! __CREATEPROTO);
+
+            return __PROTO;
+        } catch (ex) {
+            showAlert('[' + ex.lineNumber + "] Error in subclassing", ex.message, ex);
+        }
+    }, false);
+
+Class.define(Object, null, {
+                    '__init'       : function() {
+                                         // Oberstes Basisklassen-Init...
+                                         return true;
+                                     },
+                    'getClass'     : function() {
+                                         return this.__class;
+                                     },
+                    'getClassName' : function() {
+                                         const __CLASS = this.getClass();
+
+                                         return (__CLASS ? __CLASS.getName() : undefined);
+                                     },
+                    'setConst'     : function(item, value, config = undefined) {
+                                         return Object.setConst(this, item, value, config);
+                                     }
+                }, undefined, false);
+
+Class.define(Function, Object);
+
+Class.define(Class, Object, {
+                    'getName'      : function() {
+                                         return this.className;
+                                     }
+                } );
+
+// ==================== Ende Abschnitt fuer Klasse Class ====================
+
+// ==================== Abschnitt fuer Klasse Delims ====================
+
+// Basisklasse fuer die Verwaltung der Trennzeichen und Symbole von Pfaden
+// delim: Trennzeichen zwischen zwei Ebenen (oder Objekt/Delims mit entsprechenden Properties)
+// back: (Optional) Name des relativen Vaterverzeichnisses
+// root: (Optional) Kennung vor dem ersten Trenner am Anfang eines absoluten Pfads
+// home: (Optional) Kennung vor dem ersten Trenner am Anfang eines Pfads relativ zu Home
+function Delims(delim, back, root, home) {
+    'use strict';
+
+    if ((typeof delim) === 'object') {
+        // Erster Parameter ist Objekt mit den Properties...
+        if (back === undefined) {
+            back = delim.back;
+        }
+        if (root === undefined) {
+            root = delim.root;
+        }
+        if (home === undefined) {
+            home = delim.home;
+        }
+        delim = delim.delim;
+    }
+
+    this.setDelim(delim);
+    this.setBack(back);
+    this.setRoot(root);
+    this.setHome(home);
+}
+
+Class.define(Delims, Object, {
+              'setDelim'       : function(delim = undefined) {
+                                     this.delim = delim;
+                                 },
+              'setBack'        : function(back = undefined) {
+                                     this.back = back;
+                                 },
+              'setRoot'        : function(root = undefined) {
+                                     this.root = root;
+                                 },
+              'setHome'        : function(home = undefined) {
+                                     this.home = home;
+                                 }
+          } );
+
+// ==================== Ende Abschnitt fuer Klasse Delims ====================
+
+// ==================== Abschnitt fuer Klasse UriDelims ====================
+
+// Basisklasse fuer die Verwaltung der Trennzeichen und Symbole von URIs
+// delim: Trennzeichen zwischen zwei Ebenen (oder Objekt/Delims mit entsprechenden Properties)
+// back: (Optional) Name des relativen Vaterverzeichnisses
+// root: (Optional) Kennung vor dem ersten Trenner am Anfang eines absoluten Pfads
+// home: (Optional) Kennung vor dem ersten Trenner am Anfang eines Pfads relativ zu Home
+// scheme: (Optional) Trennzeichen fuer den Schema-/Protokollnamen vorne
+// host: (Optional) Prefix fuer Hostnamen hinter dem Scheme-Trenner
+// port: (Optional) Trennzeichen vor der Portangabe, falls vorhanden
+// query: (Optional) Trennzeichen fuer die Query-Parameter hinter dem Pfad
+// parSep: (Optional) Trennzeichen zwischen je zwei Parametern
+// parAss: (Optional) Trennzwischen zwischen Key und Value
+// node: (Optional) Trennzeichen fuer den Knotennamen hinten (Fragment, Kapitel)
+function UriDelims(delim, back, root, home, scheme, host, port, query, qrySep, qryAss, node) {
+    'use strict';
+
+    if ((typeof delim) === 'object') {
+        // Erster Parameter ist Objekt mit den Properties...
+        if (scheme === undefined) {
+            scheme = delim.scheme;
+        }
+        if (host === undefined) {
+            host = delim.host;
+        }
+        if (port === undefined) {
+            port = delim.port;
+        }
+        if (query === undefined) {
+            query = delim.query;
+        }
+        if (qrySep === undefined) {
+            qrySep = delim.qrySep;
+        }
+        if (qryAss === undefined) {
+            qryAss = delim.qryAss;
+        }
+        if (node === undefined) {
+            node = delim.node;
+        }
+    }
+
+    Delims.call(this, delim, back, root, home);
+
+    this.setScheme(scheme);
+    this.setHost(host);
+    this.setPort(port);
+    this.setQuery(query);
+    this.setQrySep(qrySep);
+    this.setQryAss(qryAss);
+    this.setNode(node);
+}
+
+Class.define(UriDelims, Delims, {
+              'setScheme'      : function(scheme = undefined) {
+                                     this.scheme = scheme;
+                                 },
+              'setHost'        : function(host = undefined) {
+                                     this.host = host;
+                                 },
+              'setPort'        : function(port = undefined) {
+                                     this.port = port;
+                                 },
+              'setQuery'       : function(query = undefined) {
+                                     this.query = query;
+                                 },
+              'setQrySep'      : function(qrySep = undefined) {
+                                     this.qrySep = qrySep;
+                                 },
+              'setQryAss'      : function(qryAss = undefined) {
+                                     this.qryAss = qryAss;
+                                 },
+              'setNode'        : function(node = undefined) {
+                                     this.node = node;
+                                 }
+          } );
+
+// ==================== Ende Abschnitt fuer Klasse UriDelims ====================
+
+// ==================== Abschnitt fuer Klasse Path ====================
+
+// Basisklasse fuer die Verwaltung eines Pfades
+// homePath: Absoluter Startpfad als String
+// delims: Objekt mit Trennern und Symbolen als Properties (oder Delims-Objekt)
+// 'delim': Trennzeichen zwischen zwei Ebenen
+// 'back': Name des relativen Vaterverzeichnisses
+// 'root': Kennung vor dem ersten Trenner am Anfang eines absoluten Pfads
+// 'home': Kennung vor dem ersten Trenner am Anfang eines Pfads relativ zu Home
+function Path(homePath, delims) {
+    'use strict';
+
+    this.dirs = [];
+    this.setDelims(delims);
+    this.homeDirs = this.getDirs(homePath, { 'home' : "" });
+
+    this.home();
+}
+
+Class.define(Path, Object, {
+                  'root'           : function() {
+                                         this.dirs.splice(0, this.dirs.length);
+                                     },
+                  'home'           : function() {
+                                         this.dirs = this.homeDirs.slice();
+                                     },
+                  'up'             : function() {
+                                         this.dirs.pop();
+                                     },
+                  'down'           : function(subDir) {
+                                         this.dirs.push(subDir);
+                                     },
+                  'setDelims'      : function(delims = undefined) {
+                                         this.setConst('delims', new Delims(delims));
+                                     },
+                  'setDelim'       : function(delim = undefined) {
+                                         this.delims.setDelim(delim || '/');
+                                     },
+                  'setBackDelim'   : function(backDelim = undefined) {
+                                         this.delims.setBack(backDelim || "..");
+                                     },
+                  'setRootDelim'   : function(rootDelim = undefined) {
+                                         this.delims.setRoot(rootDelim || "");
+                                     },
+                  'setHomeDelim'   : function(homeDelim = undefined) {
+                                         this.delims.setHome(homeDelim || '~');
+                                     },
+                  'setSchemeDelim' : function(schemeDelim = undefined) {
+                                         this.delims.setScheme(schemeDelim || ':');
+                                     },
+                  'setHostDelim'   : function(hostDelim = undefined) {
+                                         this.delims.setHost(hostDelim || '//');
+                                     },
+                  'setPortDelim'   : function(portDelim = undefined) {
+                                         this.delims.setHost(portDelim || ':');
+                                     },
+                  'setQueryDelim'  : function(queryDelim = undefined) {
+                                         this.delims.setQuery(queryDelim || '?');
+                                     },
+                  'setParSepDelim' : function(parSepDelim = undefined) {
+                                         this.delims.setParSep(parSepDelim || '&');
+                                     },
+                  'setParAssDelim' : function(parAssDelim = undefined) {
+                                         this.delims.setParAss(parAssDelim || '=');
+                                     },
+                  'setNodeDelim'   : function(nodeDelim = undefined) {
+                                         this.delims.setNode(nodeDelim || '#');
+                                     },
+                  'getLeaf'        : function(dirs = undefined) {
+                                         const __DIRS = (dirs || this.dirs);
+
+                                         return ((__DIRS && __DIRS.length) ? __DIRS.slice(-1)[0] : "");
+                                     },
+                  'getPath'        : function(dirs = undefined, delims = undefined) {
+                                         const __DELIMS = new Delims(delims);
+                                         const __DELIM = (__DELIMS.delim || this.delims.delim);
+                                         const __ROOTDELIM = ((__DELIMS.root !== undefined) ? __DELIMS.root : this.delims.root);
+                                         const __DIRS = (dirs || this.dirs);
+
+                                         return __ROOTDELIM + __DELIM + __DIRS.join(__DELIM);
+                                     },
+                  'getDirs'        : function(path = undefined, delims = undefined) {
+                                         const __DELIMS = new Delims(delims);
+                                         const __DELIM = (__DELIMS.delim || this.delims.delim);
+                                         const __ROOTDELIM = ((__DELIMS.root !== undefined) ? __DELIMS.root : this.delims.root);
+                                         const __HOMEDELIM = ((__DELIMS.home !== undefined) ? __DELIMS.home : this.delims.home);
+                                         const __DIRS = (path ? path.split(__DELIM) : []);
+                                         const __FIRST = __DIRS[0];
+
+                                         if (__FIRST && (__FIRST !== __ROOTDELIM) && (__FIRST !== __HOMEDELIM)) {
+                                             showAlert("Kein absoluter Pfad", this.getPath(__DIRS), this);
+                                         }
+
+                                         return __DIRS.slice(1);
+                                     }
+                } );
+
+// ==================== Ende Abschnitt fuer Klasse Path ====================
+
+// ==================== Abschnitt fuer Klasse URI ====================
+
+// Basisklasse fuer die Verwaltung einer URI/URL
+// homePath: Absoluter Startpfad als String
+// delims: Objekt mit Trennern und Symbolen als Properties (oder Delims-Objekt)
+// 'delim': Trennzeichen zwischen zwei Ebenen
+// 'back': Name des relativen Vaterverzeichnisses
+// 'root': Kennung vor dem ersten Trenner am Anfang eines absoluten Pfads
+// 'home': Kennung vor dem ersten Trenner am Anfang eines Pfads relativ zu Home
+function URI(homePath, delims) {
+    'use strict';
+
+    Path.call(this);
+
+    const __HOSTPORT = this.getHostPort(homePath);
+
+    this.scheme = this.getSchemePrefix(homePath);
+    this.host = __HOSTPORT.host;
+    this.port = this.parseValue(__HOSTPORT.port);
+    this.query = this.parseQuery(this.getQueryString(homePath));
+    this.node = this.getNodeSuffix(homePath);
+
+    this.homeDirs = this.getDirs(homePath, { 'home' : "" });
+
+    this.home();
+}
+
+Class.define(URI, Path, {
+               'setDelims'         : function() {
+                                         this.setConst('delims', new UriDelims('/', "..", "", '~', ':', "//", ':', '?', '&', '=', '#'));
+                                     },
+               'setSchemeDelim'    : function(schemeDelim = undefined) {
+                                         this.delims.setScheme(schemeDelim || ':');
+                                     },
+               'setQueryDelim'     : function(queryDelim = undefined) {
+                                         this.delims.setQuery(queryDelim || '?');
+                                     },
+               'setParSepDelim'    : function(parSepDelim = undefined) {
+                                         this.delims.setParSep(parSepDelim || '&');
+                                     },
+               'setParAssDelim'    : function(parAssDelim = undefined) {
+                                         this.delims.setParAss(parAssDelim || '=');
+                                     },
+               'setNodeDelim'      : function(nodeDelim = undefined) {
+                                         this.delims.setNode(nodeDelim || '#');
+                                     },
+               'getServerPath'     : function(path = undefined) {
+                                         return this.stripHostPort(this.stripQueryString(this.stripNodeSuffix(this.stripSchemePrefix(path))));
+                                     },
+               'getHostPort'       : function(path = undefined) {
+                                         const __HOSTDELIM = this.delims.host;
+                                         const __PORTDELIM = this.delims.port;
+                                         const __ROOTDELIM = this.delims.root + this.delims.delim;
+                                         const __NOSCHEME = this.stripSchemePrefix(path);
+                                         const __INDEXHOST = (__NOSCHEME ? __NOSCHEME.indexOf(__HOSTDELIM) : -1);
+                                         const __PATH = (~ __INDEXHOST) ? __NOSCHEME.substring(__INDEXHOST + __HOSTDELIM.length) : __NOSCHEME;
+                                         const __INDEXHOSTPORT = (__PATH ? __PATH.indexOf(__ROOTDELIM) : -1);
+                                         const __HOSTPORT = (~ __INDEXHOSTPORT) ? __PATH.substring(0, __INDEXHOSTPORT) : undefined;
+                                         const __INDEXPORT = (__HOSTPORT ? __HOSTPORT.indexOf(__PORTDELIM) : -1);
+                                         const __HOST = (~ __INDEXPORT) ? __HOSTPORT.substring(0, __INDEXPORT) : __HOSTPORT;
+                                         const __PORT = (~ __INDEXPORT) ? __HOSTPORT.substring(__INDEXPORT + __PORTDELIM.length) : undefined;
+
+                                         return {
+                                                    'host' : __HOST,
+                                                    'port' : __PORT
+                                                };
+                                     },
+               'stripHostPort'     : function(path = undefined) {
+                                         const __HOSTDELIM = this.delims.host;
+                                         const __ROOTDELIM = this.delims.root + this.delims.delim;
+                                         const __INDEXHOST = (path ? path.indexOf(__HOSTDELIM) : -1);
+                                         const __PATH = (~ __INDEXHOST) ? path.substring(__INDEXHOST + __HOSTDELIM.length) : path;
+                                         const __INDEXHOSTPORT = (__PATH ? __PATH.indexOf(__ROOTDELIM) : -1);
+
+                                         return (~ __INDEXHOSTPORT) ? __PATH.substring(__INDEXHOSTPORT) : __PATH;
+                                     },
+               'getSchemePrefix'   : function(path = undefined) {
+                                         const __SCHEMEDELIM = this.delims.scheme;
+                                         const __INDEXSCHEME = (path ? path.indexOf(__SCHEMEDELIM) : -1);
+
+                                         return (~ __INDEXSCHEME) ? path.substring(0, __INDEXSCHEME) : undefined;
+                                     },
+               'stripSchemePrefix' : function(path = undefined) {
+                                         const __SCHEMEDELIM = this.delims.scheme;
+                                         const __INDEXSCHEME = (path ? path.indexOf(__SCHEMEDELIM) : -1);
+
+                                         return (~ __INDEXSCHEME) ? path.substring(__INDEXSCHEME + __INDEXSCHEME.length) : path;
+                                     },
+               'getNodeSuffix'     : function(path = undefined) {
+                                         const __NODEDELIM = this.delims.node;
+                                         const __INDEXNODE = (path ? path.lastIndexOf(__NODEDELIM) : -1);
+
+                                         return (~ __INDEXNODE) ? path.substring(__INDEXNODE + __NODEDELIM.length) : undefined;
+                                     },
+               'stripNodeSuffix'   : function(path = undefined) {
+                                         const __NODEDELIM = this.delims.node;
+                                         const __INDEXNODE = (path ? path.lastIndexOf(__NODEDELIM) : -1);
+
+                                         return (~ __INDEXNODE) ? path.substring(0, __INDEXNODE) : path;
+                                     },
+               'getQueryString'    : function(path = undefined) {
+                                         const __QUERYDELIM = this.delims.query;
+                                         const __PATH = this.stripNodeSuffix(path);
+                                         const __INDEXQUERY = (__PATH ? __PATH.indexOf(__QUERYDELIM) : -1);
+
+                                         return (~ __INDEXQUERY) ? __PATH.substring(__INDEXQUERY + __QUERYDELIM.length) : undefined;
+                                     },
+               'stripQueryString'  : function(path = undefined) {
+                                         const __QUERYDELIM = this.delims.query;
+                                         const __INDEXQUERY = (path ? path.indexOf(__QUERYDELIM) : -1);
+
+                                         return (~ __INDEXQUERY) ? path.substring(0, __INDEXQUERY) : path;
+                                     },
+               'formatParams'      : function(params, formatFun, delim = ' ', assign = '=') {
+                                         const __PARAMS = [];
+
+                                         for (let param in params) {
+                                             __PARAMS.push(param + assign + formatFun(params[param]));
+                                         }
+
+                                         return __PARAMS.join(delim);
+                                     },
+               'parseParams'       : function(params, parseFun, delim = ' ', assign = '=') {
+                                         const __RET = { };
+
+                                         if (params) {
+                                             const __PARAMS = params.split(delim);
+
+                                             for (let index = 0; index < __PARAMS.length; index++) {
+                                                 const __PARAM = __PARAMS[index];
+
+                                                 if (__PARAM) {
+                                                     const __INDEX = __PARAM.indexOf(assign);
+                                                     const __KEY = (~ __INDEX) ? __PARAM.substring(0, __INDEX) : __PARAM;
+                                                     const __VAL = (~ __INDEX) ? parseFun(__PARAM.substring(__INDEX + assign.length)) : true;
+
+                                                     __RET[__KEY] = __VAL;
+                                                 }
+                                             }
+                                         }
+
+                                         return __RET;
+                                     },
+               'rawValue'          : function(value) {
+                                         return value;
+                                     },
+               'parseValue'        : function(value) {
+                                         const __VALUE = Number(value);
+
+                                         if (__VALUE == value) {  // schwacher Vergleich true, also Number
+                                             return __VALUE;
+                                         } else {
+                                             const __LOWER = (value ? value.toLowerCase() : undefined);
+
+                                             if ((__LOWER === "true") || (__LOWER === "false")) {
+                                                 return (value === "true");
+                                             }
+                                         }
+
+                                         return value;
+                                     },
+               'getQuery'          : function(delims = { }) {
+                                         const __QRYSEP = ((delims.qrySep !== undefined) ? delims.qrySep : this.delims.qrySep);
+                                         const __QRYASS = ((delims.qryAss !== undefined) ? delims.qryAss : this.delims.qryAss);
+
+                                         return this.formatParams(this.query, this.rawValue, __QRYSEP, __QRYASS);
+                                     },
+               'parseQuery'        : function(path = undefined, delims = { }) {
+                                         const __QRYSEP = ((delims.qrySep !== undefined) ? delims.qrySep : this.delims.qrySep);
+                                         const __QRYASS = ((delims.qryAss !== undefined) ? delims.qryAss : this.delims.qryAss);
+
+                                         return this.parseParams(path, this.parseValue, __QRYSEP, __QRYASS);
+                                     },
+               'setQuery'          : function(query) {
+                                         this.query = query;
+                                     },
+               'setQueryPar'       : function(key, value) {
+                                         this.query[key] = value;
+                                     },
+               'getQueryPar'       : function(key) {
+                                         return this.query[key];
+                                     },
+               'getPath'           : function(dirs = undefined, delims = undefined) {
+                                         const __DELIMS = new UriDelims(delims);
+                                         const __SCHEMEDELIM = ((__DELIMS.scheme !== undefined) ? __DELIMS.scheme : this.delims.scheme);
+                                         const __HOSTDELIM = ((__DELIMS.host !== undefined) ? __DELIMS.host : this.delims.host);
+                                         const __PORTDELIM = ((__DELIMS.port !== undefined) ? __DELIMS.port : this.delims.port);
+                                         const __QUERYDELIM = ((__DELIMS.query !== undefined) ? __DELIMS.query : this.delims.query);
+                                         const __NODEDELIM = ((__DELIMS.node !== undefined) ? __DELIMS.node : this.delims.node);
+                                         const __SCHEMENAME = this.scheme;
+                                         const __SCHEME = (__SCHEMENAME ? __SCHEMENAME + __SCHEMEDELIM : "");
+                                         const __HOSTNAME = this.host;
+                                         const __HOST = (__HOSTNAME ? __HOSTDELIM + __HOSTNAME : "");
+                                         const __PORTNR = this.port;
+                                         const __PORT = ((__HOSTNAME && __PORTNR) ? __PORTDELIM + __PORTNR : "");
+                                         const __QUERYSTR = this.getQuery();
+                                         const __QUERY = (__QUERYSTR ? __QUERYDELIM + __QUERYSTR : "");
+                                         const __NODENAME = this.node;
+                                         const __NODE = (__NODENAME ? __NODEDELIM + __NODENAME : "");
+
+                                         return __SCHEME + __HOST + __PORT + Path.prototype.getPath.call(this, dirs, delims) + __QUERY + __NODE;
+                                     },
+               'getDirs'           : function(path = undefined, delims = undefined) {
+                                         const __PATH = this.getServerPath(path);
+
+                                         return Path.prototype.getDirs.call(this, __PATH);
+                                     }
+           } );
+
+// ==================== Ende Abschnitt fuer Klasse URI ====================
+
+// ==================== Abschnitt fuer Klasse Directory ====================
+
+// Basisklasse fuer eine Verzeichnisstruktur
+// homePath: Absoluter Startpfad als String
+// delims: Objekt mit Trennern und Symbolen als Properties (oder Delims-Objekt)
+// 'delim': Trennzeichen zwischen zwei Ebenen
+// 'back': Name des relativen Vaterverzeichnisses
+// 'root': Kennung vor dem ersten Trenner am Anfang eines absoluten Pfads
+// 'home': Kennung vor dem ersten Trenner am Anfang eines Pfads relativ zu Home
+function Directory(homePath, delims) {
+    'use strict';
+
+    Path.call(this, homePath, delims);
+}
+
+Class.define(Directory, Path, {
+                    'chDir' : function(subDir = undefined) {
+                                  if (subDir === undefined) {
+                                      this.root();
+                                  } else if ((typeof subDir) === 'object') {
+                                      for (let sub of subDir) {
+                                          this.chDir(sub);
+                                      }
+                                  } else {
+                                      if (subDir === this.delims.home) {
+                                          this.home();
+                                      } else if (subDir === this.delims.back) {
+                                          this.up();
+                                      } else {
+                                          this.down(subDir);
+                                      }
+                                  }
+                              },
+                    'pwd'   : function() {
+                                  return this.getPath();
+                              }
+                } );
+
+// ==================== Ende Abschnitt fuer Klasse Directory ====================
+
+// ==================== Abschnitt fuer Klasse ObjRef ====================
+
+// Basisklasse fuer eine Objekt-Referenz
+function ObjRef(rootObj) {
+    'use strict';
+
+    Directory.call(this, undefined, new Delims('/', "..", '/', '~'));
+
+    this.setConst('rootObj', rootObj);  // Wichtig: Verweis nicht verfolgen! Gefahr durch Zyklen!
+}
+
+Class.define(ObjRef, Directory, {
+                    'valueOf' : function() {
+                                    let ret = this.rootObj;
+
+                                    for (let name of this.dirs) {
+                                        if (ret === undefined) {
+                                            break;
+                                        }
+                                        ret = ret[name];
+                                    }
+
+                                    return ret;
+                                }
+                } );
+
+// ==================== Ende Abschnitt fuer Klasse ObjRef ====================
 
 // ==================== Abschnitt fuer diverse Utilities ====================
 
@@ -292,9 +956,9 @@ function checkItem(item, inList = undefined, exList = undefined) {
 // ignList: Checkliste der ignorierten Items (true fuer auslassen), falls angegeben
 // return Das gemergete Objekt mit allen Properties
 function addProps(data, addData, addList = undefined, ignList = undefined) {
-    for (let prop in getValue(addData, { })) {
-        if (checkItem(prop, addList, ignList)) {
-            data[prop] = addData[prop];
+    for (let item in getValue(addData, { })) {
+        if (checkItem(item, addList, ignList)) {
+            data[item] = addData[item];
         }
     }
 
@@ -302,13 +966,13 @@ function addProps(data, addData, addList = undefined, ignList = undefined) {
 }
 
 // Gibt den Wert einer Property zurueck. Ist dieser nicht definiert oder null, wird er vorher gesetzt
-// obj: Ein Objekt. Ist dieses undefined oder null, wird undefined zurueckgeliefert
+// obj: Ein Objekt. Ist dieses undefined oder null, wird defValue zurueckgeliefert
 // item: Key des Properties
 // defValue: Default-Wert fuer den Fall, dass nichts gesetzt ist
-// return Der Wert des Properties. Sind das obj oder das Property und retValue undefined oder null, dann undefined
+// return Der Wert des Properties. Sind das obj oder das Property und defValue undefined oder null, dann undefined
 function getProp(obj, item, defValue = undefined) {
     if ((obj === undefined) || (obj === null)) {
-        return undefined;
+        return defValue;
     }
 
     const __PROP = obj[item];
@@ -355,7 +1019,7 @@ function serializer(replacer = undefined, cycleReplacer = undefined) {
     }
 
     return function(key, value) {
-            if (__STACK.length > 0) {
+            if (__STACK.length) {
                 const __THISPOS = __STACK.indexOf(this);
 
                 if (~ __THISPOS) {
@@ -383,7 +1047,7 @@ function serializer(replacer = undefined, cycleReplacer = undefined) {
 function serialize(name, value) {
     const __STREAM = (value !== undefined) ? safeStringify(value) : value;
 
-    console.log(name + " >> " + __STREAM);
+    __LOG[4](name + " >> " + __STREAM);
 
     GM_setValue(name, __STREAM);
 
@@ -397,14 +1061,13 @@ function serialize(name, value) {
 function deserialize(name, defValue = undefined) {
     const __STREAM = GM_getValue(name, defValue);
 
-    console.log(name + " << " + __STREAM);
+    __LOG[4](name + " << " + __STREAM);
 
-    //if ((__STREAM !== undefined) && (__STREAM.length !== 0)) {
-    if (__STREAM) {
+    if ((__STREAM !== undefined) && __STREAM.length) {
         try {
             return JSON.parse(__STREAM);
         } catch (ex) {
-            console.error(name + ": " + ex.message);
+            __LOG[1](name + ": " + ex.message);
         }
     }
 
@@ -416,7 +1079,7 @@ function deserialize(name, defValue = undefined) {
 // value: Zu setzender Wert
 // reload: Seite mit neuem Wert neu laden
 // return Gespeicherter Wert fuer setOptValue()
-function setStored(name, value, reload = true, serial = false) {
+function setStored(name, value, reload = false, serial = false) {
     if (serial) {
         serialize(name, value);
     } else {
@@ -436,12 +1099,12 @@ function setStored(name, value, reload = true, serial = false) {
 // value: Vorher gesetzter Wert
 // reload: Seite mit neuem Wert neu laden
 // return Gespeicherter Wert fuer setOptValue()
-function setNextStored(arr, name, value, reload = true, serial = false) {
+function setNextStored(arr, name, value, reload = false, serial = false) {
     return setStored(name, getNextValue(arr, value), reload, serial);
 }
 
 // Fuehrt die in einem Storage gespeicherte Operation aus
-// memory: __OPTMEM.normal = bis Browserende gespeichert (sessionStorage), __OPTMEM.unbegrenzt = unbegrenzt gespeichert (localStorage), __OPTMEM.inaktiv
+// memory: __OPTMEM.normal = unbegrenzt gespeichert (localStorage), __OPTMEM.begrenzt = bis Browserende gespeichert (sessionStorage), __OPTMEM.inaktiv
 // return Array von Objekten mit 'cmd' / 'key' / 'val' (derzeit maximal ein Kommando) oder undefined
 function getStoredCmds(memory = undefined) {
     const __STORAGE = getMemory(memory);
@@ -465,7 +1128,7 @@ function getStoredCmds(memory = undefined) {
             try {
                 value = JSON.parse(value);
             } catch (ex) {
-                console.error("getStoredCmds(): " + __CMD + " '" + __KEY + "' hat illegalen Wert '" + value + "'");
+                __LOG[1]("getStoredCmds(): " + __CMD + " '" + __KEY + "' hat illegalen Wert '" + value + "'");
                 // ... meist kann man den String selber aber speichern, daher kein "return"...
             }
 
@@ -488,18 +1151,14 @@ function getStoredCmds(memory = undefined) {
 // storedCmds: Array von Objekten mit 'cmd' / 'key' / 'val' (siehe getStoredCmds())
 // optSet: Set mit den Optionen
 // beforeLoad: Angabe, ob nach der Speicherung noch loadOptions() aufgerufen wird
-// memory: __OPTMEM.normal = bis Browserende gespeichert (sessionStorage), __OPTMEM.unbegrenzt = unbegrenzt gespeichert (localStorage), __OPTMEM.inaktiv
+// memory: __OPTMEM.normal = unbegrenzt gespeichert (localStorage), __OPTMEM.begrenzt = bis Browserende gespeichert (sessionStorage), __OPTMEM.inaktiv
 // return Array von Operationen (wie storedCmds), die fuer die naechste Phase uebrig bleiben
 function runStoredCmds(storedCmds, optSet = undefined, beforeLoad = undefined) {
     const __BEFORELOAD = getValue(beforeLoad, true);
     const __STOREDCMDS = getValue(storedCmds, []);
     const __LOADEDCMDS = [];
+    let invalidated = false;
 
-    //if (__STOREDCMDS.length > 0) {
-    if (__STOREDCMDS.length) {
-        invalidateOpts(optSet);  // alle Optionen invalidieren
-    }
-    //while (__STOREDCMDS.length > 0) {
     while (__STOREDCMDS.length) {
         const __STORED = __STOREDCMDS.shift();
         const __CMD = __STORED.cmd;
@@ -507,15 +1166,19 @@ function runStoredCmds(storedCmds, optSet = undefined, beforeLoad = undefined) {
         const __VAL = __STORED.val;
 
         if (__BEFORELOAD) {
+            if (__STOREDCMDS.length) {
+                invalidateOpts(optSet);  // alle Optionen invalidieren
+                invalidated = true;
+            }
             switch (__OPTACTION[__CMD]) {
-            case __OPTACTION.SET : console.log("SET '" + __KEY + "' " + __VAL);
+            case __OPTACTION.SET : __LOG[4]("SET '" + __KEY + "' " + __VAL);
                                    setStored(__KEY, __VAL, false, false);
                                    break;
-            case __OPTACTION.NXT : console.log("SETNEXT '" + __KEY + "' " + __VAL);
+            case __OPTACTION.NXT : __LOG[4]("SETNEXT '" + __KEY + "' " + __VAL);
                                    //setNextStored(__CONFIG.Choice, __KEY, __VAL, false, false);
                                    setStored(__KEY, __VAL, false, false);
                                    break;
-            case __OPTACTION.RST : console.log("RESET (delayed)");
+            case __OPTACTION.RST : __LOG[4]("RESET (delayed)");
                                    __LOADEDCMDS.push(__STORED);
                                    break;
             default :              break;
@@ -523,9 +1186,9 @@ function runStoredCmds(storedCmds, optSet = undefined, beforeLoad = undefined) {
         } else {
             switch (__OPTACTION[__CMD]) {
             case __OPTACTION.SET :
-            case __OPTACTION.NXT : console.log("SETNEXT (undefined)");
+            case __OPTACTION.NXT : __LOG[2]("SET/SETNEXT (undefined)");
                                    break;
-            case __OPTACTION.RST : console.log("RESET");
+            case __OPTACTION.RST : __LOG[4]("RESET");
                                    resetOptions(optSet, false);
                                    loadOptions(optSet);  // Reset auf umbenannte Optionen anwenden!
                                    break;
@@ -572,18 +1235,38 @@ function getOptConfig(opt, defConfig = { }) {
 // reload: Seite mit neuem Wert neu laden
 // return Gesetzter Name der Option
 function setOptName(opt, name) {
+    const __CONFIG = getOptConfig(opt);
     const __NAME = getOptName(opt);
 
-    console.log("RENAME " + __NAME + " => " + name);
+    if (__NAME !== name) {
+        __LOG[4]("RENAME " + __NAME + " => " + name);
 
-    return (getOptConfig(opt).Name = name);
+        __CONFIG.Name = name;
+    }
+
+    return name;
 }
 
 // Gibt den Namen einer Option zurueck
 // opt: Config und Value der Option
 // return Name der Option
 function getOptName(opt) {
-    return getOptConfig(opt).Name;
+    const __CONFIG = getOptConfig(opt);
+    const __NAME = __CONFIG.Name;
+
+    if (! __NAME) {
+        const __SHARED = __CONFIG.Shared;
+
+        if (__SHARED && ! opt.Loaded) {
+            const __OBJREF = getSharedRef(__SHARED, opt.Item);
+
+            return __OBJREF.getPath();
+        }
+
+        showAlert("Error", "Option ohne Namen", safeStringify(__CONFIG));
+    }
+
+    return __NAME;
 }
 
 // Setzt den Wert einer Option
@@ -593,6 +1276,8 @@ function getOptName(opt) {
 function setOptValue(opt, value) {
     if (opt !== undefined) {
         if (! opt.ReadOnly) {
+            __LOG[6](getOptName(opt) + ": " + __LOG.changed(opt.Value, value));
+
             opt.Value = value;
         }
         return opt.Value;
@@ -625,14 +1310,14 @@ function getOptValue(opt, defValue = undefined, load = true, force = false) {
 
 // ==================== Abschnitt fuer Speicher und die Scriptdatenbank ====================
 
-// Namen des Default-, Dauer- und Null-Memories...
+// Namen des Default-, Temporaer- und Null-Memories...
 const __MEMNORMAL   = 'normal';
-const __MEMINFINITE = 'unbegrenzt';
+const __MEMSESSION  = 'begrenzt';
 const __MEMINAKTIVE = 'inaktiv';
 
 // Definition des Default-, Dauer- und Null-Memories...
 const __OPTMEMNORMAL   = __OPTMEM[__MEMNORMAL];
-const __OPTMEMINFINITE = __OPTMEM[__MEMINFINITE];
+const __OPTMEMSESSION  = __OPTMEM[__MEMSESSION];
 const __OPTMEMINAKTIVE = __OPTMEM[__MEMINAKTIVE];
 
 // Medium fuer die Datenbank (Speicher)
@@ -640,7 +1325,7 @@ let myOptMem = __OPTMEMNORMAL;
 let myOptMemSize;
 
 // Infos ueber dieses Script-Modul
-const __DBMOD = initScript();
+const __DBMOD = new ScriptModule();
 
 // Inhaltsverzeichnis der DB-Daten (indiziert durch die Script-Namen)
 const __DBTOC = { };
@@ -651,16 +1336,18 @@ const __DBDATA = { };
 // ==================== Abschnitt fuer Speicher ====================
 
 // Ermittelt fuer die uebergebene Speicher-Konfiguration einen Speicher
-// memory: __OPTMEM.normal = bis Browserende gespeichert (sessionStorage), __OPTMEM.unbegrenzt = unbegrenzt gespeichert (localStorage), __OPTMEM.inaktiv
+// memory: __OPTMEM.normal = unbegrenzt gespeichert (localStorage), __OPTMEM.begrenzt = bis Browserende gespeichert (sessionStorage), __OPTMEM.inaktiv
+// defMemory: Ersatz-Wert, falls memory undefined. Soll nur memory genutzt werden, dann z.B. null uebergeben!
 // return memory, falls okay, sonst einen Defaultwert
-function getMemory(memory = undefined) {
-    return getValue(memory, getValue(myOptMem, __OPTMEMNORMAL));
+function getMemory(memory = undefined, defMemory = getValue(myOptMem, __OPTMEMNORMAL)) {
+    return getValue(memory, defMemory);
 }
 
 // Kompatibilitaetsfunktion: Testet, ob der uebergebene Speicher genutzt werden kann
-// memory: __OPTMEM.normal = bis Browserende gespeichert (sessionStorage), __OPTMEM.unbegrenzt = unbegrenzt gespeichert (localStorage), __OPTMEM.inaktiv
+// memory: __OPTMEM.normal = unbegrenzt gespeichert (localStorage), __OPTMEM.begrenzt = bis Browserende gespeichert (sessionStorage), __OPTMEM.inaktiv
+// return true, wenn der Speichertest erfolgreich war
 function canUseMemory(memory = undefined) {
-    const __STORAGE = getMemory(memory);
+    const __STORAGE = getMemory(memory, { });
     const __MEMORY = __STORAGE.Value;
     let ret = false;
 
@@ -674,24 +1361,24 @@ function canUseMemory(memory = undefined) {
         __MEMORY.removeItem(__TESTITEM);
     }
 
-    console.log("canUseStorage(" + __STORAGE.Name + ") = " + ret);
+    __LOG[2]("canUseStorage(" + __STORAGE.Name + ") = " + ret);
 
     return ret;
 }
 
 // Ermittelt die Groesse des benutzten Speichers
-// memory: __OPTMEM.normal = bis Browserende gespeichert (sessionStorage), __OPTMEM.unbegrenzt = unbegrenzt gespeichert (localStorage), __OPTMEM.inaktiv
+// memory: __OPTMEM.normal = unbegrenzt gespeichert (localStorage), __OPTMEM.begrenzt = bis Browserende gespeichert (sessionStorage), __OPTMEM.inaktiv
 // return Groesse des genutzten Speichers in Bytes
 function getMemSize(memory = undefined) {
     const __STORAGE = getMemory(memory);
     const __MEMORY = __STORAGE.Value;
 
-    getMemUsage(__MEMORY);
+    //getMemUsage(__MEMORY);
 
     if (__MEMORY !== undefined) {
         const __SIZE = safeStringify(__MEMORY).length;
 
-        console.log("MEM: " + __SIZE + " bytes");
+        __LOG[2]("MEM: " + __SIZE + " bytes");
         return __SIZE;
     } else {
         return 0;
@@ -704,7 +1391,7 @@ function getMemSize(memory = undefined) {
 // depth: Gewuenschte Rekursionstiefe (0 = nur dieses Objekt, -1 = alle Ebenen)
 // name: Name des Objekts
 function getMemUsage(value = undefined, out = undefined, depth = -1, name = '$') {
-    const __OUT = (out || console.log);
+    const __OUT = (out || __LOG[4]);
 
     if ((typeof value) === 'string') {
         const __SIZE = value.length;
@@ -769,7 +1456,9 @@ function startMemoryByOpt(opt, saveOpt = undefined) {
 // Initialisiert das Script-Modul und ermittelt die beschreibenden Daten
 // meta: Metadaten des Scripts (Default: GM_info.script)
 // return Beschreibende Daten fuer __DBMOD
-function initScript(meta = undefined) {
+function ScriptModule(meta) {
+    'use strict';
+
     const __META = getValue(meta, GM_info.script);
     const __PROPS = {
                 'name'        : true,
@@ -777,9 +1466,10 @@ function initScript(meta = undefined) {
                 'namespace'   : true,
                 'description' : true
             };
+
     const __DBMOD = { };
 
-    //console.log(__META);
+    __LOG[5](__META);
 
     // Infos zu diesem Script...
     addProps(__DBMOD, __META, __PROPS);
@@ -792,10 +1482,12 @@ function initScript(meta = undefined) {
                     set : undefined
                 });
 
-    console.log(__DBMOD);
+    __LOG[2](__DBMOD);
 
     return __DBMOD;
 }
+
+Class.define(ScriptModule, Object);
 
 // Initialisiert die Scriptdatenbank, die einen Datenaustausch zwischen den Scripten ermoeglicht
 // optSet: Gesetzte Optionen (und Config)
@@ -841,7 +1533,7 @@ function updateScriptDB(optSet) {
     // Jetzt die inzwischen gefuellten Daten *dieses* Scripts ergaenzen...
     scriptDB(__DBMOD.name, getValue(optSet, { }));
 
-    console.log(__DBDATA);
+    __LOG[2](__DBDATA);
 }
 
 // Holt die globalen Daten zu einem Modul aus der Scriptdatenbank
@@ -866,20 +1558,20 @@ function scriptDB(module, initValue = undefined) {
 // ==================== Abschnitt fuer das Benutzermenu ====================
 
 // Zeigt den Eintrag im Menu einer Option
-// opt: Derzeitiger Wert der Option
+// val: Derzeitiger Wert der Option
 // menuOn: Text zum Setzen im Menu
 // funOn: Funktion zum Setzen
 // keyOn: Hotkey zum Setzen im Menu
 // menuOff: Text zum Ausschalten im Menu
 // funOff: Funktion zum Ausschalten
 // keyOff: Hotkey zum Ausschalten im Menu
-function registerMenuOption(opt, menuOn, funOn, keyOn, menuOff, funOff, keyOff) {
-    const __ON  = (opt ? '*' : "");
-    const __OFF = (opt ? "" : '*');
+function registerMenuOption(val, menuOn, funOn, keyOn, menuOff, funOff, keyOff) {
+    const __ON  = (val ? '*' : "");
+    const __OFF = (val ? "" : '*');
 
-    console.log("OPTION " + __ON + menuOn + __ON + " / " + __OFF + menuOff + __OFF);
+    __LOG[3]("OPTION " + __ON + menuOn + __ON + " / " + __OFF + menuOff + __OFF);
 
-    if (opt) {
+    if (val) {
         GM_registerMenuCommand(menuOff, funOff, keyOff);
     } else {
         GM_registerMenuCommand(menuOn, funOn, keyOn);
@@ -887,41 +1579,41 @@ function registerMenuOption(opt, menuOn, funOn, keyOn, menuOff, funOff, keyOff) 
 }
 
 // Zeigt den Eintrag im Menu einer Option mit Wahl des naechsten Wertes
-// opt: Derzeitiger Wert der Option
+// val: Derzeitiger Wert der Option
 // arr: Array-Liste mit den moeglichen Optionen
 // menu: Text zum Setzen im Menu ($ wird durch gesetzten Wert ersetzt)
 // fun: Funktion zum Setzen des naechsten Wertes
 // key: Hotkey zum Setzen des naechsten Wertes im Menu
-function registerNextMenuOption(opt, arr, menu, fun, key) {
-    const __MENU = menu.replace('$', opt);
+function registerNextMenuOption(val, arr, menu, fun, key) {
+    const __MENU = menu.replace('$', val);
     let options = "OPTION " + __MENU;
 
     for (let value of arr) {
-        if (value === opt) {
+        if (value === val) {
             options += " / *" + value + '*';
         } else {
             options += " / " + value;
         }
     }
-    console.log(options);
+    __LOG[3](options);
 
     GM_registerMenuCommand(__MENU, fun, key);
 }
 
 // Zeigt den Eintrag im Menu einer Option, falls nicht hidden
-// opt: Derzeitiger Wert der Option
+// val: Derzeitiger Wert der Option
 // menu: Text zum Setzen im Menu ($ wird durch gesetzten Wert ersetzt)
 // fun: Funktion zum Setzen des naechsten Wertes
 // key: Hotkey zum Setzen des naechsten Wertes im Menu
-// hidden: Angabe, ob Menupunkt nicht sichtbar sein soll (default: sichtbar)
+// hidden: Angabe, ob Menupunkt nicht sichtbar sein soll (Default: sichtbar)
 // serial: Serialization fuer komplexe Daten
-function registerDataOption(opt, menu, fun, key, hidden = false, serial = true) {
-    const __VALUE = ((serial && (opt !== undefined)) ? safeStringify(opt) : opt);
+function registerDataOption(val, menu, fun, key, hidden = false, serial = true) {
+    const __VALUE = ((serial && (val !== undefined)) ? safeStringify(val) : val);
     const __MENU = getValue(menu, "").replace('$', __VALUE);
     const __OPTIONS = (hidden ? "HIDDEN " : "") + "OPTION " + __MENU +
                       getValue(__VALUE, "", " = " + __VALUE);
 
-    console.log(__OPTIONS);
+    __LOG[hidden ? 4 : 3](__OPTIONS);
 
     if (! hidden) {
         GM_registerMenuCommand(__MENU, fun, key);
@@ -932,29 +1624,32 @@ function registerDataOption(opt, menu, fun, key, hidden = false, serial = true) 
 // opt: Config und Value der Option
 function registerOption(opt) {
     const __CONFIG = getOptConfig(opt);
+    const __VALUE = getOptValue(opt);
+    const __LABEL = __CONFIG.Label;
+    const __ACTION = opt.Action;
+    const __HOTKEY = __CONFIG.Hotkey;
+    const __HIDDEN = __CONFIG.HiddenMenu;
+    const __SERIAL = __CONFIG.Serial;
 
     if (! __CONFIG.HiddenMenu) {
         switch (__CONFIG.Type) {
-        case __OPTTYPES.MC : registerNextMenuOption(getOptValue(opt), __CONFIG.Choice,
-                                                                  __CONFIG.Label, opt.Action, __CONFIG.Hotkey);
+        case __OPTTYPES.MC : registerNextMenuOption(__VALUE, __CONFIG.Choice, __LABEL, __ACTION, __HOTKEY);
                              break;
-        case __OPTTYPES.SW : registerMenuOption(getOptValue(opt), __CONFIG.Label, opt.Action, __CONFIG.Hotkey,
-                                                                  __CONFIG.AltLabel, opt.Action, __CONFIG.AltHotkey);
+        case __OPTTYPES.SW : registerMenuOption(__VALUE, __LABEL, __ACTION, __HOTKEY,
+                                                __CONFIG.AltLabel, __ACTION, __CONFIG.AltHotkey);
                              break;
-        case __OPTTYPES.TF : registerMenuOption(getOptValue(opt), __CONFIG.Label, opt.Action, __CONFIG.Hotkey,
-                                                                  __CONFIG.AltLabel, opt.AltAction, __CONFIG.AltHotkey);
+        case __OPTTYPES.TF : registerMenuOption(__VALUE, __LABEL, __ACTION, __HOTKEY,
+                                                __CONFIG.AltLabel, opt.AltAction, __CONFIG.AltHotkey);
                              break;
-        case __OPTTYPES.SD : registerDataOption(getOptValue(opt), __CONFIG.Label, opt.Action, __CONFIG.Hotkey,
-                                                                  __CONFIG.HiddenMenu, __CONFIG.Serial);
+        case __OPTTYPES.SD : registerDataOption(__VALUE, __LABEL, __ACTION, __HOTKEY, __HIDDEN, __SERIAL);
                              break;
-        case __OPTTYPES.SI : registerDataOption(getOptValue(opt), __CONFIG.Label, opt.Action, __CONFIG.Hotkey,
-                                                                  __CONFIG.HiddenMenu, __CONFIG.Serial);
+        case __OPTTYPES.SI : registerDataOption(__VALUE, __LABEL, __ACTION, __HOTKEY, __HIDDEN, __SERIAL);
                              break;
         default :            break;
         }
     } else {
         // Nur Anzeige im Log...
-        registerDataOption(getOptValue(opt), getOptName(opt), opt.Action, __CONFIG.Hotkey, __CONFIG.HiddenMenu, __CONFIG.Serial);
+        registerDataOption(__VALUE, __LABEL, __ACTION, __HOTKEY, __HIDDEN, __SERIAL);
     }
 }
 
@@ -1002,7 +1697,7 @@ function initOptAction(optAction, item = undefined, optSet = undefined, optConfi
 
     if (optAction !== undefined) {
         const __CONFIG = ((optConfig !== undefined) ? optConfig : getOptConfig(getOptByName(optSet, item)));
-        const __RELOAD = getValue(getValue(__CONFIG, { }).ActionReload, false);
+        const __RELOAD = getValue(getValue(__CONFIG, { }).ActionReload, true);
 
         switch (optAction) {
         case __OPTACTION.SET : fun = function() {
@@ -1010,7 +1705,8 @@ function initOptAction(optAction, item = undefined, optSet = undefined, optConfi
                                    };
                                break;
         case __OPTACTION.NXT : fun = function() {
-                                       return setNextOptByName(optSet, item, __CONFIG.SetValue, __RELOAD);
+                                       return promptNextOptByName(optSet, item, __CONFIG.SetValue, __RELOAD,
+                                                  __CONFIG.FreeValue, __CONFIG.SelValue, __CONFIG.MinChoice);
                                    };
                                break;
         case __OPTACTION.RST : fun = function() {
@@ -1024,6 +1720,34 @@ function initOptAction(optAction, item = undefined, optSet = undefined, optConfi
     return fun;
 }
 
+// Gibt fuer einen 'Shared'-Eintrag eine ObjRef zurueck
+// shared: Object mit den Angaben 'namespace', 'module' und ggfs. 'item'
+// item: Key der Option
+// return ObjRef, die das Ziel definiert
+function getSharedRef(shared, item = undefined) {
+    if (shared === undefined) {
+        return undefined;
+    }
+
+    const __OBJREF = new ObjRef(__DBDATA);  // Gemeinsame Daten
+    const __PROPS = [ 'namespace', 'module', 'item' ];
+    const __DEFAULTS = [ __DBMOD.namespace, __DBMOD.name, item ];
+
+    for (let stage in __PROPS) {
+        const __DEFAULT = __DEFAULTS[stage];
+        const __PROP = __PROPS[stage];
+        const __NAME = shared[__PROP];
+
+        if (__NAME === '$') {
+            break;
+        }
+
+        __OBJREF.chDir(getValue(__NAME, __DEFAULT));
+    }
+
+    return __OBJREF;
+}
+
 // Gibt diese Config oder, falls 'Shared', ein Referenz-Objekt mit gemeinsamen Daten zurueck
 // optConfig: Konfiguration der Option
 // item: Key der Option
@@ -1033,21 +1757,7 @@ function getSharedConfig(optConfig, item = undefined) {
     const __SHARED = config.Shared;
 
     if (__SHARED !== undefined) {
-        const __OBJREF = new ObjRef(__DBDATA);  // Gemeinsame Daten
-        const __PROPS = [ 'namespace', 'module', 'item' ];
-        const __DEFAULTS = [ __DBMOD.namespace, __DBMOD.name, item ];
-
-        for (let stage in __PROPS) {
-            const __DEFAULT = __DEFAULTS[stage];
-            const __PROP = __PROPS[stage];
-            const __NAME = __SHARED[__PROP];
-
-            if (__NAME === '$') {
-                break;
-            }
-
-            __OBJREF.chDir(getValue(__NAME, __DEFAULT));
-        }
+        const __OBJREF = getSharedRef(__SHARED, item);  // Gemeinsame Daten
 
         if (getValue(__SHARED.item, '$') !== '$') {  // __REF ist ein Item
             const __REF = valueOf(__OBJREF);
@@ -1055,12 +1765,13 @@ function getSharedConfig(optConfig, item = undefined) {
             config = { };  // Neu aufbauen...
             addProps(config, getOptConfig(__REF));
             addProps(config, optConfig);
-            config.SharedData = getOptValue(__REF);
+            config.setConst('SharedData', getOptValue(__REF));
         } else {  // __REF enthaelt die Daten selbst
-            config.SharedData = __OBJREF;  // Achtung: Ggfs. zirkulaer!
+            if (! config.Name) {
+                config.Name = __OBJREF.getPath();
+            }
+            config.setConst('SharedData', __OBJREF);  // Achtung: Ggfs. zirkulaer!
         }
-
-        config.ReadOnly = true;  // Erst einmal nur lesend
     }
 
     return config;
@@ -1080,31 +1791,34 @@ function initOptions(optConfig, optSet = undefined, preInit = undefined) {
 
     for (let opt in optConfig) {
         const __OPTCONFIG = optConfig[opt];
-        const __PREINIT = getValue(__OPTCONFIG.PreInit, false);
+        const __PREINIT = getValue(__OPTCONFIG.PreInit, false, true);
+        const __ISSHARED = getValue(__OPTCONFIG.Shared, false, true);
 
         if ((preInit === undefined) || (__PREINIT === preInit)) {
             const __CONFIG = getSharedConfig(__OPTCONFIG, opt);
             const __ALTACTION = getValue(__CONFIG.AltAction, __CONFIG.Action);
             // Gab es vorher einen Aufruf, der einen Stub-Eintrag erzeugt hat? Wurde ggfs. bereits geaendert...
             const __USESTUB = ((preInit === false) && __PREINIT);
-            const __LOADED = (__USESTUB ? optSet[opt].Loaded : false);
+            const __LOADED = (__USESTUB && optSet[opt].Loaded);
             const __VALUE = (__USESTUB ? optSet[opt].Value : undefined);
 
             optSet[opt] = {
+                'Item'      : opt,
                 'Config'    : __CONFIG,
-                'Loaded'    : __LOADED,
+                'Loaded'    : (__ISSHARED || __LOADED),
                 'Value'     : initOptValue(__CONFIG, __VALUE),
                 'SetValue'  : __CONFIG.SetValue,
-                'ReadOnly'  : __CONFIG.ReadOnly,
+                'ReadOnly'  : (__ISSHARED || __CONFIG.ReadOnly),
                 'Action'    : initOptAction(__CONFIG.Action, opt, optSet, __CONFIG),
                 'AltAction' : initOptAction(__ALTACTION, opt, optSet, __CONFIG)
             };
         } else if (preInit) {  // erstmal nur Stub
             optSet[opt] = {
+                'Item'      : opt,
                 'Config'    : __OPTCONFIG,
                 'Loaded'    : false,
                 'Value'     : initOptValue(__OPTCONFIG),
-                'ReadOnly'  : __OPTCONFIG.ReadOnly
+                'ReadOnly'  : (__ISSHARED || __OPTCONFIG.ReadOnly)
             };
         }
     }
@@ -1227,10 +1941,70 @@ function getNextOpt(opt, value = undefined) {
 // value: Default fuer ggfs. zu setzenden Wert
 // reload: Seite mit neuem Wert neu laden
 // return Gesetzter Wert
-function setNextOpt(opt, value = undefined, reload = true) {
-    const __CONFIG = getOptConfig(opt);
-
+function setNextOpt(opt, value = undefined, reload = false) {
     return setOpt(opt, getNextOpt(opt, value), reload);
+}
+
+// Setzt die naechste moegliche Option oder fragt ab einer gewissen Anzahl interaktiv ab
+// opt: Config und Value der Option
+// value: Default fuer ggfs. zu setzenden Wert
+// reload: Seite mit neuem Wert neu laden
+// freeValue: Angabe, ob Freitext zugelassen ist (Default: false)
+// minChoice: Ab wievielen Auswahlmoeglichkeiten soll abgefragt werden? (Default: 3)
+// return Gesetzter Wert
+function promptNextOpt(opt, value = undefined, reload = false, freeValue = false, selValue = true, minChoice = 3) {
+    const __CONFIG = getOptConfig(opt);
+    const __CHOICE = __CONFIG.Choice;
+
+    if (value || (! __CHOICE) || (__CHOICE.length < minChoice)) {
+        return setNextOpt(opt, value, reload);
+    }
+
+    const __VALUE = getOptValue(opt, value);
+
+    try {
+        const __NEXTVAL = getNextValue(__CHOICE, __VALUE);
+        let message = "";
+
+        if (selValue) {
+            for (let index = 0; index < __CHOICE.length; index++) {
+                message += (index + 1) + ") " + __CHOICE[index] + '\n';
+            }
+            message += "\nNummer eingeben:";
+        } else {
+            message = __CHOICE.join(" / ") + "\n\nWert eingeben:";
+        }
+
+        const __ANSWER = prompt(message, __NEXTVAL);
+
+        if (__ANSWER) {
+            const __INDEX = parseInt(__ANSWER, 10) - 1;
+            let nextVal = (selValue ? __CHOICE[__INDEX] : undefined);
+
+            if (nextVal === undefined) {
+                const __VALTYPE = getValue(__CONFIG.ValType, 'String');
+                const __CASTVAL = this[__VALTYPE](__ANSWER);
+
+                if (freeValue || (~ __CHOICE.indexOf(__CASTVAL))) {
+                    nextVal = __CASTVAL;
+                }
+            }
+
+            if (nextVal !== __VALUE) {
+                if (nextVal) {
+                    return setOpt(opt, nextVal, reload);
+                }
+
+                const __LABEL = __CONFIG.Label.replace('$', __VALUE);
+
+                showAlert(__LABEL, "Ung\xFCltige Eingabe: " + __ANSWER);
+            }
+        }
+    } catch (ex) {
+        __LOG[1]("promptNextOpt: " + ex.message);
+    }
+
+    return __VALUE;
 }
 
 // Setzt eine Option auf einen vorgegebenen Wert (Version mit Key)
@@ -1247,10 +2021,9 @@ function setOptByName(optSet, item, value, reload = false) {
 }
 
 // Ermittelt die naechste moegliche Option (Version mit Key)
-// opt: Config und Value der Option
 // optSet: Platz fuer die gesetzten Optionen (und Config)
 // item: Key der Option
-// value: Ggfs. zu setzender Wert
+// value: Default fuer ggfs. zu setzenden Wert
 // return Zu setzender Wert
 function getNextOptByName(optSet, item, value = undefined) {
     const __OPT = getOptByName(optSet, item);
@@ -1259,22 +2032,35 @@ function getNextOptByName(optSet, item, value = undefined) {
 }
 
 // Setzt die naechste moegliche Option (Version mit Key)
-// opt: Config und Value der Option
 // optSet: Platz fuer die gesetzten Optionen (und Config)
 // item: Key der Option
-// value: Ggfs. zu setzender Wert
+// value: Default fuer ggfs. zu setzenden Wert
 // reload: Seite mit neuem Wert neu laden
 // return Gesetzter Wert
-function setNextOptByName(optSet, item, value = undefined, reload = true) {
+function setNextOptByName(optSet, item, value = undefined, reload = false) {
     const __OPT = getOptByName(optSet, item);
 
     return setNextOpt(__OPT, value, reload);
 }
 
+// Setzt die naechste moegliche Option oder fragt ab einer gewissen Anzahl interaktiv ab (Version mit Key)
+// optSet: Platz fuer die gesetzten Optionen (und Config)
+// item: Key der Option
+// value: Default fuer ggfs. zu setzenden Wert
+// reload: Seite mit neuem Wert neu laden
+// freeValue: Angabe, ob Freitext zugelassen ist (Default: false)
+// minChoice: Ab wievielen Auswahlmoeglichkeiten soll abgefragt werden? (Default: 3)
+// return Gesetzter Wert
+function promptNextOptByName(optSet, item, value = undefined, reload = false, freeValue = false, selValue = true, minChoice = 3) {
+    const __OPT = getOptByName(optSet, item);
+
+    return promptNextOpt(__OPT, value, reload, freeValue, selValue, minChoice);
+}
+
 // Baut das Benutzermenu auf
 // optSet: Gesetzte Optionen
 function buildMenu(optSet) {
-    console.log("buildMenu()");
+    __LOG[3]("buildMenu()");
 
     for (let opt in optSet) {
         registerOption(optSet[opt]);
@@ -1285,14 +2071,16 @@ function buildMenu(optSet) {
 // opt: Zu invalidierende Option
 // force: Invalidiert auch Optionen mit 'AutoReset'-Attribut
 function invalidateOpt(opt, force = false) {
-    const __CONFIG = getOptConfig(opt);
+    if (! opt.ReadOnly) {
+        const __CONFIG = getOptConfig(opt);
 
-    // Wert "ungeladen"...
-    opt.Loaded = (force || ! __CONFIG.AutoReset);
+        // Wert "ungeladen"...
+        opt.Loaded = (force || ! __CONFIG.AutoReset);
 
-    if (opt.Loaded) {
-        // Nur zuruecksetzen, gilt als geladen...
-        setOptValue(opt, initOptValue(__CONFIG));
+        if (opt.Loaded && __CONFIG.AutoReset) {
+            // Nur zuruecksetzen, gilt als geladen...
+            setOptValue(opt, initOptValue(__CONFIG));
+        }
     }
 }
 
@@ -1318,24 +2106,26 @@ function invalidateOpts(optSet, force = false) {
 // return Gesetzter Wert der gelandenen Option
 function loadOption(opt, force = false) {
     const __CONFIG = getOptConfig(opt);
+    const __ISSHARED = getValue(__CONFIG.Shared, false, true);
+    const __NAME = getOptName(opt);
+    const __DEFAULT = getOptValue(opt, undefined, false, false);
     let value;
 
-    if (opt.Loaded) {
-        console.error("Error: Oprion '" + getOptName(opt) + "' bereits geladen!");
+    if (opt.Loaded && ! __ISSHARED) {
+        __LOG[1]("Error: Oprion '" + __NAME + "' bereits geladen!");
     }
 
-    if (opt.ReadOnly) {
-        value = getOptValue(opt, undefined, false, false);
+    if (opt.ReadOnly || __ISSHARED) {
+        value = __DEFAULT;
     } else if (! force && __CONFIG.AutoReset) {
         value = initOptValue(__CONFIG);
     } else {
-        const __NAME = getOptName(opt);
-        const __DEFAULT = getOptValue(opt, undefined, false, false);
-
         value = (__CONFIG.Serial ?
                         deserialize(__NAME, __DEFAULT) :
                         GM_getValue(__NAME, __DEFAULT));
     }
+
+    __LOG[5]("LOAD " + __NAME + ": " + __LOG.changed(__DEFAULT, value));
 
     // Wert als geladen markieren...
     opt.Loaded = true;
@@ -1370,7 +2160,7 @@ function deleteOption(opt, force = false, reset = true) {
     if (force || ! __CONFIG.Permanent) {
         const __NAME = getOptName(opt);
 
-        console.log("DELETE " + __NAME);
+        __LOG[4]("DELETE " + __NAME);
 
         GM_deleteValue(__NAME);
 
@@ -1441,20 +2231,18 @@ function postfixName(name, postfix) {
 // 'force': Option auch mit 'AutoReset'-Attribut nachladen?
 // renameParam: Wird an renameFun uebergeen
 // renameFun: function(name, param) zur Ermittlung des neuen Namens
-// name: Neu zu setzender Name (Speicheradresse)
-// reload: Wert nachladen statt beizubehalten
-// force: Laedt auch Optionen mit 'AutoReset'-Attribut
-// return Umbenannte Option
+// - name: Neu zu setzender Name (Speicheradresse)
+// - param: Parameter "renameParam" von oben, z.B. Prefix oder Postfix
 function renameOptions(optSet, optSelect, renameParam = undefined, renameFun = prefixName) {
     if (renameFun === undefined) {
-        console.error("RENAME: Illegale Funktion!");
+        __LOG[1]("RENAME: Illegale Funktion!");
     }
     for (let opt in optSelect) {
         const __OPTPARAMS = optSelect[opt];
         const __OPT = optSet[opt];
 
         if (__OPT === undefined) {
-            console.error("RENAME: Option '" + opt + "' nicht gefunden!");
+            __LOG[1]("RENAME: Option '" + opt + "' nicht gefunden!");
         } else {
             const __NAME = getOptName(__OPT);
             const __NEWNAME = renameFun(__NAME, renameParam);
@@ -1480,351 +2268,6 @@ function resetOptions(optSet, reload = true) {
         // ... und Seite neu laden (mit "Werkseinstellungen")...
         window.location.reload();
     }
-}
-
-// ==================== Abschnitt fuer Klasse Delims ====================
-
-// Basisklasse fuer die Verwaltung der Trennzeichen und Symbole
-// delim: Trennzeichen zwischen zwei Ebenen (oder Objekt/Delims mit entsprechenden Properties)
-// back: (Optional) Name des relativen Vaterverzeichnisses
-// root: (Optional) Kennung vor dem ersten Trenner am Anfang eines absoluten Pfads
-// home: (Optional) Kennung vor dem ersten Trenner am Anfang eines Pfads relativ zu Home
-function Delims(delim = undefined, back = undefined, root = undefined, home = undefined) {
-    'use strict';
-
-    this.setDelim = function(delim = undefined) {
-        this.delim = delim;
-    };
-
-    this.setRoot = function(root = undefined) {
-        this.root = root;
-    };
-
-    this.setHome = function(home = undefined) {
-        this.home = home;
-    };
-
-    this.setBack = function(back = undefined) {
-        this.back = back;
-    };
-
-    if ((typeof delim) == 'object') {
-        // Erster Parameter ist Objekt mit den Properties...
-        if (root === undefined) {
-            root = delim.root;
-        }
-        if (home === undefined) {
-            home = delim.home;
-        }
-        if (back === undefined) {
-            back = delim.back;
-        }
-        delim = delim.delim;
-    }
-
-    this.setDelim(delim);
-    this.setRoot(root);
-    this.setHome(home);
-    this.setBack(back);
-}
-
-// ==================== Ende Abschnitt fuer Klasse Delims ====================
-
-// ==================== Abschnitt fuer Klasse Path ====================
-
-// Basisklasse fuer die Verwaltung eines Pfades
-// homePath: Absoluter Startpfad als String
-// delims: Objekt mit Trennern und Symbolen als Properties (oder Delims-Objekt)
-// 'delim': Trennzeichen zwischen zwei Ebenen
-// 'back': Name des relativen Vaterverzeichnisses
-// 'root': Kennung vor dem ersten Trenner am Anfang eines absoluten Pfads
-// 'home': Kennung vor dem ersten Trenner am Anfang eines Pfads relativ zu Home
-function Path(homePath = undefined, delims = undefined) {
-    //'use strict';
-
-    this.root = function() {
-        this.dirs.splice(0, this.dirs.length);
-    };
-
-    this.home = function() {
-        this.dirs = this.homeDirs.slice();
-    };
-
-    this.up = function() {
-        this.dirs.pop();
-    };
-
-    this.down = function(subDir) {
-        this.dirs.push(subDir);
-    };
-
-    this.setDelims = function(delims = undefined) {
-        this.delims = new Delims(delims);
-    };
-
-    this.setDelim = function(delim = undefined) {
-        this.delims.setDelim(delim || '/');
-    };
-
-    this.setRootDelim = function(rootDelim = undefined) {
-        this.delims.setRoot(rootDelim || "");
-    };
-
-    this.setHomeDelim = function(homeDelim = undefined) {
-        this.delims.setHome(homeDelim || '~');
-    };
-
-    this.setBackDelim = function(backDelim = undefined) {
-        this.delims.setBack(backDelim || "..");
-    };
-
-    this.getPath = function(dirs = undefined, delims = undefined) {
-        const __DELIMS = new Delims(delims);
-        const __DELIM = (__DELIMS.delim || this.delims.delim);
-        const __ROOTDELIM = ((__DELIMS.root !== undefined) ? __DELIMS.root : this.delims.root);
-        const __DIRS = (dirs || this.dirs);
-
-        return __ROOTDELIM + __DELIM + __DIRS.join(__DELIM);
-    };
-
-    this.getDirs = function(path = undefined, delims = undefined) {
-        const __DELIMS = new Delims(delims);
-        const __DELIM = (__DELIMS.delim || this.delims.delim);
-        const __ROOTDELIM = ((__DELIMS.root !== undefined) ? __DELIMS.root : this.delims.root);
-        const __HOMEDELIM = ((__DELIMS.home !== undefined) ? __DELIMS.home : this.delims.home);
-        const __DIRS = (path ? path.split(__DELIM) : []);
-        const __FIRST = __DIRS[0];
-
-        if (__FIRST && (__FIRST !== __ROOTDELIM) && (__FIRST !== __HOMEDELIM)) {
-            alert("Kein absoluter Pfad: " + this.getPath(__DIRS));
-        }
-
-        return __DIRS.slice(1);
-    };
-
-    this.dirs = [];
-    this.setDelims(delims);
-    this.homeDirs = this.getDirs(homePath, { 'home' : "" });
-
-    this.home();
-}
-
-// ==================== Ende Abschnitt fuer Klasse Path ====================
-
-// ==================== Abschnitt fuer Klasse Directory ====================
-
-// Basisklasse fuer eine Verzeichnisstruktur
-// homePath: Absoluter Startpfad als String
-// delims: Objekt mit Trennern und Symbolen als Properties (oder Delims-Objekt)
-// 'delim': Trennzeichen zwischen zwei Ebenen
-// 'back': Name des relativen Vaterverzeichnisses
-// 'root': Kennung vor dem ersten Trenner am Anfang eines absoluten Pfads
-// 'home': Kennung vor dem ersten Trenner am Anfang eines Pfads relativ zu Home
-function Directory(homePath = undefined, delims = undefined) {
-    //'use strict';
-
-    Path.call(this, homePath, delims);
-
-    this.chDir = function(subDir = undefined) {
-        if (subDir === undefined) {
-            this.root();
-        } else if ((typeof subDir) === 'object') {
-            for (let sub of subDir) {
-                this.chDir(sub);
-            }
-        } else {
-            if (subDir === this.delims.home) {
-                this.home();
-            } else if (subDir === this.delims.back) {
-                this.up();
-            } else {
-                this.down(subDir);
-            }
-        }
-    };
-
-    this.pwd = function() {
-        return this.getPath();
-    };
-}
-
-Directory.prototype = new Path;
-
-// ==================== Ende Abschnitt fuer Klasse Directory ====================
-
-// ==================== Abschnitt fuer Klasse ObjRef ====================
-
-// Basisklasse fuer eine Objekt-Referenz
-function ObjRef(rootObj = undefined) {
-    'use strict';
-
-    Directory.call(this, undefined, new Delims('/', "..", '/', '~'));
-
-    Object.defineProperty(this, 'rootObj', {
-                                  enumerable   : false,
-                                  configurable : false,
-                                  writable     : false,
-                                  value        : rootObj
-                              });  // Wichtig: Verweis nicht verfolgen! Gefahr durch Zyklen!
-}
-
-ObjRef.prototype = new Directory;
-
-ObjRef.prototype.valueOf = function() {
-        let ret = this.rootObj;
-
-        for (let name of this.dirs) {
-            if (ret === undefined) {
-                break;
-            }
-            ret = ret[name];
-        }
-
-        return ret;
-    };
-
-// ==================== Ende Abschnitt fuer Klasse ObjRef ====================
-
-// ==================== Abschnitt fuer Klasse Classification ====================
-
-// Basisklasse fuer eine Klassifikation der Optionen nach Kriterium (z.B. Erst- und Zweitteam oder Fremdteam)
-function Classification() {
-    'use strict';
-
-    this.renameFun = prefixName;
-    //this.renameParamFun = undefined;
-    this.optSet = undefined;
-    this.optSelect = { };
-
-    this.renameOptions = function() {
-        const __PARAM = this.renameParamFun();
-
-        if (__PARAM !== undefined) {
-            // Klassifizierte Optionen umbenennen...
-            renameOptions(this.optSet, this.optSelect, __PARAM, this.renameFun);
-        }
-    };
-
-    this.deleteOptions = function() {
-        return deleteOptions(this.optSet, this.optSelect, true, true);
-    };
-}
-
-// ==================== Ende Abschnitt fuer Klasse Classification ====================
-
-// ==================== Abschnitt fuer Klasse TeamClassification ====================
-
-// Klasse fuer die Klassifikation der Optionen nach Team (Erst- und Zweitteam oder Fremdteam)
-function TeamClassification() {
-    'use strict';
-
-    Classification.call(this);
-
-    this.team = undefined;
-    this.teamParams = undefined;
-
-    this.renameParamFun = function() {
-        const __MYTEAM = (this.team = getMyTeam(this.optSet, this.teamParams, this.team));
-
-        if (__MYTEAM.LdNr) {
-            // Prefix fuer die Optionen mit gesonderten Behandlung...
-            return __MYTEAM.LdNr.toString() + '.' + __MYTEAM.LgNr.toString() + ':';
-        } else {
-            return undefined;
-        }
-    };
-}
-
-TeamClassification.prototype = new Classification;
-
-// ==================== Ende Abschnitt fuer Klasse TeamClassification ====================
-
-// ==================== Abschnitt fuer Klasse Team ====================
-
-// Klasse fuer Teamdaten
-function Team(team = undefined, land = undefined, liga = undefined) {
-    'use strict';
-
-    this.Team = team;
-    this.Land = land;
-    this.Liga = liga;
-    this.LdNr = getLandNr(land);
-    this.LgNr = getLigaNr(liga);
-}
-
-// Items, die in Team als Teamdaten gesetzt werden...
-Team.prototype.__TEAMITEMS = {
-                       'Team'       : true,
-                       'Liga'       : true,
-                       'Land'       : true,
-                       'LdNr'       : true,
-                       'LgNr'       : true
-                   };
-
-// ==================== Ende Abschnitt fuer Klasse Team ====================
-
-// ==================== Spezialisierter Abschnitt fuer Optionen ====================
-
-// Gesetzte Optionen (wird von initOptions() angelegt und von loadOptions() gefuellt):
-const __OPTSET = { };
-
-// Teamparameter fuer getrennte Speicherung der Optionen fuer Erst- und Zweitteam...
-const __TEAMCLASS = new TeamClassification();
-
-// Optionen mit Daten, die ZAT- und Team-bezogen gemerkt werden...
-__TEAMCLASS.optSelect = {
-                       'datenZat'   : true,
-                       'ligaSize'   : true
-                   };
-
-// Gibt die Teamdaten zurueck und aktualisiert sie ggfs. in der Option
-// optSet: Platz fuer die gesetzten Optionen
-// teamParams: Dynamisch ermittelte Teamdaten ('Team', 'Liga', 'Land', 'LdNr' und 'LgNr')
-// myTeam: Objekt fuer die Teamdaten
-// return Die Teamdaten oder undefined bei Fehler
-function getMyTeam(optSet = undefined, teamParams = undefined, myTeam = new Team()) {
-    if (teamParams !== undefined) {
-        addProps(myTeam, teamParams, myTeam.__TEAMITEMS);
-        console.log("Ermittelt: " + safeStringify(myTeam));
-        // ... und abspeichern...
-        setOpt(optSet.team, myTeam, false);
-    } else {
-        const __TEAM = getOptValue(optSet.team);  // Gespeicherte Parameter
-
-        if ((__TEAM !== undefined) && (__TEAM.Land !== undefined)) {
-            addProps(myTeam, __TEAM, myTeam.__TEAMITEMS);
-            console.log("Gespeichert: " + safeStringify(myTeam));
-        } else {
-            console.error("Unbekannt: " + safeStringify(__TEAM));
-        }
-    }
-
-    //return ((myTeam.length > 0) ? myTeam : undefined);
-    return myTeam;
-}
-
-// Behandelt die Optionen und laedt das Benutzermenu
-// optConfig: Konfiguration der Optionen
-// optSet: Platz fuer die gesetzten Optionen
-// optParams: Eventuell notwendige Parameter zur Initialisierung
-// 'hideMenu': Optionen werden zwar geladen und genutzt, tauchen aber nicht im Benutzermenu auf
-// 'teamParams': Getrennte Daten-Option wird genutzt, hier: Team() mit 'LdNr'/'LgNr' des Erst- bzw. Zweitteams
-// 'menuAnchor': Startpunkt fuer das Optionsmenu auf der Seite
-// 'showForm': Checkliste der auf der Seite sichtbaren Optionen (true fuer sichtbar)
-// 'hideForm': Checkliste der auf der Seite unsichtbaren Optionen (true fuer unsichtbar)
-// 'formWidth': Anzahl der Elemente pro Zeile
-// 'formBreak': Elementnummer des ersten Zeilenumbruchs
-// return Gefuelltes Objekt mit den gesetzten Optionen
-function buildOptions(optConfig, optSet = undefined, optParams = { 'hideMenu' : false }) {
-    // Klassifikation ueber Land und Liga des Teams...
-    __TEAMCLASS.optSet = optSet;  // Classification mit optSet verknuepfen
-    __TEAMCLASS.teamParams = optParams.teamParams;  // Ermittelte Parameter
-
-    optSet = startOptions(optConfig, optSet, __TEAMCLASS);
-
-    showOptions(optSet, optParams);
-
-    return optSet;
 }
 
 // ==================== Abschnitt fuer diverse Utilities ====================
@@ -1869,8 +2312,8 @@ function addEvent(obj, type, callback, capture = false) {
     } else if (obj.attachEvent) {
         return obj.attachEvent("on" + type, callback);
     } else {
-        console.log("Could not add " + type + " event:");
-        console.log(callback);
+        __LOG[1]("Could not add " + type + " event:");
+        __LOG[2](callback);
 
         return false;
     }
@@ -1888,8 +2331,8 @@ function removeEvent(obj, type, callback, capture = false) {
     } else if (obj.detachEvent) {
         return obj.detachEvent("on" + type, callback);
     } else {
-        console.log("Could not remove " + type + " event:");
-        console.log(callback);
+        __LOG[1]("Could not remove " + type + " event:");
+        __LOG[2](callback);
 
         return false;
     }
@@ -1961,7 +2404,7 @@ function getRows(index, doc = document) {
 // isAlt: Angabe, ob AltAction statt Action gemeint ist
 // value: Ggfs. zu setzender Wert
 // serial: Serialization fuer String-Werte (Select, Textarea)
-// memory: __OPTMEM.normal = bis Browserende gespeichert (sessionStorage), __OPTMEM.unbegrenzt = unbegrenzt gespeichert (localStorage), __OPTMEM.inaktiv
+// memory: __OPTMEM.normal = unbegrenzt gespeichert (localStorage), __OPTMEM.begrenzt = bis Browserende gespeichert (sessionStorage), __OPTMEM.inaktiv
 // return String mit dem (reinen) Funktionsaufruf
 function getFormAction(opt, isAlt = false, value = undefined, serial = undefined, memory = undefined) {
     const __STORAGE = getMemory(memory);
@@ -2007,7 +2450,7 @@ function getFormAction(opt, isAlt = false, value = undefined, serial = undefined
 // value: Ggfs. zu setzender Wert
 // type: Event-Typ fuer <input>, z.B. "click" fuer "onclick="
 // serial: Serialization fuer String-Werte (Select, Textarea)
-// memory: __OPTMEM.normal = bis Browserende gespeichert (sessionStorage), __OPTMEM.unbegrenzt = unbegrenzt gespeichert (localStorage), __OPTMEM.inaktiv
+// memory: __OPTMEM.normal = unbegrenzt gespeichert (localStorage), __OPTMEM.begrenzt = bis Browserende gespeichert (sessionStorage), __OPTMEM.inaktiv
 // return String mit dem (reinen) Funktionsaufruf
 function getFormActionEvent(opt, isAlt = false, value = undefined, type = "click", serial = undefined, memory = undefined) {
     const __ACTION = getFormAction(opt, isAlt, value, serial, memory);
@@ -2027,6 +2470,9 @@ function getOptionSelect(opt) {
     const __LABEL = '<label for="' + __NAME + '">' + __FORMLABEL + '</label>';
     let element = '<select name="' + __NAME + '" id="' + __NAME + '"' + __ACTION + '>';
 
+    if (__CONFIG.FreeValue && ! (~ __CONFIG.Choice.indexOf(__VALUE))) {
+        element += '\n<option value="' + __VALUE + '" SELECTED>' + __VALUE + '</option>';
+    }
     for (let value of __CONFIG.Choice) {
         element += '\n<option value="' + value + '"' +
                    ((value === __VALUE) ? ' SELECTED' : "") +
@@ -2085,7 +2531,7 @@ function getOptionTextarea(opt) {
     const __VALUE = getOptValue(opt);
     const __ACTION = getFormActionEvent(opt, false, undefined, "submit", undefined);
     const __SUBMIT = getValue(__CONFIG.Submit, "");
-    //const __ONSUBMIT = ((__SUBMIT.length > 0) ? ' onKeyDown="' + __SUBMIT + '"': "");
+    //const __ONSUBMIT = (__SUBMIT.length ? ' onKeyDown="' + __SUBMIT + '"': "");
     const __ONSUBMIT = (__SUBMIT ? ' onKeyDown="' + __SUBMIT + '"': "");
     const __FORMLABEL = getValue(__CONFIG.FormLabel, __CONFIG.Label);
     const __ELEMENTLABEL = '<label for="' + __NAME + '">' + __FORMLABEL + '</label>';
@@ -2169,9 +2615,8 @@ function getForm(optSet, optParams = { }) {
     for (let opt in optSet) {
         if (checkItem(opt, __SHOWFORM, optParams.hideForm)) {
             const __ELEMENT = getOptionElement(optSet[opt]);
-            const __TDOPT = (__ELEMENT.indexOf('|') < 0) ? ' colspan="2"' : "";
+            const __TDOPT = (~ __ELEMENT.indexOf('|')) ? "" : ' colspan="2"';
 
-            //if (__ELEMENT.length > 0) {
             if (__ELEMENT) {
                 if (++count > __FORMBREAK) {
                     if (++column > __FORMWIDTH) {
@@ -2216,7 +2661,7 @@ function getScript(optSet, optParams = { }) {
 // 'formWidth': Anzahl der Elemente pro Zeile
 // 'formBreak': Elementnummer des ersten Zeilenumbruchs
 function buildForm(anchor, optSet, optParams = { }) {
-    console.log("buildForm()");
+    __LOG[3]("buildForm()");
 
     const __FORM = getForm(optSet, optParams);
     const __SCRIPT = getScript(optSet, optParams);
@@ -2236,9 +2681,156 @@ function addForm(anchor, form = "", script = "") {
     const __REST = (__OLDFORM === undefined) ? anchor.innerHTML :
                    anchor.innerHTML.substring(0, anchor.innerHTML.length - __OLDFORM.Script.length - __OLDFORM.Form.length);
 
-    __FORMS[anchor] = { 'Script' : script, 'Form' : form };
+    __FORMS[anchor] = {
+                          'Script' : script,
+                          'Form'   : form
+                      };
 
     anchor.innerHTML = __REST + script + form;
+}
+
+// ==================== Abschnitt fuer Klasse Classification ====================
+
+// Basisklasse fuer eine Klassifikation der Optionen nach Kriterium (z.B. Erst- und Zweitteam oder Fremdteam)
+function Classification() {
+    'use strict';
+
+    this.renameFun = prefixName;
+    //this.renameParamFun = undefined;
+    this.optSet = undefined;
+    this.optSelect = { };
+}
+
+Class.define(Classification, Object, {
+                    'renameOptions' : function() {
+                                          const __PARAM = this.renameParamFun();
+
+                                          if (__PARAM !== undefined) {
+                                              // Klassifizierte Optionen umbenennen...
+                                              renameOptions(this.optSet, this.optSelect, __PARAM, this.renameFun);
+                                          }
+                                      },
+                    'deleteOptions' : function() {
+                                          return deleteOptions(this.optSet, this.optSelect, true, true);
+                                      }
+                } );
+
+// ==================== Ende Abschnitt fuer Klasse Classification ====================
+
+// ==================== Abschnitt fuer Klasse TeamClassification ====================
+
+// Klasse fuer die Klassifikation der Optionen nach Team (Erst- und Zweitteam oder Fremdteam)
+function TeamClassification() {
+    'use strict';
+
+    Classification.call(this);
+
+    this.team = undefined;
+    this.teamParams = undefined;
+}
+
+Class.define(TeamClassification, Classification, {
+                    'renameParamFun' : function() {
+                                           const __MYTEAM = (this.team = getMyTeam(this.optSet, this.teamParams, this.team));
+
+                                           if (__MYTEAM.LdNr) {
+                                               // Prefix fuer die Optionen mit gesonderten Behandlung...
+                                               return __MYTEAM.LdNr.toString() + '.' + __MYTEAM.LgNr.toString() + ':';
+                                           } else {
+                                               return undefined;
+                                           }
+                                       }
+                } );
+
+// ==================== Ende Abschnitt fuer Klasse TeamClassification ====================
+
+// ==================== Abschnitt fuer Klasse Team ====================
+
+// Klasse fuer Teamdaten
+function Team(team, land, liga) {
+    'use strict';
+
+    this.Team = team;
+    this.Land = land;
+    this.Liga = liga;
+    this.LdNr = getLandNr(land);
+    this.LgNr = getLigaNr(liga);
+}
+
+Class.define(Team, Object, {
+                    '__TEAMITEMS' : {   // Items, die in Team als Teamdaten gesetzt werden...
+                                        'Team' : true,
+                                        'Liga' : true,
+                                        'Land' : true,
+                                        'LdNr' : true,
+                                        'LgNr' : true
+                                    }
+                } );
+
+// ==================== Ende Abschnitt fuer Klasse Team ====================
+
+// ==================== Spezialisierter Abschnitt fuer Optionen ====================
+
+// Gesetzte Optionen (wird von initOptions() angelegt und von loadOptions() gefuellt):
+const __OPTSET = { };
+
+// Teamparameter fuer getrennte Speicherung der Optionen fuer Erst- und Zweitteam...
+const __TEAMCLASS = new TeamClassification();
+
+// Optionen mit Daten, die ZAT- und Team-bezogen gemerkt werden...
+__TEAMCLASS.optSelect = {
+                       'datenZat'   : true,
+                       'ligaSize'   : true
+                   };
+
+// Gibt die Teamdaten zurueck und aktualisiert sie ggfs. in der Option
+// optSet: Platz fuer die gesetzten Optionen
+// teamParams: Dynamisch ermittelte Teamdaten ('Team', 'Liga', 'Land', 'LdNr' und 'LgNr')
+// myTeam: Objekt fuer die Teamdaten
+// return Die Teamdaten oder undefined bei Fehler
+function getMyTeam(optSet = undefined, teamParams = undefined, myTeam = new Team()) {
+    if (teamParams !== undefined) {
+        addProps(myTeam, teamParams, myTeam.__TEAMITEMS);
+        __LOG[2]("Ermittelt: " + safeStringify(myTeam));
+        // ... und abspeichern...
+        setOpt(optSet.team, myTeam, false);
+    } else {
+        const __TEAM = getOptValue(optSet.team);  // Gespeicherte Parameter
+
+        if ((__TEAM !== undefined) && (__TEAM.Land !== undefined)) {
+            addProps(myTeam, __TEAM, myTeam.__TEAMITEMS);
+            __LOG[2]("Gespeichert: " + safeStringify(myTeam));
+        } else {
+            __LOG[1]("Unbekannt: " + safeStringify(__TEAM));
+        }
+    }
+
+    //return ((myTeam.length > 0) ? myTeam : undefined);
+    return myTeam;
+}
+
+// Behandelt die Optionen und laedt das Benutzermenu
+// optConfig: Konfiguration der Optionen
+// optSet: Platz fuer die gesetzten Optionen
+// optParams: Eventuell notwendige Parameter zur Initialisierung
+// 'hideMenu': Optionen werden zwar geladen und genutzt, tauchen aber nicht im Benutzermenu auf
+// 'teamParams': Getrennte Daten-Option wird genutzt, hier: Team() mit 'LdNr'/'LgNr' des Erst- bzw. Zweitteams
+// 'menuAnchor': Startpunkt fuer das Optionsmenu auf der Seite
+// 'showForm': Checkliste der auf der Seite sichtbaren Optionen (true fuer sichtbar)
+// 'hideForm': Checkliste der auf der Seite unsichtbaren Optionen (true fuer unsichtbar)
+// 'formWidth': Anzahl der Elemente pro Zeile
+// 'formBreak': Elementnummer des ersten Zeilenumbruchs
+// return Gefuelltes Objekt mit den gesetzten Optionen
+function buildOptions(optConfig, optSet = undefined, optParams = { 'hideMenu' : false }) {
+    // Klassifikation ueber Land und Liga des Teams...
+    __TEAMCLASS.optSet = optSet;  // Classification mit optSet verknuepfen
+    __TEAMCLASS.teamParams = optParams.teamParams;  // Ermittelte Parameter
+
+    optSet = startOptions(optConfig, optSet, __TEAMCLASS);
+
+    showOptions(optSet, optParams);
+
+    return optSet;
 }
 
 // ==================== Ende Abschnitt fuer Optionen ====================
@@ -2251,6 +2843,70 @@ const __QUALIRUNDEN = [ "", "Quali 1", "Quali 2", "Quali 3" ];
 const __OSCRUNDEN   = [ "", "Viertelfinale", "Halbfinale", "Finale" ];
 const __OSERUNDEN   = [ "", "Runde 1", "Runde 2", "Runde 3", "Runde 4", "Achtelfinale", "Viertelfinale", "Halbfinale", "Finale" ];
 const __HINRUECK    = [ " Hin", " R\xFCck", "" ];
+
+// ==================== Abschnitt fuer Klasse RundenLink ====================
+
+function RundenLink(saison, team) {
+    'use strict';
+
+    this.uri = new URI("http://os.ongapo.com/?erganzeigen=1&stataktion=Statistik+ausgeben");
+    this.runde = 0;
+    this.prop = "";
+    this.label = "";
+
+    if (saison) {
+        this.setSaison(saison);
+    }
+    if (team) {
+        this.setTeam(team);
+    }
+}
+
+Class.define(RundenLink, Object, {
+        'setSaison'    : function(saison) {
+                             this.uri.setQueryPar('saauswahl', saison);
+                         },
+        'setTeam'      : function(team) {
+                             this.uri.setQueryPar('landauswahl', team.LdNr);
+                             this.uri.setQueryPar('ligaauswahl', team.LgNr);
+                         },
+        'setPage'      : function(page, label) {
+                             this.uri.home();
+                             this.uri.down(page + ".php");
+                             this.setLabel(label);
+                         },
+        'setRunde'     : function(prop, runde) {
+                             this.prop = prop;
+                             this.runde = runde;
+                         },
+        'setLabel'     : function(label) {
+                             this.label = (label || "");
+                         },
+        'setAnzeigen'  : function(show = true) {
+                             this.uri.setQueryPar('erganzeigen', (show ? 1 : 0));
+                         },
+        'getLabel'     : function() {
+                             return (this.label || "Link");
+                         },
+        'getHTML'      : function(target = undefined) {
+                             if ((this.runde <= 0) || (! this.uri.getLeaf())) {
+                                 return this.label;
+                             } else {
+                                 if (this.prop) {
+                                     this.uri.setQueryPar(this.prop, this.runde);
+                                 }
+
+                                 return "<a " + URI.prototype.formatParams({
+                                                                      'href'   : this.uri.getPath(),
+                                                                      'target' : (target ? target : '_blank')
+                                                                  }, function(value) {
+                                                                         return '"' + value + '"';
+                                                                     }, ' ', '=') + '>' + this.getLabel() + "</a>";
+                             }
+                         }
+    });
+
+// ==================== Ende Abschnitt fuer Klasse RundenLink ====================
 
 // Liefert einen vor den ersten ZAT zurueckgesetzten Spielplanzeiger
 // saison: Enthaelt die Nummer der laufenden Saison
@@ -2328,7 +2984,7 @@ function incZAT(currZAT, anzZAT = 1) {
         } else {
             const __POS = __LIGAEXTRA.indexOf(currZAT.ZAT);
 
-            if (__POS > -1) {
+            if (~ __POS) {
                 if (__POS < 2 * (currZAT.ligaSize % 9)) {
                     currZAT.ligaSpieltag++;
                 }
@@ -2370,68 +3026,38 @@ function incZAT(currZAT, anzZAT = 1) {
 // showLink: Angabe, ob ein Link eingefuegt werden soll
 // return Beschreibung des Spiels
 function getZusatz(currZAT, showLink = true) {
-    const __NAMESPACE = "http://os.ongapo.com/";
-    const __MYTEAM = __TEAMCLASS.team;
-    let zusatz = "";
-    let href = "";
-    let prop = "stauswahl";
-    let runde = 0;
+    const __LINK = new RundenLink(currZAT.saison, __TEAMCLASS.team);
 
     if (currZAT.gameType === "Liga") {
-        href = "ls";
-        runde = currZAT.ligaSpieltag;
         if (currZAT.ZAT < 70) {
-            zusatz = runde + ". Spieltag";
+            __LINK.setRunde("stauswahl", currZAT.ligaSpieltag);
+            __LINK.setPage("ls", __LINK.runde + ". Spieltag");
         } else {
-            prop = "";
-            zusatz = "Relegation";
+            __LINK.setLabel("Relegation");
         }
     } else if (currZAT.gameType === "LP") {
-        href = "lp";
-        runde = currZAT.pokalRunde;
-        zusatz = __POKALRUNDEN[runde];
+        __LINK.setRunde("stauswahl", currZAT.pokalRunde);
+        __LINK.setPage("lp", __POKALRUNDEN[__LINK.runde]);
     } else if ((currZAT.gameType === "OSCQ") || (currZAT.gameType === "OSEQ")) {
-        href = ((currZAT.gameType === "OSCQ") ? "oscq" : "oseq");
-        prop = "runde";
-        runde = currZAT.euroRunde;
-        zusatz = __QUALIRUNDEN[runde] + __HINRUECK[currZAT.hinRueck];
+        __LINK.setRunde("runde", currZAT.euroRunde);
+        __LINK.setPage(((currZAT.gameType === "OSCQ") ? "oscq" : "oseq"), __QUALIRUNDEN[__LINK.runde] + __HINRUECK[currZAT.hinRueck]);
     } else if (currZAT.gameType === "OSC") {
         if (currZAT.euroRunde < 9) {
             const __GRUPPENPHASE = ((currZAT.euroRunde < 6) ? "HR-Grp. " : "ZR-Grp. ");
 
-            href = ((currZAT.euroRunde < 6) ? "oschr" : "osczr");
-            runde = ((currZAT.euroRunde % 3) * 2 + 1 + currZAT.hinRueck);
-            zusatz = __GRUPPENPHASE + "Spiel " + runde;
+            __LINK.setRunde("", (currZAT.euroRunde % 3) * 2 + 1 + currZAT.hinRueck);
+            __LINK.setPage(((currZAT.euroRunde < 6) ? "oschr" : "osczr"), __GRUPPENPHASE + "Spiel " + __LINK.runde);
         } else {
-            href = "oscfr";
-            runde = currZAT.euroRunde - 8;
-            zusatz = __OSCRUNDEN[runde] + __HINRUECK[currZAT.hinRueck];
+            __LINK.setPage("oscfr", __OSCRUNDEN[currZAT.euroRunde - 8] + __HINRUECK[currZAT.hinRueck]);
         }
-        prop = "";
     } else if (currZAT.gameType === "OSE") {
-        href = "ose";
-        prop = "runde";
-        runde = currZAT.euroRunde - 3;
-        zusatz = __OSERUNDEN[runde] + __HINRUECK[currZAT.hinRueck];
+        __LINK.setRunde("runde", currZAT.euroRunde - 3);
+        __LINK.setPage("ose", __OSERUNDEN[__LINK.runde] + __HINRUECK[currZAT.hinRueck]);
     } else {
-        prop = "";
-        zusatz = "";    // irgendwie besser lesbar! ("Friendly" bzw. "spielfrei"/"Frei"/"reserviert")
+        __LINK.setLabel();  // irgendwie besser lesbar! ("Friendly" bzw. "spielfrei"/"Frei"/"reserviert")
     }
 
-    if (showLink && (runde > 0) && (href !== "")) {
-        if (zusatz === "") {
-            zusatz = "Link";
-        }
-        if (prop !== "") {
-            prop = '&' + prop + '=' + runde;
-        }
-        prop = '?' + 'erganzeigen' + '=' + 1 + '&' + 'saauswahl' + '=' + currZAT.saison +
-               '&' + 'landauswahl' + '=' + __MYTEAM.LdNr + '&' + 'ligaauswahl' + '=' + __MYTEAM.LgNr + prop +
-               '&' + 'stataktion' + '=' + "Statistik+ausgeben";
-        zusatz = '<a href="' + __NAMESPACE + href + '.php' + prop + '" target="_blank">' + zusatz + '</a>';
-    }
-
-    return zusatz;
+    return (showLink ? __LINK.getHTML() : "");
 }
 
 // ==================== Abschnitt fuer Statistiken des Spielplans ====================
@@ -2549,7 +3175,7 @@ function getGegnerFromCell(cell) {
     const __GEGNER = cell.textContent;
     const __POS = __GEGNER.indexOf(" (");
 
-    if (__POS > -1) {
+    if (~ __POS) {
         return __GEGNER.substr(0, __POS);
     } else {
         return __GEGNER;
@@ -2689,9 +3315,9 @@ function getTeamParamsFromTable(table, teamSearch = undefined) {
     const __INDEXLIGA = teamParams.indexOf(__SEARCHLIGA);
     const __INDEXMIDDLE = teamParams.indexOf(__SEARCHMIDDLE);
 
-    let land = (__INDEXLIGA > 0) ? teamParams.substring(__INDEXLIGA + __SEARCHLIGA.length) : undefined;
-    const __TEAMNAME = (__INDEXMIDDLE > 0) ? teamParams.substring(0, __INDEXMIDDLE) : undefined;
-    let liga = ((__INDEXLIGA > 0) && (__INDEXMIDDLE > 0)) ? teamParams.substring(__INDEXMIDDLE + __SEARCHMIDDLE.length) : undefined;
+    let land = (~ __INDEXLIGA) ? teamParams.substring(__INDEXLIGA + __SEARCHLIGA.length) : undefined;
+    const __TEAMNAME = (~ __INDEXMIDDLE) ? teamParams.substring(0, __INDEXMIDDLE) : undefined;
+    let liga = ((~ __INDEXLIGA) && (~ __INDEXMIDDLE)) ? teamParams.substring(__INDEXMIDDLE + __SEARCHMIDDLE.length) : undefined;
 
     if (land !== undefined) {
         if (land.charAt(2) === ' ') {    // Land z.B. hinter "2. Liga A " statt "1. Liga "
@@ -2701,7 +3327,7 @@ function getTeamParamsFromTable(table, teamSearch = undefined) {
             liga = liga.substring(0, liga.length - land.length);
         }
         const __INDEXLAND = land.indexOf(__SEARCHLAND);
-        if (__INDEXLAND > -1) {
+        if (~ __INDEXLAND) {
             land = land.substr(__INDEXLAND + __SEARCHLAND.length);
         }
     }
@@ -2771,21 +3397,23 @@ function addZusatz(row, currZAT, anzZAT = 1, bilanz = false) {
     const __ROW = getValue(row, { });
     const __CELLS = __ROW.cells;
     const __COLUMNINDEX = {
-        'Lbl' : 0,
-        'Art' : 1,
-        'Geg' : 2,
-        'Ber' : 2,
-        'Zus' : 3
-    };
+            'Lbl' : 0,
+            'Art' : 1,
+            'Geg' : 2,
+            'Ber' : 2,
+            'Zus' : 3
+        };
 
-    setGegnerFromCell(currZAT, __CELLS[__COLUMNINDEX.Geg]);
-    setSpielArtFromCell(currZAT, __CELLS[__COLUMNINDEX.Art]);
-    if (bilanz) {
-        addBilanzLinkToCell(__CELLS[__COLUMNINDEX.Ber], currZAT.gameType, "(Bilanz)");
+    if (__CELLS) {
+        setGegnerFromCell(currZAT, __CELLS[__COLUMNINDEX.Geg]);
+        setSpielArtFromCell(currZAT, __CELLS[__COLUMNINDEX.Art]);
+        if (bilanz) {
+            addBilanzLinkToCell(__CELLS[__COLUMNINDEX.Ber], currZAT.gameType, "(Bilanz)");
+        }
+        incZAT(currZAT, anzZAT);
+        appendHTML(__ROW, "&nbsp;" + getZusatz(currZAT, true));
+        __CELLS[__COLUMNINDEX.Zus].className = __CELLS[__COLUMNINDEX.Art].className;
     }
-    incZAT(currZAT, anzZAT);
-    appendHTML(__ROW, "&nbsp;" + getZusatz(currZAT, true));
-    __CELLS[__COLUMNINDEX.Zus].className = __CELLS[__COLUMNINDEX.Art].className;
 }
 
 // ==================== Hauptprogramm ====================
@@ -2797,9 +3425,9 @@ function procHaupt() {
     buildOptions(__OPTCONFIG, __OPTSET, {
                      'teamParams' : __TEAMPARAMS,
                      'menuAnchor' : getTable(1, "div"),
-                     'hideForm' : {
-                                    'team'         : true
-                                  }
+                     'hideForm'   : {
+                                        'team'         : true
+                                    }
                  });
 
     const __ZAT = firstZAT(getOptValue(__OPTSET.saison), getOptValue(__OPTSET.ligaSize));
@@ -2814,13 +3442,9 @@ function procHaupt() {
 try {
     procHaupt();
 } catch (ex) {
-    const __NAME = __DBMOD.Name;
-    const __TEXT = ex.message;
-
-    console.error(__NAME + ": " + __TEXT);
-    alert(__NAME + "\n\n" + __TEXT);
+    showAlert('[' + ex.lineNumber + "] " + __DBMOD.Name, ex.message, ex);
 } finally {
-    console.log("SCRIPT END");
+    __LOG[2]("SCRIPT END");
 }
 
 // *** EOF ***
