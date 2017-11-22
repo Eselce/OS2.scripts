@@ -356,23 +356,14 @@ function procSpielplan() {
     const __ROWOFFSETUPPER = 1;
     const __ROWOFFSETLOWER = 0;
 
-/*
     const __COLUMNINDEX = {
-        __COLUMNINDEXART : 1,
-        __COLUMNINDEXGEG : 2,
-        __COLUMNINDEXERG : 3,
-        __COLUMNINDEXBER : 4,
-        __COLUMNINDEXZUS : 5,
-        __COLUMNINDEXKOM : 6
+        'Art' : 1,
+        'Geg' : 2,
+        'Erg' : 3,
+        'Ber' : 4,
+        'Zus' : 5,
+        'Kom' : 6
     };
-*/
-
-    const __COLUMNINDEXART = 1;
-    const __COLUMNINDEXGEG = 2;
-    const __COLUMNINDEXERG = 3;
-    const __COLUMNINDEXBER = 4;
-    const __COLUMNINDEXZUS = 5;
-    const __COLUMNINDEXKOM = 6;
 
     let ligaSpieltag = 0;
     let pokalRunde = 0;
@@ -403,10 +394,10 @@ function procSpielplan() {
 
     for (i = __ROWOFFSETUPPER; i < table.rows.length - __ROWOFFSETLOWER; i++, ZAT++) {
         if (shortKom) {
-            let kommentar = table.rows[i].cells[__COLUMNINDEXKOM].innerHTML;
+            let kommentar = table.rows[i].cells[__COLUMNINDEX.Kom].innerHTML;
 
             kommentar = kommentar.replace("Vorbericht(e)", 'V').replace("Kommentar(e)", 'K').replace("&amp;", '/').replace('&', '/');
-            table.rows[i].cells[__COLUMNINDEXKOM].innerHTML = kommentar;
+            table.rows[i].cells[__COLUMNINDEX.Kom].innerHTML = kommentar;
         }
         if ((ZAT > 12) && (ZAT % 10 == 5)) {    // passt fuer alle Saisons: 12, 20, 30, 40, 48, 58, 68 / 3, 15, 27, 39, 51, 63, 69
             pokalRunde++;
@@ -437,16 +428,16 @@ function procSpielplan() {
             }
         }
         stats = "";
-        spielart = getSpielArtFromCell(table.rows[i].cells[__COLUMNINDEXART]);
-        ergebnis = getErgebnisFromCell(table.rows[i].cells[__COLUMNINDEXERG]);
+        spielart = getSpielArtFromCell(table.rows[i].cells[__COLUMNINDEX.Art]);
+        ergebnis = getErgebnisFromCell(table.rows[i].cells[__COLUMNINDEX.Erg]);
         if (shortKom) {
-            let cellArt = table.rows[i].cells[__COLUMNINDEXART];
+            let cellArt = table.rows[i].cells[__COLUMNINDEX.Art];
 
             cellArt.innerHTML = cellArt.innerHTML.replace(": Heim", "(H)").replace(": Ausw\xE4rts", "(A)").replace("Friendly", "FSS");
         }
-        table.rows[i].cells[__COLUMNINDEXZUS].className = table.rows[i].cells[__COLUMNINDEXART].className;
-        if (table.rows[i].cells[__COLUMNINDEXZUS].textContent === "") {
-            let cellBer = table.rows[i].cells[__COLUMNINDEXBER];
+        table.rows[i].cells[__COLUMNINDEX.Zus].className = table.rows[i].cells[__COLUMNINDEX.Art].className;
+        if (table.rows[i].cells[__COLUMNINDEX.Zus].textContent === "") {
+            let cellBer = table.rows[i].cells[__COLUMNINDEX.Ber];
 
             zusatz = "";
             gameType = spielart[0];
@@ -492,7 +483,7 @@ function procSpielplan() {
             if (showStats && (stats !== "")) {
                 zusatz = zusatz + ' ' + stats;
             }
-            table.rows[i].cells[__COLUMNINDEXZUS].textContent = zusatz;
+            table.rows[i].cells[__COLUMNINDEX.Zus].textContent = zusatz;
         }
         if (sepMonths && (ZAT % __ANZZATPERMONTH === 0) && (i < table.rows.length - __ROWOFFSETLOWER - 1)) {
             for (j = 0; j < table.rows[i].cells.length; j++) {
