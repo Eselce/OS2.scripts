@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        OS2.haupt
 // @namespace   http://os.ongapo.com/
-// @version     0.2
+// @version     0.21
 // @copyright   2016+
 // @author      Sven Loges (SLC)
 // @description Managerbuero-Abschnitt aus dem Master-Script fuer Online Soccer 2.0
@@ -160,7 +160,7 @@ function firstZAT(saison, ligaSize) {
         'anzZATpMonth' : ((saison < 2) ? 7 : 6),    // Erste Saison 7 ZAT, danach 6 ZAT...
         'saison'       : saison,
         'ZAT'          : 0,
-        'gameType'     : 'spielfrei',
+        'gameType'     : "spielfrei",
         'heim'         : true,
         'gegner'       : "",
         'gFor'         : 0,
@@ -244,6 +244,8 @@ function incZAT(currZAT, anzZAT = 1) {
 // currZAT: Enthaelt den Spielplanzeiger auf den aktuellen ZAT
 // return Beschreibung des Spiels
 function getZusatz(currZAT) {
+    let zusatz = "";
+
     if (currZAT.gameType == "Liga") {
         if (currZAT.ZAT < 70) {
             zusatz = currZAT.ligaSpieltag + ". Spieltag";
@@ -263,8 +265,8 @@ function getZusatz(currZAT) {
         }
     } else if (currZAT.gameType == "OSE") {
         zusatz = __OSERUNDEN[currZAT.euroRunde - 3] + __HINRUECK[currZAT.hinRueck];
-    } else if (currZAT.gameType == "Friendly") {
-        zusatz = "";    // irgendwie besser lesbar!
+    } else {
+        zusatz = "";    // irgendwie besser lesbar! ("Friendly" bzw. "spielfrei"/"Frei"/"reserviert")
     }
 
     return zusatz;
@@ -316,6 +318,7 @@ function setSpielArtFromCell(currZAT, cell) {
 
 const __GAMETYPES = {
     "reserviert" : 0,
+    "Frei"       : 0,
     "spielfrei"  : 0,
     "Friendly"   : 1,
     "Liga"       : 2,
@@ -328,7 +331,7 @@ const __GAMETYPES = {
 
 // Gibt die ID fuer den Namen eines Wettbewerbs zurueck
 // gameType: Name des Wettbewerbs eines Spiels
-// return OS2-ID fuer den Spieltyp (1 bis 7), 0 fuer spielfrei/reserviert, -1 fuer ungueltig
+// return OS2-ID fuer den Spieltyp (1 bis 7), 0 fuer spielfrei/Frei/reserviert, -1 fuer ungueltig
 function getGameTypeID(gameType) {
     const __ID = __GAMETYPES[gameType];
 
@@ -345,7 +348,7 @@ function getBilanzLinkFromCell(cell, gameType, label) {
     let ret = "";
 
     if (cell.textContent != "Vorschau") {   // Nur falls Link nicht bereits vorhanden
-        if (__GAMETYPEID > 1) {             // nicht moeglich fuer "Friendly" bzw. "spielfrei"/"reserviert"
+        if (__GAMETYPEID > 1) {             // nicht moeglich fuer "Friendly" bzw. "spielfrei"/"Frei"/"reserviert"
             const __SEARCHFUN = ":os_bericht(";
             let paarung = cell.innerHTML.substr(cell.innerHTML.indexOf(__SEARCHFUN) + __SEARCHFUN.length);
 
