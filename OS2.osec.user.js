@@ -1,21 +1,13 @@
 // ==UserScript==
 // @name         OS2.osec
 // @namespace    http://os.ongapo.com/
-// @version      1.0
+// @version      0.12+WE
 // @copyright    2013+
 // @author       Sven Loges (SLC)
 // @description  Europapokal-Script fuer Online Soccer 2.0
-// @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/(os(eq?|c(q|[hzf]r)))\.php(\?\S+(&\S+)*)?$/
-// @grant        GM_getValue
-// @grant        GM_setValue
-// @grant        GM_deleteValue
-// @grant        GM_registerMenuCommand
-// @grant        GM_info
+// @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/(os(eq?|c(q|[hzf]r))|supercup)\.php(\?\S+(&\S+)*)?$/
+// @grant        none
 // ==/UserScript==
-
-// ECMAScript 6: Erlaubt 'const', 'let', ...
-/* jshint esnext: true */
-/* jshint moz: true */
 
 // Script wird angewendet auf
 // - OSE(Q) und OSC(Q) Ergebnisse
@@ -88,7 +80,7 @@ function addResultToStats(stats, id, kue, name, oppId, heim, ergHin, ergRueck) {
     entry[6] = gforRueck;
     entry[7] = gagainstRueck;
     stats.push(entry);
-    
+
     return stats;
 }
 
