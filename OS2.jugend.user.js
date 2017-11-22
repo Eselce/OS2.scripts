@@ -134,7 +134,8 @@ const __OPTCONFIG = {
                    'Name'      : "anzOpti",
                    'Type'      : __OPTTYPES.MC,
                    'ValType'   : "Number",
-                   'Choice'    : [ 1, 2, 3, 4, 5, 6, 0 ],
+                   'Choice'    : [ 0, 1, 2, 3, 4, 5, 6 ],
+                   'Default'   : 1,
                    'Action'    : __OPTACTION.NXT,
                    'Label'     : "Opti: beste $",
                    'Hotkey'    : 'O',
@@ -145,7 +146,8 @@ const __OPTCONFIG = {
                    'Name'      : "anzMW",
                    'Type'      : __OPTTYPES.MC,
                    'ValType'   : "Number",
-                   'Choice'    : [ 1, 2, 3, 4, 5, 6, 0 ],
+                   'Choice'    : [ 0, 1, 2, 3, 4, 5, 6 ],
+                   'Default'   : 1,
                    'Action'    : __OPTACTION.NXT,
                    'Label'     : "MW: beste $",
                    'Hotkey'    : 'M',
@@ -168,7 +170,8 @@ const __OPTCONFIG = {
                    'Name'      : "anzOptiEnde",
                    'Type'      : __OPTTYPES.MC,
                    'ValType'   : "Number",
-                   'Choice'    : [ 1, 2, 3, 4, 5, 6, 0 ],
+                   'Choice'    : [ 0, 1, 2, 3, 4, 5, 6 ],
+                   'Default'   : 1,
                    'Action'    : __OPTACTION.NXT,
                    'Label'     : "Opti Ende: beste $",
                    'Hotkey'    : 't',
@@ -180,7 +183,8 @@ const __OPTCONFIG = {
                    'Name'      : "anzMWEnde",
                    'Type'      : __OPTTYPES.MC,
                    'ValType'   : "Number",
-                   'Choice'    : [ 1, 2, 3, 4, 5, 6, 0 ],
+                   'Choice'    : [ 0, 1, 2, 3, 4, 5, 6 ],
+                   'Default'   : 1,
                    'Action'    : __OPTACTION.NXT,
                    'Label'     : "MW Ende: beste $",
                    'Hotkey'    : 'W',
@@ -233,7 +237,8 @@ const __OPTCONFIG = {
                    'Name'      : "saison",
                    'Type'      : __OPTTYPES.MC,
                    'ValType'   : "Number",
-                   'Choice'    : [ 10, 9, 8, 7, 6, 5, 4, 3, 2, 1 ],
+                   'Choice'    : [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ],
+                   'Default'   : 10,
                    'Action'    : __OPTACTION.NXT,
                    'Label'     : "Saison: $",
                    'Hotkey'    : 'a',
@@ -1816,7 +1821,7 @@ function PlayerRecord(age, skills, isGoalie) {
                 progSkill += __ADDSKILL;
             }
 
-            this.skillsEnd[i] = progSkill;
+            this.skillsEnd[i] = Math.min(progSkill, 99);
         }
     };  // Ende this.iniPlayer()
 
