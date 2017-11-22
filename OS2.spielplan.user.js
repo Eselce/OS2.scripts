@@ -24,14 +24,14 @@ var borderString = "solid white 1px";
 
 //registerMenu();
 
-// Verarbeitet die URL der Seite und ermittelt die Nummer der gewünschten Unterseite
+// Verarbeitet die URL der Seite und ermittelt die Nummer der gewuenschten Unterseite
 // url Adresse der Seite
 function getPageIdFromURL(url) {
     // Variablen zur Identifikation der Seite
     var indexS = url.lastIndexOf("s=");
     var st = url.match(/st\.php/);              // Teamansicht Popupfenster
     var showteam = url.match(/showteam\.php/);  // Teamansicht Hauptfenster
-    var s = -1;                                 // Seitenindex (Rückgabewert)
+    var s = -1;                                 // Seitenindex (Rueckgabewert)
     
     // Wert von s (Seitenindex) ermitteln...
     // Annahme: Entscheidend ist jeweils das letzte Vorkommnis von "s=" und ggf. von "&"
@@ -48,8 +48,8 @@ function getPageIdFromURL(url) {
     return s;
 }
 
-// Verarbeitet die URL der Seite und ermittelt die Nummer der gewünschten Unterseite
-// saisons Alle "option"-Einträge der Combo-Box
+// Verarbeitet die URL der Seite und ermittelt die Nummer der gewuenschten Unterseite
+// saisons Alle "option"-Eintraege der Combo-Box
 function getSaisonFromComboBox(saisons) {
     var saison = 0;
     var i;
@@ -63,7 +63,7 @@ function getSaisonFromComboBox(saisons) {
     return saison;
 }
 
-// Baut das User-Menü auf
+// Baut das User-Menue auf
 function registerMenu() {
 
     GM_registerMenuCommand("Short format", setShortStats, "s");
@@ -91,21 +91,21 @@ function setLongStats() {
     setLongStatsFormat(true);
 }
 
-// Liefert eine auf 0 zurückgesetzte Ergebnissumme
-// stats Enthält die summierten Stats
+// Liefert eine auf 0 zurueckgesetzte Ergebnissumme
+// stats Enthaelt die summierten Stats
 function emptyStats(stats) {
     return [ 0, 0, 0, 0, 0, 0 ];
 }
 
 // Liefert die Stats als String
-// stats Enthält die summierten Stats
+// stats Enthaelt die summierten Stats
 function getStats(stats) {
     return (longStats ? "[" + stats[0] + " " + stats[1] + " " + stats[2] + "] " : "/ ") + stats[3] + ":" + stats[4] + " "
     + ((stats[3] < stats[4]) ? "" : ((stats[3] > stats[4]) ? "+" : "")) + (stats[3] - stats[4]) + " (" + stats[5] + ")";
 }
 
-// Summiert ein Ergebnis auf die Stats und liefert den neuen Text zurück
-// stats Enthält die summierten Stats
+// Summiert ein Ergebnis auf die Stats und liefert den neuen Text zurueck
+// stats Enthaelt die summierten Stats
 // ergebnis Spielergebnis [ Eigene Tore, Gegentore ]
 function addResultToStats(stats, ergebnis) {
     var ret = "";
@@ -127,9 +127,88 @@ function addResultToStats(stats, ergebnis) {
     return ret;
 }
 
+// Ermittelt das Spiel-Ergebnis aus einer Tabellenzelle, etwa "2 : 1" und liefert zwei Werte zurueck
+// cell Tabellenzelle mit Eintrag "2 : 1"
+// return { "2", "1" } im Beispiel
+function getErgebnisFromCell(cell) {
+    var ret = cell.textContent.split(" : ", 2);
+
+    return ret;
+}
+
+// Ermittelt die Spielart aus einer Tabellenzelle, etwa "Liga : Heim" und liefert zwei Werte zurueck
+// cell Tabellenzelle mit Eintrag "Liga : Heim" oder "Liga Heim"
+// return { "Liga", "Heim" } im Beispiel
+function getSpielArtFromCell(cell) {
+    var ret = cell.textContent.split(" ", 2);
+
+    if (ret.length > 1) {
+        // Alle ":" und " " raus...
+        ret[1] = ret[1].replace(":", "").replace(" ", "");
+    }
+
+    return ret;
+}
+
+// Gibt die ID fuer den Namen eines Wettbewerbs zurueck
+// gameType Name des Wettbewerbs eines Spiels
+// return OS2-ID für den Spieltyp (1 bis 7)
+function getGameTypeID(gameType) {
+    var ID = -1;
+
+    switch (gameType) {
+        case "Friendly":   ID = 1; break;
+        case "Liga":       ID = 2; break;
+        case "LP":         ID = 3; break;
+        case "OSEQ":       ID = 4; break;
+        case "OSE":        ID = 5; break;
+        case "OSCQ":       ID = 6; break;
+        case "OSC":        ID = 7; break;
+        default:           ID = 0; break;
+    }
+
+    return ID;
+}
+
+// Gibt die ID fuer den Namen eines Wettbewerbs zurueck
+// cell Tabellenzelle mit Link auf den Spielberichts-Link
+// gameType Name des Wettbewerbs eines Spiels
+// label Anzuklickender Text des neuen Links
+// return HTML-Link auf die Preview-Seite für diesen Spielbericht
+function getBilanzLinkFromCell(cell, gameType, label) {
+    var bericht = cell.textContent;
+    var gameTypeID = getGameTypeID(gameType);
+    var ret = "";
+
+    if (bericht != "Vorschau") {   // Nur falls Link nicht bereits vorhanden
+        if (gameTypeID > 1) {      // nicht möglich für "Friendly" bzw. "spielfrei"
+            var searchFun = "javascript:os_bericht(";
+            var paarung = cell.innerHTML.substr(cell.innerHTML.indexOf(searchFun) + searchFun.length);
+            paarung = paarung.substr(0, paarung.indexOf(")"));
+            paarung = paarung.substr(0, paarung.lastIndexOf(","));
+            paarung = paarung.substr(0, paarung.lastIndexOf(","));
+            ret = " <a href=\"javascript:spielpreview(" + paarung + "," + gameTypeID + ")\">" + label + "</a>";
+        }
+    }
+
+    return ret;
+}
+
+// Addiert einen Link auf die Bilanz hinter den Spielberichts-Link
+// cell Tabellenzelle mit Link auf den Spielberichts-Link
+// gameType Name des Wettbewerbs eines Spiels
+// label Anzuklickender Text des neuen Links
+function addBilanzLinkToCell(cell, gameType, label) {
+    var bilanzLink = getBilanzLinkFromCell(cell, gameType, label);
+    if (bilanzLink != "") {
+        cell.innerHTML += bilanzLink;
+    }
+}
+
 // Verarbeitet Ansicht "Saisonplan"
 // sepMonths Im Spielplan Striche zwischen den Monaten
 // shortKom Vorbericht(e) & Kommentar(e) nicht ausschreiben
+// showStats Ergebnisse aufaddieren?
 function procSpielplan(sepMonths, shortKom, showStats) {
     var pokalRunden = [ "1. Runde", "2. Runde", "3. Runde", "Achtelfinale", "Viertelfinale", "Halbfinale", "Finale" ];
     var qualiRunden = [ "Quali 1", "Quali 2", "Quali 3" ];
@@ -165,21 +244,18 @@ function procSpielplan(sepMonths, shortKom, showStats) {
     
     var spielart;
     var ergebnis;
-    var bericht;
-    var paarung;
     var kommentar;
     var stats;
-    var zusatz;
-    var zusatzID;
+    var gameType;
     var gruppenPhase;
     
     var i;
     var j;
-
+    
     ligaStats = emptyStats();
     
     for (i = rowOffsetUpper; i < table.rows.length - rowOffsetLower; i++, ZAT++) {
-        if ((ZAT > 12) && (ZAT % 10 == 5)) {	// paßt für alle Saisons: 12, 20, 30, 40, 48, 58, 68 / 3, 15, 27, 39, 51, 63, 69
+        if ((ZAT > 12) && (ZAT % 10 == 5)) {	// passt fuer alle Saisons: 12, 20, 30, 40, 48, 58, 68 / 3, 15, 27, 39, 51, 63, 69
             pokalRunde++;
         }
         if ((ZAT + ZATkorr) % 6 == 4) {
@@ -203,7 +279,7 @@ function procSpielplan(sepMonths, shortKom, showStats) {
                     ZATkorr = 0;
                 }
                 if ((ZAT == 22) || (ZAT == 30)) {
-                    euroRunde--;	// Früher: 3. Quali-Rückspiel erst knapp vor 1. Hauptrunde
+                    euroRunde--;	// Frueher: 3. Quali-Rueckspiel erst knapp vor 1. Hauptrunde
                 }
             }
         }
@@ -212,38 +288,29 @@ function procSpielplan(sepMonths, shortKom, showStats) {
             table.rows[i].cells[columnIndexKom].innerHTML = kommentar.replace("Vorbericht(e)", "V").replace("Kommentar(e)", "K").replace("&amp;", "/").replace("&", "/");
         }
         stats = "";
-        spielart = table.rows[i].cells[columnIndexArt].textContent.split(" : ", 2);
-        ergebnis = table.rows[i].cells[columnIndexErg].textContent.split(" : ", 2);
-        bericht = table.rows[i].cells[columnIndexBer].textContent;
+        spielart = getSpielArtFromCell(table.rows[i].cells[columnIndexArt]);
+        ergebnis = getErgebnisFromCell(table.rows[i].cells[columnIndexErg]);
         table.rows[i].cells[columnIndexZus].className = table.rows[i].cells[columnIndexArt].className;
         if (table.rows[i].cells[columnIndexZus].textContent == "") {
-            zusatz = spielart[0];
-            zusatzID = -1;
-            switch (zusatz) {
-                case "Liga":   zusatzID = 2; break;
-                case "LP":     zusatzID = 3; break;
-                case "OSEQ":   zusatzID = 4; break;
-                case "OSE":    zusatzID = 5; break;
-                case "OSCQ":   zusatzID = 6; break;
-                case "OSC":    zusatzID = 7; break;
-                default:       zusatzID = 0; break;
-            }
-            if (zusatz == "Liga") {
+            zusatz = "";
+            gameType = spielart[0];
+            addBilanzLinkToCell(table.rows[i].cells[columnIndexBer], gameType, "B");
+            if (gameType == "Liga") {
                 if (ZAT < 70) {
                     stats = addResultToStats(ligaStats, ergebnis);
                     zusatz = ++ligaSpieltag + ". Spieltag";
                 } else {
                     zusatz = "Relegation";
                 }
-            } else if (zusatz == "LP") {
+            } else if (gameType == "LP") {
                 zusatz = pokalRunden[pokalRunde];
-            } else if ((zusatz == "OSCQ") || (zusatz == "OSEQ")) {
+            } else if ((gameType == "OSCQ") || (gameType == "OSEQ")) {
                 if (hinrueckspiel != 1) {
                     euroStats = emptyStats();
                 }
                 stats = addResultToStats(euroStats, ergebnis);
                 zusatz = qualiRunden[euroRunde] + hinrueck[hinrueckspiel];
-            } else if (zusatz == "OSC") {
+            } else if (gameType == "OSC") {
                 if ((hinrueckspiel != 1) && ((euroRunde >= 8) || ((euroRunde - 2) % 3 == 0))) {
                     euroStats = emptyStats();
                 }
@@ -254,27 +321,17 @@ function procSpielplan(sepMonths, shortKom, showStats) {
                 } else {
                     zusatz = oscRunden[euroRunde - 8] + hinrueck[hinrueckspiel];
                 }
-            } else if (zusatz == "OSE") {
+            } else if (gameType == "OSE") {
                 if (hinrueckspiel != 1) {
                     euroStats = emptyStats();
                 }
                 stats = addResultToStats(euroStats, ergebnis);
                 zusatz = oseRunden[euroRunde - 3] + hinrueck[hinrueckspiel];
-            } else if (zusatz == "Friendly") {
+            } else if (gameType == "Friendly") {
                 zusatz = "";	// irgendwie besser lesbar!
             }
             if (showStats && (stats != "")) {
                 zusatz = zusatz + " " + stats;
-            }
-            if (zusatzID > 0) {
-                if (bericht != "Vorschau") {
-                    bericht = table.rows[i].cells[columnIndexBer].innerHTML;
-                    paarung = bericht.substr(bericht.indexOf("(") + 1);
-                    paarung = paarung.substr(0, paarung.lastIndexOf(","));
-                    paarung = paarung.substr(0, paarung.lastIndexOf(","));
-                    bericht = bericht + " <a href=\"javascript:spielpreview(" + paarung + "," + zusatzID + ")\">B</a>";
-                    table.rows[i].cells[columnIndexBer].innerHTML = bericht;
-                }
             }
             table.rows[i].cells[columnIndexZus].textContent = zusatz;
         }
@@ -287,7 +344,7 @@ function procSpielplan(sepMonths, shortKom, showStats) {
 }
 
 // URL-Legende:
-// s=0Teamübersicht
+// s=0Teamuebersicht
 // s=1Vertragsdaten
 // s=2Einzelwerte
 // s=3Statistik Saison
