@@ -23,16 +23,23 @@
 /* jshint esnext: true */
 /* jshint moz: true */
 
+// Trennlinie zwischen den Monaten
+const __BORDERSTYLE = [ "solid", "hidden", "dotted", "dashed", "double", "groove", "ridge",
+                        "inset", "outset", "none" ];       // Stil der Trennlinie
+const __BORDERCOLOR = [ "white", "yellow", "black", "blue", "cyan", "gold", "grey", "green",
+                        "lime", "magenta", "maroon", "navy", "olive", "orange", "purple",
+                        "red", "teal", "transparent" ];    // Farbe der Trennlinie
+const __BORDERWIDTH = [ "thin", "medium", "thick" ];       // Dicke der Trennlinie
+
 // Optionen (hier die Standardwerte editieren oder ueber das Benutzermenu setzen):
 const __SEPMONTHS = true;    // Im Spielplan Trennstriche zwischen den Monaten
 const __SHORTKOM  = true;    // "Vorbericht(e) & Kommentar(e)" nicht ausschreiben
 const __SHOWSTATS = true;    // Ergebnisse aufaddieren und Stand anzeigen
 const __LONGSTATS = false;   // Detailliertere Ausgabe des Stands
 
-// Trennlinie zwischen den Monaten
-const __BORDERSTYLE = "solid";         // Stil der Trennlinie
-const __BORDERCOLOR = "white";         // Farbe der Trennlinie
-const __BORDERWIDTH = "1px";           // Dicke der Trennlinie
+const __SEPSTYLE  = __BORDERSTYLE[0];           // Stil der Trennlinie
+const __SEPCOLOR  = __BORDERCOLOR[0];           // Farbe der Trennlinie
+const __SEPWIDTH  = __BORDERWIDTH[0];           // Dicke der Trennlinie
 
 // Verarbeitet die URL der Seite und ermittelt die Nummer der gewuenschten Unterseite
 // url Adresse der Seite
@@ -89,6 +96,10 @@ let shortKom  = __SHORTKOM;     // "Vorbericht(e) & Kommentar(e)" nicht ausschre
 let showStats = __SHOWSTATS;    // Ergebnisse aufaddieren und Stand anzeigen
 let longStats = __LONGSTATS;    // Detailliertere Ausgabe des Stands
 
+let sepStyle  = __SEPSTYLE;     // Stil der Trennlinie
+let sepColor  = __SEPCOLOR;     // Farbe der Trennlinie
+let sepWidth  = __SEPWIDTH;     // Dicke der Trennlinie
+
 // Setzt das Stats-Format neu auf short/long
 function setLongStatsFormat(long) {
     longStats = setOption("longStats", long);
@@ -109,6 +120,13 @@ function setMonthsSeparated(on) {
     sepMonths = setOption("sepMonths", on);
 }
 
+// Setzt den naechsten Wert aus einer Array-Liste als Option
+function setNextOption(arr, name, value) {
+    const __POS = arr.indexOf(value) + 1;
+
+    return setOption(name, arr[(__POS < arr.length) ? __POS : 0]);
+}
+
 // Zeigt den Eintrag im Menu einer Option
 // option Derzeitiger Wert der Option
 // menuOn Text zum Setzen im Menu
@@ -118,15 +136,35 @@ function setMonthsSeparated(on) {
 // funOff Funktion zum Ausschalten
 // keyOff Hotkey zum Ausschalten im Menu
 function registerMenuOption(opt, menuOn, funOn, keyOn, menuOff, funOff, keyOff) {
-    var on  = (opt ? '*' : "");
-    var off = (opt ? "" : '*');
+    const __ON  = (opt ? '*' : "");
+    const __OFF = (opt ? "" : '*');
 
-    console.log("OPTION " + on + menuOn + on + " / " + off + menuOff + off);
+    console.log("OPTION " + __ON + menuOn + __ON + " / " + __OFF + menuOff + __OFF);
     if (opt) {
         GM_registerMenuCommand(menuOff, funOff, keyOff);
     } else {
         GM_registerMenuCommand(menuOn, funOn, keyOn);
     }
+}
+
+// Zeigt den Eintrag im Menu einer Option mit Wahl des naechsten Wertes
+// option Derzeitiger Wert der Option
+// menu Text zum Setzen im Menu
+// fun Funktion zum Setzen des naechsten Wertes
+// key Hotkey zum Setzen des naechsten Wertes im Menu
+function registerNextMenuOption(opt, arr, menu, fun, key) {
+    let options = "OPTION " + menu;
+
+    for (let value of arr) {
+        if (value === opt) {
+            options += " / *" + value + '*';
+        } else {
+            options += " / " + value;
+        }
+    }
+
+    console.log(options);
+    GM_registerMenuCommand(menu, fun, key);
 }
 
 // Baut das Benutzermenu fuer den Spielplan auf
@@ -136,6 +174,11 @@ function registerSpielplanMenu() {
     registerMenuOption(showStats, "Stats ein", setShowStats, 'S', "Stats aus", setShowNoStats, 'S');
     registerMenuOption(shortKom, "Kurze Texte", setShortKom, 'T', "Lange Texte", setFullKom, 'T');
     registerMenuOption(sepMonths, "Monate trennen", setSepMonths, 'M', "Keine Monate", setNoSepMonths, 'M');
+
+    registerNextMenuOption(sepStyle, __BORDERSTYLE, "Stil: " + sepStyle, setNextSepStyle, 'i');
+    registerNextMenuOption(sepColor, __BORDERCOLOR, "Farbe: " + sepColor, setNextSepColor, 'F');
+    registerNextMenuOption(sepWidth, __BORDERWIDTH, "Dicke: " + sepWidth, setNextSepWidth, 'D');
+
     GM_registerMenuCommand("Standard-Optionen", resetSpielplanOptions, 'O');
 }
 
@@ -145,6 +188,11 @@ function resetSpielplanOptions() {
     GM_deleteValue("showStats");
     GM_deleteValue("shortKom");
     GM_deleteValue("sepMonths");
+
+    GM_deleteValue("sepStyle");
+    GM_deleteValue("sepColor");
+    GM_deleteValue("sepWidth");
+
     window.location.reload();
 }
 
@@ -154,6 +202,10 @@ function loadSpielplanOptions() {
     shortKom  = GM_getValue("shortKom",  shortKom);    // "Vorbericht(e) & Kommentar(e)" nicht ausschreiben
     showStats = GM_getValue("showStats", showStats);   // Ergebnisse aufaddieren und Stand anzeigen
     longStats = GM_getValue("longStats", longStats);   // Detailliertere Ausgabe des Stands
+
+    sepStyle  = GM_getValue("sepStyle",  sepStyle);    // Stil der Trennlinie
+    sepColor  = GM_getValue("sepColor",  sepColor);    // Farbe der Trennlinie
+    sepWidth  = GM_getValue("sepWidth",  sepWidth);    // Dicke der Trennlinie
 }
 
 // Setzt das Stats-Format neu auf short
@@ -194,6 +246,21 @@ function setSepMonths() {
 // Entfernt die Trennungslinien zwischen den Monaten
 function setNoSepMonths() {
     setMonthsSeparated(false);
+}
+
+// Setzt den naechsten Stil der Trennlinie als Option
+function setNextSepStyle() {
+    sepStyle = setNextOption(__BORDERSTYLE, "sepStyle", sepStyle);
+}
+
+// Setzt die naechste Farbe der Trennlinie als Option
+function setNextSepColor() {
+    sepColor = setNextOption(__BORDERCOLOR, "sepColor", sepColor);
+}
+
+// Setzt die naechste Dicke der Trennlinie als Option
+function setNextSepWidth() {
+    sepWidth = setNextOption(__BORDERWIDTH, "sepWidth", sepWidth);
 }
 
 const __POKALRUNDEN = [ "1. Runde", "2. Runde", "3. Runde", "Achtelfinale", "Viertelfinale", "Halbfinale", "Finale" ];
@@ -333,12 +400,11 @@ function getSpielArtFromCell(cell) {
 // Ermittelt das Spiel-Ergebnis aus einer Tabellenzelle und setzt tore/gtore im Spielplanzeiger
 // currZAT Enthaelt den Spielplanzeiger auf den aktuellen ZAT
 // cell Tabellenzelle mit Eintrag "2 : 1"
-// return { '2', '1' } im Beispiel
 function setErgebnisFromCell(currZAT, cell) {
     const __ERGEBNIS = getErgebnisFromCell(cell);
 
     if (__ERGEBNIS.length == 2) {
-        currZAT.gFor  = parseInt(__ERGEBNIS[0], 10);
+        currZAT.gFor = parseInt(__ERGEBNIS[0], 10);
         currZAT.gAga = parseInt(__ERGEBNIS[1], 10);
     } else {
         currZAT.gFor = -1;
@@ -349,7 +415,6 @@ function setErgebnisFromCell(currZAT, cell) {
 // Ermittelt die Spielart aus einer Tabellenzelle und setzt gameType/heim im Spielplanzeiger
 // currZAT Enthaelt den Spielplanzeiger auf den aktuellen ZAT
 // cell Tabellenzelle mit Eintrag "Liga : Heim" oder "Liga Heim"
-// return { "Liga", "Heim" } im Beispiel
 function setSpielArtFromCell(currZAT, cell) {
     const __SPIELART = getSpielArtFromCell(cell);
 
@@ -370,7 +435,7 @@ const __GAMETYPES = {
 
 // Gibt die ID fuer den Namen eines Wettbewerbs zurueck
 // gameType Name des Wettbewerbs eines Spiels
-// return OS2-ID fuer den Spieltyp (1 bis 7), 0 fuer spielfrei
+// return OS2-ID fuer den Spieltyp (1 bis 7), 0 fuer spielfrei, -1 fuer ungueltig
 function getGameTypeID(gameType) {
     const __ID = __GAMETYPES[gameType];
 
@@ -432,8 +497,6 @@ function procSpielplan() {
         'Zus' : 5,
         'Kom' : 6
     };
-
-    let borderString = __BORDERSTYLE + ' ' + __BORDERCOLOR + ' ' + __BORDERWIDTH;    // Format der Trennlinie zwischen den Monaten
 
     loadSpielplanOptions();
 
@@ -546,8 +609,10 @@ function procSpielplan() {
             __CELLS[__COLUMNINDEX.Zus].textContent = zusatz;
         }
         if (sepMonths && (ZAT.ZAT % ZAT.anzZATpMonth === 0) && (i < __TABLE.rows.length - __ROWOFFSETLOWER - 1)) {
+            const __BORDERSTRING = sepStyle + ' ' + sepColor + ' ' + sepWidth;    // Format der Trennlinie zwischen den Monaten
+
             for (let entry of __CELLS) {
-                entry.style.borderBottom = borderString;
+                entry.style.borderBottom = __BORDERSTRING;
             }
         }
     }
