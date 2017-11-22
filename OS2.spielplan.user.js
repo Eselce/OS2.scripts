@@ -19,18 +19,18 @@
 // @grant GM_registerMenuCommand
 // ==/UserScript==
 
-// ECMAScript 6: Erlaubt 'const'...
+// ECMAScript 6: Erlaubt 'const', 'let', ...
 /* jshint esnext: true */
 /* jshint moz: true */
 
 // Optionen (hier die Standardwerte editieren oder ueber das Benutzermenu setzen):
-var sepMonths = true;    // Im Spielplan Trennstriche zwischen den Monaten
-var shortKom  = true;    // "Vorbericht(e) & Kommentar(e)" nicht ausschreiben
-var showStats = true;    // Ergebnisse aufaddieren und Stand anzeigen
-var longStats = false;   // Detailliertere Ausgabe des Stands
+let sepMonths = true;    // Im Spielplan Trennstriche zwischen den Monaten
+let shortKom  = true;    // "Vorbericht(e) & Kommentar(e)" nicht ausschreiben
+let showStats = true;    // Ergebnisse aufaddieren und Stand anzeigen
+let longStats = false;   // Detailliertere Ausgabe des Stands
 
-var __BORDERSTRING = "solid white 1px";
-var borderString = __BORDERSTRING;                // Format der Trennlinie zwischen den Monaten
+const __BORDERSTRING = "solid white 1px";
+let borderString = __BORDERSTRING;                // Format der Trennlinie zwischen den Monaten
 
 // Verarbeitet die URL der Seite und ermittelt die Nummer der gewuenschten Unterseite
 // url Adresse der Seite
@@ -39,7 +39,7 @@ function getPageIdFromURL(url) {
     var indexS = url.lastIndexOf("s=");
     var st = url.match(/st\.php/);              // Teamansicht Popupfenster
     var showteam = url.match(/showteam\.php/);  // Teamansicht Hauptfenster
-    var s = -1;                                 // Seitenindex (Rueckgabewert)
+    let s = -1;                                 // Seitenindex (Rueckgabewert)
 
     // Wert von s (Seitenindex) ermitteln...
     // Annahme: Entscheidend ist jeweils das letzte Vorkommnis von "s=" und ggf. von '&'
@@ -59,7 +59,7 @@ function getPageIdFromURL(url) {
 // Verarbeitet die URL der Seite und ermittelt die Nummer der gewuenschten Unterseite
 // saisons Alle "option"-Eintraege der Combo-Box
 function getSaisonFromComboBox(saisons) {
-    var saison = 0;
+    let saison = 0;
     var i;
 
     for (i = 0; i < saisons.length; i++) {
@@ -239,7 +239,7 @@ function getStats(stats) {
 // stats Enthaelt die summierten Stats
 // ergebnis Spielergebnis [ Eigene Tore, Gegentore ]
 function addResultToStats(stats, ergebnis) {
-    var ret = "";
+    let ret = "";
     var sgn;
     var gfor;
     var gagainst;
@@ -272,7 +272,7 @@ function getErgebnisFromCell(cell) {
 // cell Tabellenzelle mit Eintrag "Liga : Heim" oder "Liga Heim"
 // return { "Liga", "Heim" } im Beispiel
 function getSpielArtFromCell(cell) {
-    var ret = cell.textContent.split(' ', 2);
+    let ret = cell.textContent.split(' ', 2);
 
     if (ret.length > 1) {
         // Alle ':' und ' ' raus...
@@ -286,7 +286,7 @@ function getSpielArtFromCell(cell) {
 // gameType Name des Wettbewerbs eines Spiels
 // return OS2-ID fuer den Spieltyp (1 bis 7)
 function getGameTypeID(gameType) {
-    var ID = -1;
+    let ID = -1;
 
     switch (gameType) {
         case "Friendly":   ID = 1; break;
@@ -310,12 +310,12 @@ function getGameTypeID(gameType) {
 function getBilanzLinkFromCell(cell, gameType, label) {
     var bericht = cell.textContent;
     var gameTypeID = getGameTypeID(gameType);
-    var ret = "";
+    let ret = "";
 
     if (bericht != "Vorschau") {   // Nur falls Link nicht bereits vorhanden
         if (gameTypeID > 1) {      // nicht moeglich fuer "Friendly" bzw. "spielfrei"
-            var __SEARCHFUN = ":os_bericht(";
-            var paarung = cell.innerHTML.substr(cell.innerHTML.indexOf(__SEARCHFUN) + __SEARCHFUN.length);
+            const __SEARCHFUN = ":os_bericht(";
+            let paarung = cell.innerHTML.substr(cell.innerHTML.indexOf(__SEARCHFUN) + __SEARCHFUN.length);
 
             paarung = paarung.substr(0, paarung.indexOf(')'));
             paarung = paarung.substr(0, paarung.lastIndexOf(','));
@@ -341,35 +341,46 @@ function addBilanzLinkToCell(cell, gameType, label) {
 
 // Verarbeitet Ansicht "Saisonplan"
 function procSpielplan() {
-    var __POKALRUNDEN = [ "1. Runde", "2. Runde", "3. Runde", "Achtelfinale", "Viertelfinale", "Halbfinale", "Finale" ];
-    var __QUALIRUNDEN = [ "Quali 1", "Quali 2", "Quali 3" ];
-    var __OSCRUNDEN = [ "Viertelfinale", "Halbfinale", "Finale" ];
-    var __OSERUNDEN = [ "Runde 1", "Runde 2", "Runde 3", "Runde 4", "Achtelfinale", "Viertelfinale", "Halbfinale", "Finale" ];
-    var __HINRUECK = [ " Hin", " R\xFCck", "" ];
+    const __POKALRUNDEN = [ "1. Runde", "2. Runde", "3. Runde", "Achtelfinale", "Viertelfinale", "Halbfinale", "Finale" ];
+    const __QUALIRUNDEN = [ "Quali 1", "Quali 2", "Quali 3" ];
+    const __OSCRUNDEN = [ "Viertelfinale", "Halbfinale", "Finale" ];
+    const __OSERUNDEN = [ "Runde 1", "Runde 2", "Runde 3", "Runde 4", "Achtelfinale", "Viertelfinale", "Halbfinale", "Finale" ];
+    const __HINRUECK = [ " Hin", " R\xFCck", "" ];
 
     var table = document.getElementsByTagName("table")[2];
     var saisons = document.getElementsByTagName("option");
-    var __SAISON = getSaisonFromComboBox(saisons);
+    const __SAISON = getSaisonFromComboBox(saisons);
 
-    var __ANZZATPERMONTH = ((__SAISON < 2) ? 7 : 6);    // Erste Saison 7, danach 6...
+    const __ANZZATPERMONTH = ((__SAISON < 2) ? 7 : 6);    // Erste Saison 7, danach 6...
 
-    var __ROWOFFSETUPPER = 1;
-    var __ROWOFFSETLOWER = 0;
+    const __ROWOFFSETUPPER = 1;
+    const __ROWOFFSETLOWER = 0;
 
-    var __COLUMNINDEXART = 1;
-    var __COLUMNINDEXGEG = 2;
-    var __COLUMNINDEXERG = 3;
-    var __COLUMNINDEXBER = 4;
-    var __COLUMNINDEXZUS = 5;
-    var __COLUMNINDEXKOM = 6;
+/*
+    const __COLUMNINDEX = {
+        __COLUMNINDEXART : 1,
+        __COLUMNINDEXGEG : 2,
+        __COLUMNINDEXERG : 3,
+        __COLUMNINDEXBER : 4,
+        __COLUMNINDEXZUS : 5,
+        __COLUMNINDEXKOM : 6
+    };
+*/
 
-    var ligaSpieltag = 0;
-    var pokalRunde = 0;
-    var euroRunde = -1;
-    var hinrueckspiel = 0;
-    var ZATrueck = 0;
-    var ZATkorr = 0;
-    var ZAT = 1;
+    const __COLUMNINDEXART = 1;
+    const __COLUMNINDEXGEG = 2;
+    const __COLUMNINDEXERG = 3;
+    const __COLUMNINDEXBER = 4;
+    const __COLUMNINDEXZUS = 5;
+    const __COLUMNINDEXKOM = 6;
+
+    let ligaSpieltag = 0;
+    let pokalRunde = 0;
+    let euroRunde = -1;
+    let hinrueckspiel = 0;
+    let ZATrueck = 0;
+    let ZATkorr = 0;
+    let ZAT = 1;
 
     var zusatz;
 
@@ -392,7 +403,7 @@ function procSpielplan() {
 
     for (i = __ROWOFFSETUPPER; i < table.rows.length - __ROWOFFSETLOWER; i++, ZAT++) {
         if (shortKom) {
-            var kommentar = table.rows[i].cells[__COLUMNINDEXKOM].innerHTML;
+            let kommentar = table.rows[i].cells[__COLUMNINDEXKOM].innerHTML;
 
             kommentar = kommentar.replace("Vorbericht(e)", 'V').replace("Kommentar(e)", 'K').replace("&amp;", '/').replace('&', '/');
             table.rows[i].cells[__COLUMNINDEXKOM].innerHTML = kommentar;
@@ -429,13 +440,13 @@ function procSpielplan() {
         spielart = getSpielArtFromCell(table.rows[i].cells[__COLUMNINDEXART]);
         ergebnis = getErgebnisFromCell(table.rows[i].cells[__COLUMNINDEXERG]);
         if (shortKom) {
-            var cellArt = table.rows[i].cells[__COLUMNINDEXART]
+            let cellArt = table.rows[i].cells[__COLUMNINDEXART];
 
             cellArt.innerHTML = cellArt.innerHTML.replace(": Heim", "(H)").replace(": Ausw\xE4rts", "(A)").replace("Friendly", "FSS");
         }
         table.rows[i].cells[__COLUMNINDEXZUS].className = table.rows[i].cells[__COLUMNINDEXART].className;
         if (table.rows[i].cells[__COLUMNINDEXZUS].textContent === "") {
-            var cellBer = table.rows[i].cells[__COLUMNINDEXBER];
+            let cellBer = table.rows[i].cells[__COLUMNINDEXBER];
 
             zusatz = "";
             gameType = spielart[0];
