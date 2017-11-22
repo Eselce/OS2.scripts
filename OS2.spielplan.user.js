@@ -2,7 +2,8 @@
 // @name OS2.spielplan
 // @namespace  http://os.ongapo.com/
 // @version    0.4
-// @copyright  2013+, Sven Loges (SLC)
+// @copyright  2013+
+// @author     Sven Loges (SLC)
 // @description Spielplan-Abschnitt aus dem Master-Script fuer Online Soccer 2.0
 // @include http://os.ongapo.com/st.php?s=*
 // @include http://os.ongapo.com/showteam.php?s=*
@@ -14,16 +15,17 @@
 // @include http://www.online-soccer.eu/showteam.php?s=*
 // @grant GM_getValue
 // @grant GM_setValue
+// @grant GM_deleteValue
 // @grant GM_registerMenuCommand
 // ==/UserScript==
-
-registerMenu();
 
 // Optionen (hier editieren):
 var sepMonths = GM_getValue("sepMonths", true);    // Im Spielplan Striche zwischen den Monaten
 var shortKom  = GM_getValue("shortKom",  true);    // Vorbericht(e) & Kommentar(e) nicht ausschreiben
 var showStats = GM_getValue("showStats", true);    // Ergebnisse aufaddieren und Stand anzeigen
 var longStats = GM_getValue("longStats", false);   // Detailliertere Ausgabe des Stands
+
+registerMenu();
 
 var borderString = "solid white 1px";              // Format der Trennlinie zwischen den Monaten
 
@@ -66,7 +68,7 @@ function getSaisonFromComboBox(saisons) {
     return saison;
 }
 
-// Setzt eine Option dauerhaft und lädt die Seite neu
+// Setzt eine Option dauerhaft und laedt die Seite neu
 // name Name der Option als Speicherort
 // value Zu setzender Wert
 // return Gesetzter Wert
@@ -86,7 +88,7 @@ function setStatsShown(visible) {
     showStats = setOption("showStats", visible);
 }
 
-// Setzt das Kommentar-Link neu auf gekÃ¼rzt/lang
+// Setzt das Kommentar-Link neu auf gekuerzt/lang
 function setKomLength(isShort) {
     shortKom = setOption("shortKom", isShort);
 }
@@ -123,6 +125,16 @@ function registerMenu() {
     registerMenuOption(showStats, 'Stats ein', setShowStats, 'S', 'Stats aus', setShowNoStats, 'S');
     registerMenuOption(shortKom, 'Kurze Texte', setShortKom, 'T', 'Lange Texte', setFullKom, 'T');
     registerMenuOption(sepMonths, 'Monate trennen', setSepMonths, 'M', 'Keine Monate', setNoSepMonths, 'M');
+    GM_registerMenuCommand("Standard-Optionen", resetOptions, 'O');
+}
+
+// Setzt die Optionen auf Werkseinstellungen
+function resetOptions() {
+    GM_deleteValue("longStats");
+    GM_deleteValue("showStats");
+    GM_deleteValue("shortKom");
+    GM_deleteValue("sepMonths");
+    window.location.reload();
 }
 
 // Setzt das Stats-Format neu auf short
@@ -226,7 +238,7 @@ function getSpielArtFromCell(cell) {
 
 // Gibt die ID fuer den Namen eines Wettbewerbs zurueck
 // gameType Name des Wettbewerbs eines Spiels
-// return OS2-ID fÃÂ¼r den Spieltyp (1 bis 7)
+// return OS2-ID fuer den Spieltyp (1 bis 7)
 function getGameTypeID(gameType) {
     var ID = -1;
 
@@ -248,14 +260,14 @@ function getGameTypeID(gameType) {
 // cell Tabellenzelle mit Link auf den Spielberichts-Link
 // gameType Name des Wettbewerbs eines Spiels
 // label Anzuklickender Text des neuen Links
-// return HTML-Link auf die Preview-Seite fÃÂ¼r diesen Spielbericht
+// return HTML-Link auf die Preview-Seite fuer diesen Spielbericht
 function getBilanzLinkFromCell(cell, gameType, label) {
     var bericht = cell.textContent;
     var gameTypeID = getGameTypeID(gameType);
     var ret = "";
 
     if (bericht != "Vorschau") {   // Nur falls Link nicht bereits vorhanden
-        if (gameTypeID > 1) {      // nicht mÃÂ¶glich fÃÂ¼r "Friendly" bzw. "spielfrei"
+        if (gameTypeID > 1) {      // nicht moeglich fuer "Friendly" bzw. "spielfrei"
             var searchFun = "javascript:os_bericht(";
             var paarung = cell.innerHTML.substr(cell.innerHTML.indexOf(searchFun) + searchFun.length);
             paarung = paarung.substr(0, paarung.indexOf(")"));
@@ -288,7 +300,7 @@ function procSpielplan(sepMonths, shortKom, showStats) {
     var qualiRunden = [ "Quali 1", "Quali 2", "Quali 3" ];
     var oscRunden = [ "Viertelfinale", "Halbfinale", "Finale" ];
     var oseRunden = [ "Runde 1", "Runde 2", "Runde 3", "Runde 4", "Achtelfinale", "Viertelfinale", "Halbfinale", "Finale" ];
-    var hinrueck = [ " Hin", " RÃ¼ck", "" ];
+    var hinrueck = [ " Hin", " R\374ck", "" ];
 
     var table = document.getElementsByTagName("table")[2];
     var saisons = document.getElementsByTagName("option");
@@ -420,16 +432,16 @@ function procSpielplan(sepMonths, shortKom, showStats) {
 }
 
 // URL-Legende:
-// s=0Teamuebersicht
-// s=1Vertragsdaten
-// s=2Einzelwerte
-// s=3Statistik Saison
-// s=4Statistik Gesamt
-// s=5Teaminfo
-// s=6Saisonplan
-// s=7Vereinshistorie
-// s=8Transferhistorie
-// s=9Leihhistorie
+// s=0: Teamuebersicht
+// s=1: Vertragsdaten
+// s=2: Einzelwerte
+// s=3: Statistik Saison
+// s=4: Statistik Gesamt
+// s=5: Teaminfo
+// s=6: Saisonplan
+// s=7: Vereinshistorie
+// s=8: Transferhistorie
+// s=9: Leihhistorie
 
 // Verzweige in unterschiedliche Verarbeitungen je nach Wert von s:
 switch (getPageIdFromURL(window.location.href)) {
