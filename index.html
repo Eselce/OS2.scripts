@@ -2,7 +2,7 @@
 <html>
 	<head>
 		<meta charset="utf-8">
-		<title>Online-Soccer 2.0 - Greasemonkey Benutzerskripte</title>
+		<title>Online-Soccer 2.0 - Greasemonkey Benutzerscripts</title>
 		<link rel="stylesheet" type="text/css" href="css/os_styles.css" />
 		<link rel="stylesheet" type="text/css" href="css/print.css" media="print" />
 		<link rel="shortcut icon" type="image/ico" href="img/favicon.ico" />
@@ -112,11 +112,11 @@
 					var table = document.getElementById('scripts');
 					if (! table.children.length) {
 						addRow(table, [
-										"<b>Name des Scripts</b>",
-										"<b>Aktuelle Version</b>",
-										"<b>Beschreibung der Funktion</b>",
-										"<b>Autor(en)</b>"
-									]);
+										"Name des Scripts",
+										"Aktuelle Version",
+										"Beschreibung der Funktion",
+										"Autor(en)"
+									]).style.fontWeight = 'bold';
 						for (var i = 0; i < scripts.length; ++i) {
 							script = scripts[i];
 							addEntry(table, script, scriptMeta[script]);
