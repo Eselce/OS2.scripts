@@ -97,7 +97,7 @@
 					tr.children[1].style.minWidth = "10%";
 					tr.children[3].style.minWidth = "15%";
 					var colText2 = [];
-					colText2.push('<pre>' + data.meta + '</pre><form method="post" action="./' + filename + '">' +
+					colText2.push('<pre>' + data.meta + '</pre><form method="get" action="./' + filename + '">' +
 									'<input type="hidden" name="scriptid" value="' + id + '" /><input type="submit" value="Installieren" /></form></td>');
 					tr = addRow(table, colText2);
 					tr.id = 'script_' + id;
