@@ -1,0 +1,234 @@
+	
+a {
+    color:#33ff33;
+    font-family:verdana,arial,helvetica,sans-serif;
+    /*font-size:0.75em;*/
+    text-decoration:none
+}
+a:active {
+	color:#33ff33;
+    text-decoration:none
+}
+a:hover  {
+	color:#ff9900;
+    text-decoration:none
+}
+td {
+	color:#ffffff;	
+    font-family:verdana, arial, helvetica, sans-serif;
+    /*font-size:0.75em*/
+}
+
+.pm {color:#00ff00;font-size:1.em}
+.pr {color:#dddddd}
+.pu {color:#dddddd ; font-weight : bold }
+.msgtext {color:#dddddd;font-size:0.85em}
+
+input { font-size: 0.95em; }
+textarea { font-size: 0.95em; }
+select { font-size: 0.95em; }
+
+/* AutocompleterClass */
+div.autocomplete 
+{
+	position:absolute;
+	width:350px;
+	background-color:#111166;
+	border:1px solid #888;
+	margin:0px;
+	padding:0px;
+	z-index:1000;
+}
+
+div.autocomplete ul 
+{
+	list-style-type:none;
+	margin:0px;
+	padding:0px;
+}
+
+div.autocomplete ul li.selected 
+{ 
+	background-color: #1111AA;
+}
+
+div.autocomplete ul li 
+{
+	list-style-type:none;
+	display:block;
+	margin:0;
+	padding:2px;
+	height:32px;
+	cursor:pointer;
+}
+
+li div.informal 
+{
+	font-style:italic;
+	font-size:1.0em;
+}
+/* AutocompleterClass */
+
+
+/* Scrolltable */
+/* table tbody tr { background: #111166; } */
+table.thetable tbody tr.hover { background: #FBF9B3; }
+table.thetable tbody tr.hover td { color: black; }
+
+.tablescroll
+{ font: 0.8em normal Tahoma, Geneva, "Helvetica Neue", Helvetica, Arial, sans-serif; background-color:#111166; }
+ 
+.tablescroll_head,
+.tablescroll_foot
+{ border:2px solid #FBF9B3; }
+ 
+.tablescroll td
+{ padding:0px 5px; }
+ 
+.tablescroll_wrapper
+{ border-left:0; }
+ 
+.tablescroll_head
+{ font-size:1.2em; font-weight:bold; background-color:#111166; border-right: 0; border-left:0; border-top:0; margin-bottom:3px; vertical-align:left; text-align:left;}
+ 
+.tablescroll thead td
+{ border-right:0; border-bottom:0; }
+ 
+.tablescroll tbody td
+{ color: #FBF9B3; font-size:0.8em; border-right:0; border-bottom:0; }
+ 
+.tablescroll tbody tr.first td
+{ border-top:0; }
+ 
+.tablescroll_foot
+{ font-weight:bold; background-color:#111166; border-left:0; border-top:0; margin-top:3px; }
+ 
+.tablescroll tfoot td
+{ border-right:0; border-bottom:0; }
+/* Scrolltable */
+
+
+/* Optionen */ 
+.options th
+{
+	font-size: 0.8em;
+	width:500px;
+	padding-top:10px;
+	text-align:left;	
+}
+.options td { font-size: 0.7em; }
+/* Optionen */ 
+
+/* Start spielervergleich */
+.ui-autocomplete-loading { background: #FBF9B3 url('images/ui-anim_basic_16x16.gif') right center no-repeat; }
+
+div.spv{}
+
+table.spv td.spv_fett {
+			font-weight: bold;
+			color : #FBF9B3;
+			font-style: italic;
+			font-size: 1.1em;
+		}
+/* Ende spielervergleich */
+
+td.BAK   {color:#111166}
+td.TOR   {color:#ffff00}
+td.ABW   {color:#00ff00}
+td.DMI   {color:#3366ff}
+td.MIT   {color:#66ffff}
+td.OMI   {color:#ff66ff}
+td.STU   {color:#ff0000}
+td.LEI   {color:#FFFFFF}
+td.TOR A {color:#ffff00}
+td.ABW A {color:#00ff00}
+td.DMI A {color:#3366ff}
+td.MIT A {color:#66ffff}
+td.OMI A {color:#ff66ff}
+td.STU A {color:#ff0000}
+td.LEI A {color:#FFFFFF}
+td.TOR A:hover {color:#ff9900}
+td.ABW A:hover {color:#ff9900}
+td.DMI A:hover {color:#ff9900}
+td.MIT A:hover {color:#ff9900}
+td.OMI A:hover {color:#ff9900}
+td.STU A:hover {color:#ff9900}
+td.LEI A:hover {color:#ff9900}
+td.PLUS  {color:#00ff00}
+td.MINUS {color:#ff0000}
+td.PLUS A {color:#00ff00}
+td.MINUS A {color:#ff0000}
+.MINUS {color:#ff0000}
+.MINUS A {color:#ff0000}
+td.ok    {color:#00ff00}
+td.wa    {color:#ffff00}
+td.er    {color:#ff0000}
+td.ML    {color:#00ff00}
+td.MR    {color:#ff0000}
+b.H      {color:#33ff33}
+b.G      {color:#3377ff}
+b.HT     {color:#00ff00}
+b.GT     {color:#3377ff}
+
+#kader1 a { color: #FFFF99; }
+
+tr.osc {
+	background:darkgreen;
+	height: 20px;
+}
+tr.oscq {
+	background:olivedrab;
+	height: 20px;
+}
+tr.ose {
+	background:darkOlivegreen;
+	height: 20px;
+}
+tr.oseq {
+	background:rgb(139, 134, 78);
+	height: 20px;
+}
+tr.rele {
+	background: rgb(170, 86, 86);
+	height: 20px;
+}
+tr.ab {
+	background: rgb(178, 34, 34);
+	height: 20px;
+}
+tr.tabelle {
+	background: rgb(34, 34, 119);
+	height: 20px;
+}
+
+body {
+	-moz-background-clip:border;
+	-moz-background-inline-policy:continuous;
+	-moz-background-origin:padding;
+	background:#111166 none repeat scroll 0 0;
+	color:#FBF9B3;
+	font-family:verdana,arial,helvetica,sans-serif;
+	font-size:0.75em;
+	text-decoration:none;
+}
+
+#team {
+	border-spacing: 5px 0px;
+	padding: 0px;
+}
+
+.cmbLiga { width:120px; }
+.cmbLand { width:170px; }
+.cmbMannschaft { width:200px; }
+
+span.fsst_team {
+	padding: 1px;
+	display:inline-block;
+	border: 1px solid #FBF9B3;
+	text-align: center;
+}
+
+table.fsst_table td {
+		border:1px solid #AAAAAA;
+		text-align: center;
+}

@@ -1,0 +1,34 @@
+.noprint {
+	display:none;
+}
+
+a {color:#00aa00}
+
+td {color:#000000}
+
+td.BAK   {visibility:hidden}
+td.TOR   {color:#CC3232}
+td.ABW   {color:#00aa00}
+td.DMI   {color:#3366ff}
+td.MIT   {color:#66ffff}
+td.OMI   {color:#ff66ff}
+td.STU   {color:#ff0000}
+td.LEI   {color:#aaaaaa}
+td.TOR A {color:#CC3232}
+td.ABW A {color:#00aa00}
+td.DMI A {color:#3366ff}
+td.MIT A {color:#66ffff}
+td.OMI A {color:#ff66ff}
+td.STU A {color:#ff0000}
+td.LEI A {color:#aaaaaa}
+td.PLUS  {color:#00aa00}
+td.MINUS {color:#ff0000}
+td.ok    {color:#00aa00}
+td.wa    {color:#ffff00}
+td.er    {color:#ff0000}
+td.ML    {color:#00aa00}
+td.MR    {color:#ff0000}
+b.H      {color:#33ff33}
+b.G      {color:#3377ff}
+b.HT     {color:#00aa00}
+b.GT     {color:#3377ff}

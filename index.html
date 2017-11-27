@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>Online-Soccer 2.0 - Greasemonkey Benutzerskripte</title>
+		<link rel="stylesheet" type="text/css" href="css/os_styles.css" />
+		<link rel="stylesheet" type="text/css" href="css/print.css" media="print" />
+		<link rel="shortcut icon" type="image/ico" href="img/favicon.ico" />
+		<style>
+			.script {
+				border:2px solid grey;
+				border-collapse:collapse;
+			}
+			.script td {
+				border:2px solid grey;
+				border-collapse:collapse;
+			}
+		</style>
+	</head>
+	<body>
+		<div>
+			<script type="text/javascript">
+				document.addEventListener("DOMContentLoaded", createScriptTable);
+				var popen = new Array();
+				function openclose(id) {
+					var inopen = false;
+					var newopen = new Array();
+					for (var i = 0; i < popen.length; ++i) {
+						if (popen[i] === id) {
+							inopen = true;
+						} else {
+							newopen.push(popen[i]);
+						}
+					}
+					popen = newopen;
+					if (inopen === true) {
+						document.getElementById('script_' + id).style.display = 'none';
+						document.getElementById('openclose_' + id).src = 'img/geschlossen.gif';
+					} else {
+						document.getElementById('script_' + id).style.display = "";
+						document.getElementById('openclose_' + id).src = 'img/offen.gif';
+						popen.push(id);
+					}
+				}
+				function getMeta(meta) {
+					var data = {
+								'include'  : [],
+								'exclude'  : [],
+								'match'    : [],
+								'require'  : [],
+								'resource' : [],
+								'grant'    : []
+							};
+					var match = (meta || "").match(/^\/\/ ==UserScript==\n+([^]*)\n+\/\/ ==\/UserScript==$/m);
+					data.meta = (match || [])[1];
+					var lines = (data.meta || "").split('\n');
+					for (var i = 0; i < lines.length; ++i) {
+						match = lines[i].match(/^\/\/ @(\w+)\s+(.*)\s*$/);
+						if (match) {
+							var item = match[1];
+							var value = match[2];
+							if (typeof data[item] == 'object') {
+								data[item].push(value);
+							} else {
+								data[item] = value;
+							}
+						}
+					}console.error(data);
+					return data;
+				}
+				function addRow(table, colText) {
+					var tr = document.createElement('tr');
+					var td;
+					for (var i = 0; i < colText.length; ++i) {
+						td = document.createElement('td');
+						td.innerHTML = colText[i];
+						tr.appendChild(td);
+					}
+					table.appendChild(tr);
+					return tr;
+				}
+				function addEntry(table, id, meta) {
+					var colText1 = [];
+					var data = getMeta(meta);
+					var name = data.name || "";
+					var version = data.version || "";
+					var desc = data.description || "";
+					var author = (data.author || "").replace(/ \/ /g, "<br />");
+					var filename = (name ? name + '.user.js' : undefined);
+					colText1.push('<img src="img/geschlossen.gif" style="cursor: help;" onclick="openclose(' + "'" + id + "'" + ')" id="openclose_' + id + '" />\n' +
+									'<a href="https://github.com/Eselce/OS2.scripts/blob/master/' + filename + '">' + name + '</a>');
+					colText1.push(version);
+					colText1.push(desc);
+					colText1.push(author);
+					var tr = addRow(table, colText1);
+					tr.children[0].style.minWidth = "20%";
+					tr.children[1].style.minWidth = "10%";
+					tr.children[3].style.minWidth = "15%";
+					var colText2 = [];
+					colText2.push('<pre>' + data.meta + '</pre><form method="post" action="./' + filename + '">' +
+									'<input type="hidden" name="scriptid" value="' + id + '" /><input type="submit" value="Installieren" /></form></td>');
+					tr = addRow(table, colText2);
+					tr.id = 'script_' + id;
+					tr.style.display = 'none';
+					tr.firstChild.setAttribute('colspan', 4);
+				}
+				function addScript(id, meta) {
+					var table = document.getElementById('scripts');
+					addEntry(table, id, meta);
+				}
+				function createScriptTable(event) {
+					var table = document.getElementById('scripts');
+					if (! table.children.length) {
+						addRow(table, [
+										"<b>Name des Scripts</b>",
+										"<b>Aktuelle Version</b>",
+										"<b>Beschreibung der Funktion</b>",
+										"<b>Autor(en)</b>"
+									]);
+						for (var i = 0; i < scripts.length; ++i) {
+							script = scripts[i];
+							addEntry(table, script, scriptMeta[script]);
+						}
+					}
+				}
+				var scripts = [
+					'ergebnisse',
+					'faces',
+				//	'fssturnier',
+					'haupt',
+					'jugend',
+				//	'master-SLC',
+					'master',
+				//	'osec',
+				//	'report',
+					'spielbericht',
+					'spielbericht.XXL',
+					'spielerhistorie',
+					'spielerprofil',
+					'spielerstatistik',
+					'spielersuche',
+					'spielplan',
+				//	'tabelle',
+					'training',
+					'vereinshistorie',
+					'vereinshistorieMitKruecke',
+				//	'zugabgabe'
+				];
+                var scriptMeta = {
+                    'ergebnisse' : String.raw`
+// ==UserScript==
+// @name         OS2.ergebnisse
+// @namespace    http://os.ongapo.com/
+// @version      0.32+WE+
+// @copyright    2016+
+// @author       Sven Loges (SLC)
+// @description  Aktiviert als Standard die Option "Ergebnisse anzeigen" fuer Online Soccer 2.0
+// @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/(l[sp]|os(eq?|c(q|[hzf]r))|supercup|zer)\.php(\?\S+(&\S+)*)?$/
+// @grant        GM.getValue
+// @grant        GM.setValue
+// @grant        GM.deleteValue
+// @grant        GM.registerMenuCommand
+// @grant        GM.info
+// @require      https://greasemonkey.github.io/gm4-polyfill/gm4-polyfill.js
+// @grant        GM_getValue
+// @grant        GM_setValue
+// @grant        GM_deleteValue
+// @grant        GM_registerMenuCommand
+// @grant        GM_info
+// ==/UserScript==`,
+                    'faces' : String.raw`
+// ==UserScript==
+// @name         OS2.faces
+// @namespace    http://os.ongapo.com/
+// @version      0.1-SLC-WE
+// @copyright    2016+
+// @author       Roman Bauer
+// @description  Farbeauswahl über HTML5 Color Picker
+// @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/osbetafaces\.php$/
+// @grant        none
+// ==/UserScript==`,
+                    'fssturnier' : String.raw`
+// ==UserScript==
+// @name         OS2.fssturnier
+// @namespace    http://os.ongapo.com/
+// @version      0.10+WE+
+// @copyright    2017
+// @author       Sven Loges (SLC)
+// @description  Script zum offizellen FSS-Turnier fuer Online Soccer 2.0
+// @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/haupt\.php(\?changetosecond=\w+(&\S+)*)?(#\S+)?$/
+// @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/fssturnier\.php(\?fordern=\d+(&\S+)*)?(#\S+)?$/
+// @grant        GM.getValue
+// @grant        GM.setValue
+// @grant        GM.deleteValue
+// @grant        GM.registerMenuCommand
+// @grant        GM.info
+// @require      https://greasemonkey.github.io/gm4-polyfill/gm4-polyfill.js
+// @grant        GM_getValue
+// @grant        GM_setValue
+// @grant        GM_deleteValue
+// @grant        GM_registerMenuCommand
+// @grant        GM_info
+// ==/UserScript==`,
+                    'haupt' : String.raw`
+// ==UserScript==
+// @name         OS2.haupt
+// @namespace    http://os.ongapo.com/
+// @version      0.41+WE+
+// @copyright    2016+
+// @author       Sven Loges (SLC)
+// @description  Managerbuero-Abschnitt aus dem Master-Script fuer Online Soccer 2.0
+// @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/haupt\.php(\?changetosecond=\w+(&\S+)*)?$/
+// @grant        GM.getValue
+// @grant        GM.setValue
+// @grant        GM.deleteValue
+// @grant        GM.registerMenuCommand
+// @grant        GM.info
+// @require      https://greasemonkey.github.io/gm4-polyfill/gm4-polyfill.js
+// @grant        GM_getValue
+// @grant        GM_setValue
+// @grant        GM_deleteValue
+// @grant        GM_registerMenuCommand
+// @grant        GM_info
+// ==/UserScript==`,
+                    'jugend' : String.raw`
+// ==UserScript==
+// @name         OS2.jugend
+// @namespace    http://os.ongapo.com/
+// @version      0.54+WE+
+// @copyright    2013+
+// @author       Sven Loges (SLC) / Andreas Eckes (Strindheim BK)
+// @description  Jugendteam-Script fuer Online Soccer 2.0
+// @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/haupt\.php(\?changetosecond=\w+(&\S+)*)?$/
+// @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/ju\.php(\?page=\d+(&\S+)*)?$/
+// @grant        GM.getValue
+// @grant        GM.setValue
+// @grant        GM.deleteValue
+// @grant        GM.registerMenuCommand
+// @grant        GM.info
+// @require      https://greasemonkey.github.io/gm4-polyfill/gm4-polyfill.js
+// @grant        GM_getValue
+// @grant        GM_setValue
+// @grant        GM_deleteValue
+// @grant        GM_registerMenuCommand
+// @grant        GM_info
+// ==/UserScript==`,
+                    'master-SLC' : String.raw`
+// ==UserScript==
+// @name         OS2.master
+// @namespace    http://os.ongapo.com/
+// @version      0.30+WE
+// @copyright    2013+
+// @author       Sven Loges (SLC) / Andreas Eckes (Strindheim BK)
+// @description  Master-Script fuer Online Soccer 2.0
+// @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/sp\.php\?s=\d+$/
+// @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/st\.php\?(s=\d+&)?c=\d+$/
+// @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/showteam\.php(\?s=\d+)?$/
+// @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/tplatz\.php\?t=\d+$/
+// @grant        GM.getValue
+// @grant        GM.setValue
+// @require      https://greasemonkey.github.io/gm4-polyfill/gm4-polyfill.js
+// @grant        GM_getValue
+// @grant        GM_setValue
+// ==/UserScript==`,
+                    'master' : String.raw`
+// ==UserScript==
+// @name         OS2.master
+// @namespace    http://os.ongapo.com/
+// @version      2.4+WE
+// @copyright    2013+
+// @author       Andreas Eckes (Strindheim BK)
+// @description  OS 2.0 - Master-Skript
+// @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/sp\.php\?s=\d+$/
+// @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/st\.php\?(s=\d+&)?c=\d+$/
+// @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/showteam\.php(\?s=\d+)?$/
+// @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/training\.php$/
+// @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/ka\.php$/
+// @grant        none
+// ==/UserScript==`,
+                    'osec' : String.raw`
+// ==UserScript==
+// @name         OS2.osec
+// @namespace    http://os.ongapo.com/
+// @version      0.12+WE
+// @copyright    2013+
+// @author       Sven Loges (SLC)
+// @description  Europapokal-Script fuer Online Soccer 2.0
+// @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/(os(eq?|c(q|[hzf]r))|supercup)\.php(\?\S+(&\S+)*)?$/
+// @grant        none
+// ==/UserScript==`,
+                    'report' : String.raw`
+// ==UserScript==
+// @name         OS2.report
+// @namespace    http://os.ongapo.com/
+// @version      0.11+WE
+// @copyright    2013+
+// @author       Sven Loges (SLC) / Andreas Eckes (Strindheim BK)
+// @description  Report-Script fuer Online Soccer 2.0
+// @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/rep/saison/\d+/\d+/\d+-\d+.html$/
+// @grant        none
+// ==/UserScript==`,
+                    'spielbericht' : String.raw`
+// ==UserScript==
+// @name         OS2.spielbericht
+// @namespace    http://os.ongapo.com/
+// @version      1.0-SLC-WE
+// @copyright    2013+
+// @author       Andreas Eckes (Strindheim BK)
+// @description  OS 2.0 - Ergänzt Summen- und Durchschnittswerte bei den Spielerstatistiken im Spielbericht
+// @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/rep/saison/\d+/\d+/\d+-\d+.html$/
+// @grant        none
+// ==/UserScript==`,
+                    'spielbericht.XXL' : String.raw`
+// ==UserScript==
+// @name         OS2.spielbericht.XXL
+// @namespace    http://os.ongapo.com/
+// @version      0.70+WE
+// @copyright    2013+
+// @author       Andreas Eckes (Strindheim BK) / Michael Bertram / Sven Loges (SLC)
+// @description  OS 2.0 - Ergänzt Summen- und Durchschnittswerte bei den Spielerstatistiken im Spielbericht / Zaehlt Textbausteine / Quoten mit Nachkomma / Leere Zeilen nicht genullt / Fenstergroesse
+// @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/rep/saison/\d+/\d+/\d+-\d+.html$/
+// @grant        GM.getResourceUrl
+// @require      https://greasemonkey.github.io/gm4-polyfill/gm4-polyfill.js
+// @grant        GM_getResourceURL
+// @resource PAS https://eselce.github.io/GitTest/img/pass.png
+// @resource SCH https://eselce.github.io/GitTest/img/sch.png
+// @resource TOR https://eselce.github.io/GitTest/img/tor.png
+// @resource ZWK https://eselce.github.io/GitTest/img/zwk.png
+// ==/UserScript==`,
+                    'spielerhistorie' : String.raw`
+// ==UserScript==
+// @name         OS2.spielerhistorie
+// @namespace    http://os.ongapo.com/
+// @version      0.1-SLC-WE
+// @copyright    2013+
+// @author       Andreas Eckes (Strindheim BK)
+// @description  OS 2.0 - Zeigt absoluten und relativen MW-Zuwachs in Spielerhistorie an
+// @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/sp\.php\?s=\d+$/
+// @grant        none
+// ==/UserScript==`,
+                    'spielerprofil' : String.raw`
+// ==UserScript==
+// @name         OS2.spielerprofil
+// @namespace    http://os.ongapo.com/
+// @version      0.3-SLC-WE
+// @copyright    2016+
+// @author       Michael Bertram / Andreas Eckes (Strindheim BK) / Sven Loges (SLC)
+// @description  Alter exakt / Summe der trainierbaren Skills / Talent (trainierbare Skills mit Alter 19.00 bei unterstelltem 17er-Trainer seitdem)
+// @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/haupt\.php(\?changetosecond=\w+(&\S+)*)?$/
+// @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/sp\.php\?s=\d+$/
+// @grant        GM.getValue
+// @grant        GM.setValue
+// @require      https://greasemonkey.github.io/gm4-polyfill/gm4-polyfill.js
+// @grant        GM_getValue
+// @grant        GM_setValue
+// ==/UserScript==`,
+                    'spielerstatistik' : String.raw`
+// ==UserScript==
+// @name         OS2.spielerstatistik
+// @namespace    http://os.ongapo.com/
+// @version      0.1-SLC-WE
+// @copyright    2016+
+// @author       Roman Bauer
+// @description  Sortierung/Formatierung der Statistikspalten
+// @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/st\.php\?s=[34]&c=\d+$/
+// @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/showteam\.php\?s=[34]$/
+// @grant        GM.addStyle
+// @require      https://greasemonkey.github.io/gm4-polyfill/gm4-polyfill.js
+// @grant        GM_addStyle
+// ==/UserScript==`,
+                    'spielersuche' : String.raw`
+// ==UserScript==
+// @name         OS2.spielersuche
+// @namespace    http://os.ongapo.com/
+// @version      0.13+WE
+// @copyright    2016+
+// @author       Sven Loges (SLC) / Michael Bertram
+// @description  Transferdetails einblenden
+// @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/suchspieler\.php$/
+// @grant        none
+// ==/UserScript==`,
+                    'spielplan' : String.raw`
+// ==UserScript==
+// @name         OS2.spielplan
+// @namespace    http://os.ongapo.com/
+// @version      0.72+WE+
+// @copyright    2013+
+// @author       Sven Loges (SLC)
+// @description  Spielplan-Abschnitt aus dem Master-Script fuer Online Soccer 2.0
+// @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/(st|showteam)\.php\?s=6(&\S+)*$/
+// @grant        GM.getValue
+// @grant        GM.setValue
+// @grant        GM.deleteValue
+// @grant        GM.registerMenuCommand
+// @grant        GM.info
+// @require      https://greasemonkey.github.io/gm4-polyfill/gm4-polyfill.js
+// @grant        GM_getValue
+// @grant        GM_setValue
+// @grant        GM_deleteValue
+// @grant        GM_registerMenuCommand
+// @grant        GM_info
+// ==/UserScript==`,
+                    'tabelle' : String.raw`
+// ==UserScript==
+// @name         OS2.tabelle
+// @namespace    http://os.ongapo.com/
+// @version      0.11+WE+
+// @copyright    2016+
+// @author       Sven Loges (SLC)
+// @description  Tabellen-Script fuer Online Soccer 2.0
+// @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/haupt\.php(\?changetosecond=\w+(&\S+)*)?$/
+// @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/(l[pt]|os(cfr|e)|fpt)\.php(\?\S+(&\S+)*)?$/
+// @grant        GM.getValue
+// @grant        GM.setValue
+// @grant        GM.deleteValue
+// @grant        GM.registerMenuCommand
+// @grant        GM.info
+// @require      https://greasemonkey.github.io/gm4-polyfill/gm4-polyfill.js
+// @grant        GM_getValue
+// @grant        GM_setValue
+// @grant        GM_deleteValue
+// @grant        GM_registerMenuCommand
+// @grant        GM_info
+// ==/UserScript==`,
+                    'training' : String.raw`
+// ==UserScript==
+// @name         OS2.training
+// @namespace    http://os.ongapo.com/
+// @version      0.20+WE
+// @copyright    2013+
+// @author       Sven Loges (SLC) / Andreas Eckes (Strindheim BK)
+// @description  OS 2.0 - Berechnet die Trainingswahrscheinlichkeiten abhaengig von der Art des Einsatzes
+// @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/training\.php$/
+// @grant        none
+// ==/UserScript==`,
+                    'vereinshistorie' : String.raw`
+// ==UserScript==
+// @name         OS2.vereinshistorie
+// @namespace    http://os.ongapo.com/
+// @version      1.0-SLC-WE
+// @copyright    2013+
+// @author       Andreas Eckes (Strindheim BK)
+// @description  OS 2.0 - Zeigt absoluten und relativen MW-Zuwachs an
+// @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/(st|showteam)\.php\?s=7(&\S+)*$/
+// @grant        none
+// ==/UserScript==`,
+                    'vereinshistorieMitKruecke' : String.raw`
+// ==UserScript==
+// @name         OS2.vereinshistorieMitKruecke
+// @namespace    http://os.ongapo.com/
+// @version      1.0-SLC-WE
+// @copyright    2013+
+// @author       Andreas Eckes (Strindheim BK)
+// @description  OS 2.0 - Zeigt absoluten und relativen MW-Zuwachs an
+// @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/(st|showteam)\.php\?s=7(&\S+)*$/
+// @grant        none
+// ==/UserScript==`,
+                    'zugabgabe' : String.raw`
+// ==UserScript==
+// @name         OS2.zugabgabe
+// @namespace    http://os.ongapo.com/
+// @version      0.10+WE+
+// @copyright    2017+
+// @author       Sven Loges (SLC)
+// @description  Zugabgabe-Script fuer Online Soccer 2.0
+// @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/haupt\.php(\?changetosecond=\w+(&\S+)*)?$/
+// @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/zugabgabe\.php(\?p=\d+(&\S+)*)?$/
+// @grant        GM.getValue
+// @grant        GM.setValue
+// @grant        GM.deleteValue
+// @grant        GM.registerMenuCommand
+// @grant        GM.info
+// @require      https://greasemonkey.github.io/gm4-polyfill/gm4-polyfill.js
+// @grant        GM_getValue
+// @grant        GM_setValue
+// @grant        GM_deleteValue
+// @grant        GM_registerMenuCommand
+// @grant        GM_info
+// ==/UserScript==`
+                };
+			</script>
+
+			<h3>Standard-Benutzerscripte f&uuml;r Online-Soccer 2.0 unter dem Greasemonkey AddOn</h3>
+			<table id="scripts" class="script"></table>
+		</div>
+	</body>
+</html>
