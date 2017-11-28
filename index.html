@@ -85,7 +85,7 @@
 					var version = data.version || "";
 					var desc = data.description || "";
 					var author = (data.author || "").replace(/ \/ /g, "<br />");
-					var filename = (name ? name + '.user.js' : undefined);
+					var filename = (id ? 'OS2.' + id + '.user.js' : undefined);
 					colText1.push('<img src="img/geschlossen.gif" style="cursor: help;" onclick="openclose(' + "'" + id + "'" + ')" id="openclose_' + id + '" />\n' +
 									'<a href="https://github.com/Eselce/OS2.scripts/blob/master/' + filename + '">' + name + '</a>');
 					colText1.push(version);
