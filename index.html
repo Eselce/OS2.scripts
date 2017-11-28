@@ -20,7 +20,6 @@
 	<body>
 		<div>
 			<script type="text/javascript">
-				document.addEventListener("DOMContentLoaded", createScriptTable);
 				var popen = new Array();
 				function openclose(id) {
 					var inopen = false;
@@ -105,50 +104,24 @@
 					tr.style.display = 'none';
 					tr.firstChild.setAttribute('colspan', 4);
 				}
-				function addScript(id, meta) {
-					var table = document.getElementById('scripts');
-					addEntry(table, id, meta);
-				}
-				function createScriptTable(event) {
-					var table = document.getElementById('scripts');
-					if (! table.children.length) {
+				function fillScriptTable(id, scriptMetaInfos, filter = Object.keys(scriptMeta), sortFun = undefined) {
+					var table = document.getElementById(id);
+					if (table && ! table.children.length) {
+						var scriptIds = ((typeof filter == 'function') ? Object.keys(scriptMeta).filter(filter) : filter).sort(sortFun);
 						addRow(table, [
 										"Name des Scripts",
 										"Aktuelle Version",
 										"Beschreibung der Funktion",
 										"Autor(en)"
 									]).style.fontWeight = 'bold';
-						for (var i = 0; i < scripts.length; ++i) {
-							script = scripts[i];
-							addEntry(table, script, scriptMeta[script]);
+						for (var i = 0; i < scriptIds.length; ++i) {
+							script = scriptIds[i];
+							addEntry(table, script, scriptMetaInfos[script]);
 						}
 					}
 				}
-				var scripts = [
-					'ergebnisse',
-					'faces',
-				//	'fssturnier',
-					'haupt',
-					'jugend',
-				//	'master-SLC',
-					'master',
-				//	'osec',
-				//	'report',
-					'spielbericht',
-					'spielbericht.XXL',
-					'spielerhistorie',
-					'spielerprofil',
-					'spielerstatistik',
-					'spielersuche',
-					'spielplan',
-				//	'tabelle',
-					'training',
-					'vereinshistorie',
-					'vereinshistorieMitKruecke',
-				//	'zugabgabe'
-				];
-                var scriptMeta = {
-                    'ergebnisse' : String.raw`
+				var scriptMeta = {
+					'ergebnisse' : String.raw`
 // ==UserScript==
 // @name         OS2.ergebnisse
 // @namespace    http://os.ongapo.com/
@@ -168,8 +141,8 @@
 // @grant        GM_deleteValue
 // @grant        GM_registerMenuCommand
 // @grant        GM_info
-// ==/UserScript==`,
-                    'faces' : String.raw`
+// ==/UserScript==
+					`, 'faces' : String.raw`
 // ==UserScript==
 // @name         OS2.faces
 // @namespace    http://os.ongapo.com/
@@ -179,8 +152,8 @@
 // @description  Farbeauswahl über HTML5 Color Picker
 // @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/osbetafaces\.php$/
 // @grant        none
-// ==/UserScript==`,
-                    'fssturnier' : String.raw`
+// ==/UserScript==
+					`, 'fssturnier' : String.raw`
 // ==UserScript==
 // @name         OS2.fssturnier
 // @namespace    http://os.ongapo.com/
@@ -201,8 +174,8 @@
 // @grant        GM_deleteValue
 // @grant        GM_registerMenuCommand
 // @grant        GM_info
-// ==/UserScript==`,
-                    'haupt' : String.raw`
+// ==/UserScript==
+					`, 'haupt' : String.raw`
 // ==UserScript==
 // @name         OS2.haupt
 // @namespace    http://os.ongapo.com/
@@ -222,8 +195,8 @@
 // @grant        GM_deleteValue
 // @grant        GM_registerMenuCommand
 // @grant        GM_info
-// ==/UserScript==`,
-                    'jugend' : String.raw`
+// ==/UserScript==
+					`, 'jugend' : String.raw`
 // ==UserScript==
 // @name         OS2.jugend
 // @namespace    http://os.ongapo.com/
@@ -244,8 +217,8 @@
 // @grant        GM_deleteValue
 // @grant        GM_registerMenuCommand
 // @grant        GM_info
-// ==/UserScript==`,
-                    'master-SLC' : String.raw`
+// ==/UserScript==
+					`, 'master-SLC' : String.raw`
 // ==UserScript==
 // @name         OS2.master
 // @namespace    http://os.ongapo.com/
@@ -262,8 +235,8 @@
 // @require      https://greasemonkey.github.io/gm4-polyfill/gm4-polyfill.js
 // @grant        GM_getValue
 // @grant        GM_setValue
-// ==/UserScript==`,
-                    'master' : String.raw`
+// ==/UserScript==
+					`, 'master' : String.raw`
 // ==UserScript==
 // @name         OS2.master
 // @namespace    http://os.ongapo.com/
@@ -278,7 +251,7 @@
 // @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/ka\.php$/
 // @grant        none
 // ==/UserScript==`,
-                    'osec' : String.raw`
+					'osec' : String.raw`
 // ==UserScript==
 // @name         OS2.osec
 // @namespace    http://os.ongapo.com/
@@ -288,8 +261,8 @@
 // @description  Europapokal-Script fuer Online Soccer 2.0
 // @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/(os(eq?|c(q|[hzf]r))|supercup)\.php(\?\S+(&\S+)*)?$/
 // @grant        none
-// ==/UserScript==`,
-                    'report' : String.raw`
+// ==/UserScript==
+					`, 'report' : String.raw`
 // ==UserScript==
 // @name         OS2.report
 // @namespace    http://os.ongapo.com/
@@ -299,8 +272,8 @@
 // @description  Report-Script fuer Online Soccer 2.0
 // @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/rep/saison/\d+/\d+/\d+-\d+.html$/
 // @grant        none
-// ==/UserScript==`,
-                    'spielbericht' : String.raw`
+// ==/UserScript==
+					`, 'spielbericht' : String.raw`
 // ==UserScript==
 // @name         OS2.spielbericht
 // @namespace    http://os.ongapo.com/
@@ -310,8 +283,8 @@
 // @description  OS 2.0 - Ergänzt Summen- und Durchschnittswerte bei den Spielerstatistiken im Spielbericht
 // @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/rep/saison/\d+/\d+/\d+-\d+.html$/
 // @grant        none
-// ==/UserScript==`,
-                    'spielbericht.XXL' : String.raw`
+// ==/UserScript==
+					`, 'spielbericht.XXL' : String.raw`
 // ==UserScript==
 // @name         OS2.spielbericht.XXL
 // @namespace    http://os.ongapo.com/
@@ -327,8 +300,8 @@
 // @resource SCH https://eselce.github.io/GitTest/img/sch.png
 // @resource TOR https://eselce.github.io/GitTest/img/tor.png
 // @resource ZWK https://eselce.github.io/GitTest/img/zwk.png
-// ==/UserScript==`,
-                    'spielerhistorie' : String.raw`
+// ==/UserScript==
+					`, 'spielerhistorie' : String.raw`
 // ==UserScript==
 // @name         OS2.spielerhistorie
 // @namespace    http://os.ongapo.com/
@@ -338,8 +311,8 @@
 // @description  OS 2.0 - Zeigt absoluten und relativen MW-Zuwachs in Spielerhistorie an
 // @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/sp\.php\?s=\d+$/
 // @grant        none
-// ==/UserScript==`,
-                    'spielerprofil' : String.raw`
+// ==/UserScript==
+					`, 'spielerprofil' : String.raw`
 // ==UserScript==
 // @name         OS2.spielerprofil
 // @namespace    http://os.ongapo.com/
@@ -354,8 +327,8 @@
 // @require      https://greasemonkey.github.io/gm4-polyfill/gm4-polyfill.js
 // @grant        GM_getValue
 // @grant        GM_setValue
-// ==/UserScript==`,
-                    'spielerstatistik' : String.raw`
+// ==/UserScript==
+					`, 'spielerstatistik' : String.raw`
 // ==UserScript==
 // @name         OS2.spielerstatistik
 // @namespace    http://os.ongapo.com/
@@ -368,8 +341,8 @@
 // @grant        GM.addStyle
 // @require      https://greasemonkey.github.io/gm4-polyfill/gm4-polyfill.js
 // @grant        GM_addStyle
-// ==/UserScript==`,
-                    'spielersuche' : String.raw`
+// ==/UserScript==
+					`, 'spielersuche' : String.raw`
 // ==UserScript==
 // @name         OS2.spielersuche
 // @namespace    http://os.ongapo.com/
@@ -379,8 +352,8 @@
 // @description  Transferdetails einblenden
 // @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/suchspieler\.php$/
 // @grant        none
-// ==/UserScript==`,
-                    'spielplan' : String.raw`
+// ==/UserScript==
+					`, 'spielplan' : String.raw`
 // ==UserScript==
 // @name         OS2.spielplan
 // @namespace    http://os.ongapo.com/
@@ -400,8 +373,8 @@
 // @grant        GM_deleteValue
 // @grant        GM_registerMenuCommand
 // @grant        GM_info
-// ==/UserScript==`,
-                    'tabelle' : String.raw`
+// ==/UserScript==
+					`, 'tabelle' : String.raw`
 // ==UserScript==
 // @name         OS2.tabelle
 // @namespace    http://os.ongapo.com/
@@ -422,8 +395,8 @@
 // @grant        GM_deleteValue
 // @grant        GM_registerMenuCommand
 // @grant        GM_info
-// ==/UserScript==`,
-                    'training' : String.raw`
+// ==/UserScript==
+					`, 'training' : String.raw`
 // ==UserScript==
 // @name         OS2.training
 // @namespace    http://os.ongapo.com/
@@ -433,8 +406,8 @@
 // @description  OS 2.0 - Berechnet die Trainingswahrscheinlichkeiten abhaengig von der Art des Einsatzes
 // @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/training\.php$/
 // @grant        none
-// ==/UserScript==`,
-                    'vereinshistorie' : String.raw`
+// ==/UserScript==
+					`, 'vereinshistorie' : String.raw`
 // ==UserScript==
 // @name         OS2.vereinshistorie
 // @namespace    http://os.ongapo.com/
@@ -444,8 +417,8 @@
 // @description  OS 2.0 - Zeigt absoluten und relativen MW-Zuwachs an
 // @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/(st|showteam)\.php\?s=7(&\S+)*$/
 // @grant        none
-// ==/UserScript==`,
-                    'vereinshistorieMitKruecke' : String.raw`
+// ==/UserScript==
+					`, 'vereinshistorieMitKruecke' : String.raw`
 // ==UserScript==
 // @name         OS2.vereinshistorieMitKruecke
 // @namespace    http://os.ongapo.com/
@@ -455,8 +428,8 @@
 // @description  OS 2.0 - Zeigt absoluten und relativen MW-Zuwachs an
 // @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/(st|showteam)\.php\?s=7(&\S+)*$/
 // @grant        none
-// ==/UserScript==`,
-                    'zugabgabe' : String.raw`
+// ==/UserScript==
+					`, 'zugabgabe' : String.raw`
 // ==UserScript==
 // @name         OS2.zugabgabe
 // @namespace    http://os.ongapo.com/
@@ -477,12 +450,43 @@
 // @grant        GM_deleteValue
 // @grant        GM_registerMenuCommand
 // @grant        GM_info
-// ==/UserScript==`
-                };
+// ==/UserScript==
+					`};
+				var scripts = [
+						'ergebnisse',
+						'faces',
+					//	'fssturnier',
+						'haupt',
+						'jugend',
+					//	'master-SLC',
+						'master',
+					//	'osec',
+					//	'report',
+						'spielbericht',
+						'spielbericht.XXL',
+						'spielerhistorie',
+						'spielerprofil',
+						'spielerstatistik',
+						'spielersuche',
+						'spielplan',
+					//	'tabelle',
+						'training',
+						'vereinshistorie',
+						'vereinshistorieMitKruecke',
+					//	'zugabgabe'
+					];
+				document.addEventListener("DOMContentLoaded", createScriptTables);
+				function createScriptTables(event) {
+					fillScriptTable('scripts', scriptMeta, scripts);
+					fillScriptTable('scriptsBeta', scriptMeta, name => ! scripts.includes(name));
+				}
 			</script>
 
 			<h3>Standard-Benutzerscripts f&uuml;r Online-Soccer 2.0 unter dem Greasemonkey AddOn</h3>
 			<table id="scripts" class="script"></table>
+
+			<h3>Experimentelle Scripts (Benutzung auf eigenes Risiko)</h3>
+			<table id="scriptsBeta" class="script"></table>
 		</div>
 	</body>
 </html>
