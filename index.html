@@ -41,6 +41,9 @@
 						popen.push(id);
 					}
 				}
+				function opencloseFun(id){
+					return (() => openclose(id));
+				}
 				function getMeta(meta) {
 					var data = {
 								'include'  : [],
@@ -86,23 +89,31 @@
 					var desc = data.description || "";
 					var author = (data.author || "").replace(/ \/ /g, "<br />");
 					var filename = (id ? 'OS2.' + id + '.user.js' : undefined);
-					colText1.push('<img src="img/geschlossen.gif" style="cursor: help;" onclick="openclose(' + "'" + id + "'" + ')" id="openclose_' + id + '" />\n' +
+					var openclose = '"openclose(' + "'" + id + "'" + ')"';
+					var install = '<form method="get" action="./' + filename + '" target="_blank" rel="noopener noreferrer">' +
+								//	'<input type="hidden" name="scriptid" value="' + id + '" />' +
+									'<input type="submit" value="Installieren" /></form></td>';
+					colText1.push('<img src="img/geschlossen.gif" style="cursor: help;" onclick=' + openclose + ' id="openclose_' + id + '" />\n' +
 									'<a href="https://github.com/Eselce/OS2.scripts/blob/master/' + filename + '">' + name + '</a>');
 					colText1.push(version);
 					colText1.push(desc);
 					colText1.push(author);
+					colText1.push(install);
 					var tr = addRow(table, colText1);
-					tr.children[0].style.minWidth = "20%";
-					tr.children[1].style.minWidth = "10%";
-					tr.children[3].style.minWidth = "15%";
+					[ '20%', '10%', null, '15%', '1%' ].forEach((minWidth, col) => {
+							var cell = tr.children[col];
+
+							cell.style.minWidth = minWidth;
+							if (col > 0) {
+								cell.addEventListener('click', opencloseFun(id));
+							}
+						});
 					var colText2 = [];
-					colText2.push('<pre>' + data.meta + '</pre><form method="get" action="./' + filename + '">' +
-								//	'<input type="hidden" name="scriptid" value="' + id + '" />' +
-									'<input type="submit" value="Installieren" /></form></td>');
+					colText2.push('<pre>' + data.meta + '</pre>' + install);
 					tr = addRow(table, colText2);
 					tr.id = 'script_' + id;
 					tr.style.display = 'none';
-					tr.firstChild.setAttribute('colspan', 4);
+					tr.firstChild.setAttribute('colspan', 5);
 				}
 				function fillScriptTable(id, scriptMetaInfos, filter = Object.keys(scriptMeta), sortFun = undefined) {
 					var table = document.getElementById(id);
@@ -112,7 +123,8 @@
 										"Name des Scripts",
 										"Aktuelle Version",
 										"Beschreibung der Funktion",
-										"Autor(en)"
+										"Autor(en)",
+										"Aktion"
 									]).style.fontWeight = 'bold';
 						for (var i = 0; i < scriptIds.length; ++i) {
 							script = scriptIds[i];
