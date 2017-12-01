@@ -81,13 +81,16 @@
 					table.appendChild(tr);
 					return tr;
 				}
+				function purify(text) {
+					return (text || "").replace(/\s+\/\s+/g, "<br />");
+				}
 				function addEntry(table, id, meta) {
 					var colText1 = [];
 					var data = getMeta(meta);
-					var name = data.name || "";
-					var version = data.version || "";
-					var desc = data.description || "";
-					var author = (data.author || "").replace(/ \/ /g, "<br />");
+					var name = purify(data.name);
+					var version = purify(data.version);
+					var desc = purify(data.description);
+					var author = purify(data.author);
 					var filename = (id ? 'OS2.' + id + '.user.js' : undefined);
 					var openclose = '"openclose(' + "'" + id + "'" + ')"';
 					var install = '<form method="get" action="./' + filename + '" target="_blank" rel="noopener noreferrer">' +
