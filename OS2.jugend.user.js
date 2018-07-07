@@ -4318,7 +4318,7 @@ Class.define(ColumnManager, Object, {
                                    this.addAndFillCell(playerRow, player.getAge(), __COLOR, null, 2);
                                }
                                if (player.zatLeft < 6) {  // Abrechnungszeitraum vor dem letztmoeglichen Ziehen...
-                                   formatCell(playerRow.cells[this.colIdx.Age], true, __COLALERT, null);
+                                   formatCell(playerRow.cells[this.colIdx.Age], true, __COLALERT, null, 1.0);
                                }
                                if (this.fix) {
                                    this.addAndFillCell(playerRow, player.getFixSkills(), __COLOR, null, 0);
@@ -4372,14 +4372,14 @@ Class.define(ColumnManager, Object, {
                                if (this.substSkills) {
                                    convertArrayFromHTML(playerRow.cells, this.colIdx.Einz, player.skillsEnd, function(value, cell, unused, index) {
                                                                                                                  if (~ __IDXPRI.indexOf(index)) {
-                                                                                                                     formatCell(cell, true, __OSBLAU, __POS1COLOR);
+                                                                                                                     formatCell(cell, true, __OSBLAU, __POS1COLOR, 1.0);
                                                                                                                  }
                                                                                                                  return value;
                                                                                                              });
                                } else if (this.colIdx.Einz) {
                                    convertArrayFromHTML(playerRow.cells, this.colIdx.Einz, player.skills.length, function(value, cell, unused, index) {
                                                                                                                      if (~ __IDXPRI.indexOf(index)) {
-                                                                                                                         formatCell(cell, true);
+                                                                                                                         formatCell(cell, true, null, null, 1.0);
                                                                                                                      }
                                                                                                                      return value;
                                                                                                                  });
