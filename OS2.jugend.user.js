@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         OS2.jugend
 // @namespace    http://os.ongapo.com/
-// @version      0.54+WE+
+// @version      0.60
 // @copyright    2013+
 // @author       Sven Loges (SLC) / Andreas Eckes (Strindheim BK)
 // @description  Jugendteam-Script fuer Online Soccer 2.0
@@ -5835,6 +5835,9 @@ function procTeamuebersicht() {
                 separateGroups(__ROWS, __BORDERSTRING, __COLUMNINDEX.Age, __ROWOFFSETUPPER, __ROWOFFSETLOWER, -1, 0, floorValue);
             });
     }
+
+    // Promise fuer alle Faelle ohne Rueckgabewert...
+    return Promise.resolve();
 }
 
 // Verarbeitet Ansicht "Spielereinzelwerte"
@@ -5907,6 +5910,9 @@ function procSpielereinzelwerte() {
                 separateGroups(__ROWS, __BORDERSTRING, __COLUMNINDEX.Age, __ROWOFFSETUPPER, __ROWOFFSETLOWER, -1, 0, floorValue);
             });
     }
+
+    // Promise fuer alle Faelle ohne Rueckgabewert...
+    return Promise.resolve();
 }
 
 (() => {
