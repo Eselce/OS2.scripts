@@ -4379,7 +4379,7 @@ Class.define(ColumnManager, Object, {
                                } else if (this.colIdx.Einz) {
                                    convertArrayFromHTML(playerRow.cells, this.colIdx.Einz, player.skills.length, function(value, cell, unused, index) {
                                                                                                                      if (~ __IDXPRI.indexOf(index)) {
-                                                                                                                         formatCell(cell, true, null, null, 1.0);
+                                                                                                                         formatCell(cell, true, __POS1COLOR, null, 1.0);
                                                                                                                      }
                                                                                                                      return value;
                                                                                                                  });
