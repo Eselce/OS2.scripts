@@ -232,3 +232,11 @@ table.fsst_table td {
 		border:1px solid #AAAAAA;
 		text-align: center;
 }
+
+table.jugend tr td:nth-child(odd) {
+	opacity: 0.75; 
+}
+
+table.jugend tr td:first-child {
+	opacity: 1; 
+}
