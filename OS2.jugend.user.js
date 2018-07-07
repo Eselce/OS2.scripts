@@ -5910,6 +5910,66 @@ function procSpielereinzelwerte() {
     return Promise.resolve();
 }
 
+// Verarbeitet Ansicht "Opt. Skill"
+function procOptSkill() {
+    const __ROWOFFSETUPPER = 1;     // Header-Zeile
+    const __ROWOFFSETLOWER = 0;
+
+    const __COLUMNINDEX = {
+            'Flg'   : 0,
+            'Land'  : 1,
+            'U'     : 2,
+            'Age'   : 3,
+            'Skill' : 4,
+            'TOR'   : 5,
+            'ABW'   : 6,
+            'DMI'   : 7,
+            'MIT'   : 8,
+            'OMI'   : 9,
+            'STU'   : 10,
+            'Zus'   : 11     // Zusaetze hinter den OptSkills
+        };
+
+    if (getRows(1) === undefined) {
+        __LOG[2]("Diese Seite ist ohne Team nicht verf\xFCgbar!");
+    } else {
+        return buildOptions(__OPTCONFIG, __OPTSET, {
+                                'menuAnchor' : getTable(0, 'div'),
+                                'hideForm'   : {
+                                                   'zatAges'       : true,
+                                                   'trainiert'     : true,
+                                                   'positions'     : true,
+                                                   'skills'        : true,
+                                                   'shortAufw'     : true
+                                               },
+                                'formWidth'  : 1
+                            }).then(optSet => {
+                const __ROWS = getRows(1);
+                const __HEADERS = __ROWS[0];
+                const __TITLECOLOR = getColor('LEI');  // "#FFFFFF"
+
+                const __PLAYERS = init(__ROWS, __OPTSET, __COLUMNINDEX, __ROWOFFSETUPPER, __ROWOFFSETLOWER, false);
+                const __COLMAN = new ColumnManager(__OPTSET, __COLUMNINDEX, true);
+
+                //__COLMAN.addTitles(__HEADERS, __TITLECOLOR);
+
+                for (let i = __ROWOFFSETUPPER, j = 0; i < __ROWS.length - __ROWOFFSETLOWER; i++) {
+                    if (__ROWS[i].cells.length > 1) {
+                        //__COLMAN.addValues(__PLAYERS[j++], __ROWS[i], __TITLECOLOR);
+                    }
+                }
+
+                // Format der Trennlinie zwischen den Jahrgaengen...
+                //const __BORDERSTRING = getOptValue(__OPTSET.sepStyle) + ' ' + getOptValue(__OPTSET.sepColor) + ' ' + getOptValue(__OPTSET.sepWidth);
+
+                //separateGroups(__ROWS, __BORDERSTRING, __COLUMNINDEX.Age, __ROWOFFSETUPPER, __ROWOFFSETLOWER, -1, 0, floorValue);
+            });
+    }
+
+    // Promise fuer alle Faelle ohne Rueckgabewert...
+    return Promise.resolve();
+}
+
 (() => {
     (async () => {
         try {
