@@ -749,7 +749,7 @@ const __LOG = {
                                     console.log,    // [4] Log: Debug
                                     console.log,    // [5] Log: Verbose
                                     console.log,    // [6] Log: Very verbose
-                                    console.log     // [7] Log: Testing
+                                    console.warn    // [7] Log: Testing
                                 ],
                   'init'      : function(win, logLevel = 1) {
                                     for (let level = 0; level < this.logFun.length; level++) {
