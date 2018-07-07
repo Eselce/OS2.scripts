@@ -5821,10 +5821,10 @@ function procTeamuebersicht() {
                     }
                 }
 
-                // Format der Trennlinie zwischen den Monaten...
-                const __BORDERSTRING = getOptValue(__OPTSET.sepStyle) + ' ' + getOptValue(__OPTSET.sepColor) + ' ' + getOptValue(__OPTSET.sepWidth);
+                // Format der Trennlinie zwischen den Jahrgaengen...
+                //const __BORDERSTRING = getOptValue(__OPTSET.sepStyle) + ' ' + getOptValue(__OPTSET.sepColor) + ' ' + getOptValue(__OPTSET.sepWidth);
 
-                separateGroups(__ROWS, __BORDERSTRING, __COLUMNINDEX.Age, __ROWOFFSETUPPER, __ROWOFFSETLOWER, -1, 0, floorValue);
+                //separateGroups(__ROWS, __BORDERSTRING, __COLUMNINDEX.Age, __ROWOFFSETUPPER, __ROWOFFSETLOWER, -1, 0, floorValue);
             });
     }
 
@@ -5899,10 +5899,10 @@ function procSpielereinzelwerte() {
                     }
                 }
 
-                // Format der Trennlinie zwischen den Monaten...
-                const __BORDERSTRING = getOptValue(__OPTSET.sepStyle) + ' ' + getOptValue(__OPTSET.sepColor) + ' ' + getOptValue(__OPTSET.sepWidth);
+                // Format der Trennlinie zwischen den Jahrgaengen...
+                //const __BORDERSTRING = getOptValue(__OPTSET.sepStyle) + ' ' + getOptValue(__OPTSET.sepColor) + ' ' + getOptValue(__OPTSET.sepWidth);
 
-                separateGroups(__ROWS, __BORDERSTRING, __COLUMNINDEX.Age, __ROWOFFSETUPPER, __ROWOFFSETLOWER, -1, 0, floorValue);
+                //separateGroups(__ROWS, __BORDERSTRING, __COLUMNINDEX.Age, __ROWOFFSETUPPER, __ROWOFFSETLOWER, -1, 0, floorValue);
             });
     }
 
