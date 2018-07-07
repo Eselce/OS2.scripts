@@ -5475,8 +5475,9 @@ function reverseMapping(obj, convFun) {
 // bold: Inhalt fett darstellen (true = ja, false = nein)
 // color: Falls angegeben, die Schriftfarbe
 // bgColor: Falls angegeben, die Hintergrundfarbe
+// opacity: Falls angegeben, die Opazitaet
 // return Die formatierte Zelle
-function formatCell(cell, bold = true, color = undefined, bgColor = undefined) {
+function formatCell(cell, bold = true, color = undefined, bgColor = undefined, opacity = undefined) {
     if (cell) {
         if (bold) {
             cell.style.fontWeight = 'bold';
@@ -5486,6 +5487,9 @@ function formatCell(cell, bold = true, color = undefined, bgColor = undefined) {
         }
         if (bgColor) {
             cell.style.backgroundColor = bgColor;
+        }
+        if (opacity) {
+        	cell.style.opacity = opacity;
         }
     }
 
