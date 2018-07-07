@@ -3890,26 +3890,29 @@ function init(playerRows, optSet, colIdx, offsetUpper = 1, offsetLower = 0, relo
 
     __LOG[5](__IDMAP);
 
-    for (let i = offsetUpper, j = 0; i < playerRows.length - offsetLower; i++, j++) {
+    for (let i = offsetUpper, j = 0; i < playerRows.length - offsetLower; i++) {
         const __CELLS = playerRows[i].cells;
-        const __LAND = getStringFromHTML(__CELLS, colIdx.Land);
-        const __AGE = getIntFromHTML(__CELLS, colIdx.Age);
-        const __ISGOALIE = isGoalieFromHTML(__CELLS, colIdx.Age);
-        const __NEWPLAYER = new PlayerRecord(__LAND, __AGE, __ISGOALIE, __SAISON, __CURRZAT, __DONATION);
 
-        __NEWPLAYER.initPlayer(__DATA[0], j, ! reloadData);
+        if (__CELLS.length > 1) {
+            const __LAND = getStringFromHTML(__CELLS, colIdx.Land);
+            const __AGE = getIntFromHTML(__CELLS, colIdx.Age);
+            const __ISGOALIE = isGoalieFromHTML(__CELLS, colIdx.Age);
+            const __NEWPLAYER = new PlayerRecord(__LAND, __AGE, __ISGOALIE, __SAISON, __CURRZAT, __DONATION);
 
-        const __IDX = selectPlayerIndex(__NEWPLAYER, j, __CATIDS);
+            __NEWPLAYER.initPlayer(__DATA[0], j, ! reloadData);
 
-        __NEWPLAYER.initPlayer(__DATA[1], __IDX, reloadData);
+            const __IDX = selectPlayerIndex(__NEWPLAYER, j, __CATIDS);
 
-        __NEWPLAYER.prognoseSkills();
+            __NEWPLAYER.initPlayer(__DATA[1], __IDX, reloadData);
 
-        if (reloadData) {
-            __NEWPLAYER.setZusatz(__ZATAGES[__IDX], __TRAINIERT[__IDX], __POSITIONS[__IDX]);
+            __NEWPLAYER.prognoseSkills();
+
+            if (reloadData) {
+                __NEWPLAYER.setZusatz(__ZATAGES[__IDX], __TRAINIERT[__IDX], __POSITIONS[__IDX]);
+            }
+
+            __PLAYERS[j++] = __NEWPLAYER;
         }
-
-        __PLAYERS[j] = __NEWPLAYER;
     }
 
     if (reloadData) {
@@ -4032,12 +4035,15 @@ function storePlayerDataFromHTML(playerRows, optSet, colIdx, offsetUpper = 1, of
         const __TCLASSES = [];
         const __PROGRESSES = [];
 
-        for (let i = offsetUpper, j = 0; i < playerRows.length - offsetLower; i++, j++) {
+        for (let i = offsetUpper, j = 0; i < playerRows.length - offsetLower; i++) {
             const __CELLS = playerRows[i].cells;
 
-            __BIRTHDAYS[j] = getIntFromHTML(__CELLS, colIdx.Geb);
-            __TCLASSES[j] = getTalentFromHTML(__CELLS, colIdx.Tal);
-            __PROGRESSES[j] = getAufwertFromHTML(__CELLS, colIdx.Auf, getOptValue(optSet.shortAufw, true));
+            if (__CELLS.length > 1) {
+                __BIRTHDAYS[j] = getIntFromHTML(__CELLS, colIdx.Geb);
+                __TCLASSES[j] = getTalentFromHTML(__CELLS, colIdx.Tal);
+                __PROGRESSES[j] = getAufwertFromHTML(__CELLS, colIdx.Auf, getOptValue(optSet.shortAufw, true));
+                j++;
+            }
         }
         setOpt(optSet.birthdays, __BIRTHDAYS, false);
         setOpt(optSet.tClasses, __TCLASSES, false);
@@ -4045,10 +4051,12 @@ function storePlayerDataFromHTML(playerRows, optSet, colIdx, offsetUpper = 1, of
     } else {
         const __SKILLS = [];
 
-        for (let i = offsetUpper, j = 0; i < playerRows.length - offsetLower; i++, j++) {
+        for (let i = offsetUpper, j = 0; i < playerRows.length - offsetLower; i++) {
             const __CELLS = playerRows[i].cells;
 
-            __SKILLS[j] = getSkillsFromHTML(__CELLS, colIdx);
+            if (__CELLS.length > 1) {
+                __SKILLS[j++] = getSkillsFromHTML(__CELLS, colIdx);
+            }
         }
         setOpt(optSet.skills, __SKILLS, false);
     }
@@ -5807,8 +5815,10 @@ function procTeamuebersicht() {
 
                 __COLMAN.addTitles(__HEADERS, __TITLECOLOR);
 
-                for (let i = 0; i < __PLAYERS.length; i++) {
-                    __COLMAN.addValues(__PLAYERS[i], __ROWS[i + __ROWOFFSETUPPER], __TITLECOLOR);
+                for (let i = __ROWOFFSETUPPER, j = 0; i < __ROWS.length - __ROWOFFSETLOWER; i++) {
+                    if (__ROWS[i].cells.length > 1) {
+                        __COLMAN.addValues(__PLAYERS[j++], __ROWS[i], __TITLECOLOR);
+                    }
                 }
 
                 // Format der Trennlinie zwischen den Monaten...
@@ -5882,8 +5892,10 @@ function procSpielereinzelwerte() {
 
                 __COLMAN.addTitles(__HEADERS, __TITLECOLOR);
 
-                for (let i = 0; i < __PLAYERS.length; i++) {
-                    __COLMAN.addValues(__PLAYERS[i], __ROWS[i + __ROWOFFSETUPPER], __TITLECOLOR);
+                for (let i = __ROWOFFSETUPPER, j = 0; i < __ROWS.length - __ROWOFFSETLOWER; i++) {
+                    if (__ROWS[i].cells.length > 1) {
+                        __COLMAN.addValues(__PLAYERS[j++], __ROWS[i], __TITLECOLOR);
+                    }
                 }
 
                 // Format der Trennlinie zwischen den Monaten...
