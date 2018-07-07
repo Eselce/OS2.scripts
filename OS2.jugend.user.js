@@ -4983,28 +4983,6 @@ function convertAufwertung(value, cell = undefined) {
     return value;
 }
 
-// Formatiert eine Zelle um (mit einfachen Parametern)
-// cell: Zu formatierende Zelle
-// bold: Inhalt fett darstellen (true = ja, false = nein)
-// color: Falls angegeben, die Schriftfarbe
-// bgColor: Falls angegeben, die Hintergrundfarbe
-// return Die formatierte Zelle
-function formatCell(cell, bold = true, color = undefined, bgColor = undefined) {
-    if (cell) {
-        if (bold) {
-            cell.style.fontWeight = 'bold';
-        }
-        if (color) {
-            cell.style.color = color;
-        }
-        if (bgColor) {
-            cell.style.backgroundColor = bgColor;
-        }
-    }
-
-    return cell;
-}
-
 // Konvertiert die allgemeinen Skills in die eines Torwarts
 // value: Ein Text, der die Skillnamen enthaelt
 // return Der konvertierte String mit Aenderungen (z.B. "FAN" statt "KOB") oder unveraendert
