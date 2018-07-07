@@ -5841,32 +5841,33 @@ function procSpielereinzelwerte() {
             'Flg'   : 0,
             'Land'  : 1,
             'U'     : 2,
-            'Age'   : 3,
-            'Einz'  : 4,    // ab hier die Einzelskills
-            'SCH'   : 4,
-            'ABS'   : 4,    // TOR
-            'BAK'   : 5,
-            'STS'   : 5,    // TOR
-            'KOB'   : 6,
-            'FAN'   : 6,    // TOR
-            'ZWK'   : 7,
-            'STB'   : 7,    // TOR
-            'DEC'   : 8,
-            'SPL'   : 8,    // TOR
-            'GES'   : 9,
-            'REF'   : 9,    // TOR
-            'FUQ'   : 10,
-            'ERF'   : 11,
-            'AGG'   : 12,
-            'PAS'   : 13,
-            'AUS'   : 14,
-            'UEB'   : 15,
-            'WID'   : 16,
-            'SEL'   : 17,
-            'DIS'   : 18,
-            'ZUV'   : 19,
-            'EIN'   : 20,
-            'Zus'   : 21     // Zusaetze hinter den Einzelskills
+            'X'     : 3,
+            'Age'   : 4,
+            'Einz'  : 5,    // ab hier die Einzelskills
+            'SCH'   : 5,
+            'ABS'   : 5,    // TOR
+            'BAK'   : 6,
+            'STS'   : 6,    // TOR
+            'KOB'   : 7,
+            'FAN'   : 7,    // TOR
+            'ZWK'   : 8,
+            'STB'   : 8,    // TOR
+            'DEC'   : 9,
+            'SPL'   : 9,    // TOR
+            'GES'   : 10,
+            'REF'   : 10,   // TOR
+            'FUQ'   : 11,
+            'ERF'   : 12,
+            'AGG'   : 13,
+            'PAS'   : 14,
+            'AUS'   : 15,
+            'UEB'   : 16,
+            'WID'   : 17,
+            'SEL'   : 18,
+            'DIS'   : 19,
+            'ZUV'   : 20,
+            'EIN'   : 21,
+            'Zus'   : 22     // Zusaetze hinter den Einzelskills
         };
 
     if (getRows(1) === undefined) {
