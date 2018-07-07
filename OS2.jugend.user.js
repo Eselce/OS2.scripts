@@ -5977,7 +5977,8 @@ function procOptSkill() {
             // page=0: Managerbuero
             // page=1: Teamuebersicht
             // page=2: Spielereinzelwerte
-            // page=3: Optionen
+            // page=3: Opt. Skill
+            // page=4: Optionen
 
             // Verzweige in unterschiedliche Verarbeitungen je nach Wert von page:
             switch (getPageIdFromURL(window.location.href, {
@@ -5987,7 +5988,8 @@ function procOptSkill() {
                 case 0  : await procHaupt().catch(defaultCatch); break;
                 case 1  : await procTeamuebersicht().catch(defaultCatch); break;
                 case 2  : await procSpielereinzelwerte().catch(defaultCatch); break;
-                case 3  : await procOptionen().catch(defaultCatch); break;
+                case 3  : await procOptSkill().catch(defaultCatch); break;
+                case 4  : await procOptionen().catch(defaultCatch); break;
                 default : break;
             }
 
