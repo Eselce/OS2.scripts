@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         OS2.jugend
 // @namespace    http://os.ongapo.com/
-// @version      0.60
+// @version      0.61
 // @copyright    2013+
 // @author       Sven Loges (SLC) / Andreas Eckes (Strindheim BK)
 // @description  Jugendteam-Script fuer Online Soccer 2.0
@@ -5799,6 +5799,7 @@ function procTeamuebersicht() {
                                                },
                                 'formWidth'  : 1
                             }).then(optSet => {
+                const __SAISON = getOptValue(optSet.saison);
                 const __ROWS = getRows(1);
                 const __HEADERS = __ROWS[0];
                 const __TITLECOLOR = getColor('LEI');  // "#FFFFFF"
@@ -5818,6 +5819,12 @@ function procTeamuebersicht() {
                 for (let i = __ROWOFFSETUPPER, j = 0; i < __ROWS.length - __ROWOFFSETLOWER; i++) {
                     if (__ROWS[i].cells.length > 1) {
                         __COLMAN.addValues(__PLAYERS[j++], __ROWS[i], __TITLECOLOR);
+                    } else {
+                        const __CELL = __ROWS[i].cells[0];
+                        const __SAI = __CELL.innerHTML.match(/Saison (\d+)/)[1];
+                        const __JG = 13 + __SAISON - __SAI;
+
+                        __CELL.innerHTML = __CELL.innerHTML.replace('Jahrgang', 'U' + __JG + ' - $&');
                     }
                 }
 
@@ -5884,6 +5891,7 @@ function procSpielereinzelwerte() {
                                                },
                                 'formWidth'  : 1
                             }).then(optSet => {
+                const __SAISON = getOptValue(optSet.saison);
                 const __ROWS = getRows(1);
                 const __HEADERS = __ROWS[0];
                 const __TITLECOLOR = getColor('LEI');  // "#FFFFFF"
@@ -5896,6 +5904,12 @@ function procSpielereinzelwerte() {
                 for (let i = __ROWOFFSETUPPER, j = 0; i < __ROWS.length - __ROWOFFSETLOWER; i++) {
                     if (__ROWS[i].cells.length > 1) {
                         __COLMAN.addValues(__PLAYERS[j++], __ROWS[i], __TITLECOLOR);
+                    } else {
+                        const __CELL = __ROWS[i].cells[0];
+                        const __SAI = __CELL.innerHTML.match(/Saison (\d+)/)[1];
+                        const __JG = 13 + __SAISON - __SAI;
+
+                        __CELL.innerHTML = __CELL.innerHTML.replace('Jahrgang', 'U' + __JG + ' - $&');
                     }
                 }
 
@@ -5944,6 +5958,7 @@ function procOptSkill() {
                                                },
                                 'formWidth'  : 1
                             }).then(optSet => {
+                const __SAISON = getOptValue(optSet.saison);
                 const __ROWS = getRows(1);
                 const __HEADERS = __ROWS[0];
                 const __TITLECOLOR = getColor('LEI');  // "#FFFFFF"
@@ -5956,6 +5971,12 @@ function procOptSkill() {
                 for (let i = __ROWOFFSETUPPER, j = 0; i < __ROWS.length - __ROWOFFSETLOWER; i++) {
                     if (__ROWS[i].cells.length > 1) {
                         //__COLMAN.addValues(__PLAYERS[j++], __ROWS[i], __TITLECOLOR);
+                    } else {
+                        const __CELL = __ROWS[i].cells[0];
+                        const __SAI = __CELL.innerHTML.match(/Saison (\d+)/)[1];
+                        const __JG = 13 + __SAISON - __SAI;
+
+                        __CELL.innerHTML = __CELL.innerHTML.replace('Jahrgang', 'U' + __JG + ' - $&');
                     }
                 }
 
