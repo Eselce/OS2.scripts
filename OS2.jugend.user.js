@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         OS2.jugend
 // @namespace    http://os.ongapo.com/
-// @version      0.60
+// @version      0.61
 // @copyright    2013+
 // @author       Sven Loges (SLC) / Andreas Eckes (Strindheim BK)
 // @description  Jugendteam-Script fuer Online Soccer 2.0
@@ -3866,9 +3866,14 @@ function buildOptions(optConfig, optSet = undefined, optParams = { 'hideMenu' : 
 // Funktionen ***************************************************************************
 
 // Erschafft die Spieler-Objekte und fuellt sie mit Werten
-// reloadData: true = Teamuebersicht, false = Spielereinzelwerte
-function init(playerRows, optSet, colIdx, offsetUpper = 1, offsetLower = 0, reloadData = false) {
-    storePlayerDataFromHTML(playerRows, optSet, colIdx, offsetUpper, offsetLower, reloadData);
+// playerRows: Array von Zeilen mit Array cells (Spielertabelle)
+// optSet: Gesetzte Optionen (und Config)
+// colIdx: Liste von Spaltenindices der gesuchten Werte
+// offsetUpper: Ignorierte Zeilen oberhalb der Daten
+// offsetLower: Ignorierte Zeilen unterhalb der Daten
+// page: 1: Teamuebersicht, 2: Spielereinzelwerte, 3: Opt. Skill, 4: Optionen, Default: 0
+function init(playerRows, optSet, colIdx, offsetUpper = 1, offsetLower = 0, page = 0) {
+    storePlayerDataFromHTML(playerRows, optSet, colIdx, offsetUpper, offsetLower, page);
 
     const __SAISON = getOptValue(optSet.saison);
     const __AKTZAT = getOptValue(optSet.aktuellerZat);
@@ -3882,8 +3887,9 @@ function init(playerRows, optSet, colIdx, offsetUpper = 1, offsetLower = 0, relo
     const __TRAINIERT = getOptValue(optSet.trainiert, []);
     const __POSITIONS = getOptValue(optSet.positions, []);
     const __SKILLS = getOptValue(optSet.skills, []);
+    const __ISSKILLPAGE = (page === 2);
     const __BASEDATA = [ __BIRTHDAYS, __TCLASSES, __PROGRESSES ];  // fuer initPlayer
-    const __DATA = (reloadData ? [ __BASEDATA, __SKILLS ] : [ __SKILLS, __BASEDATA ]);  // fuer initPlayer: [0] = von HTML-Seite, [1] = aus gespeicherten Daten
+    const __DATA = (__ISSKILLPAGE ? [ __SKILLS, __BASEDATA ] : [ __BASEDATA, __SKILLS ]);  // fuer initPlayer: [0] = von HTML-Seite, [1] = aus gespeicherten Daten
     const __IDMAP = getPlayerIdMap(optSet);
     const __CATIDS = __IDMAP.catIds;
     const __PLAYERS = [];
@@ -3899,15 +3905,15 @@ function init(playerRows, optSet, colIdx, offsetUpper = 1, offsetLower = 0, relo
             const __ISGOALIE = isGoalieFromHTML(__CELLS, colIdx.Age);
             const __NEWPLAYER = new PlayerRecord(__LAND, __AGE, __ISGOALIE, __SAISON, __CURRZAT, __DONATION);
 
-            __NEWPLAYER.initPlayer(__DATA[0], j, ! reloadData);
+            __NEWPLAYER.initPlayer(__DATA[0], j, __ISSKILLPAGE);
 
             const __IDX = selectPlayerIndex(__NEWPLAYER, j, __CATIDS);
 
-            __NEWPLAYER.initPlayer(__DATA[1], __IDX, reloadData);
+            __NEWPLAYER.initPlayer(__DATA[1], __IDX, ! __ISSKILLPAGE);
 
             __NEWPLAYER.prognoseSkills();
 
-            if (reloadData) {
+            if (! __ISSKILLPAGE) {
                 __NEWPLAYER.setZusatz(__ZATAGES[__IDX], __TRAINIERT[__IDX], __POSITIONS[__IDX]);
             }
 
@@ -3915,10 +3921,10 @@ function init(playerRows, optSet, colIdx, offsetUpper = 1, offsetLower = 0, relo
         }
     }
 
-    if (reloadData) {
-        setPlayerData(__PLAYERS, optSet);
-    } else {
+    if (__ISSKILLPAGE) {
         calcPlayerData(__PLAYERS, optSet);
+    } else {
+        setPlayerData(__PLAYERS, optSet);
     }
 
     storePlayerIds(__PLAYERS, optSet);
@@ -3956,6 +3962,8 @@ function getPlayerIdMap(optSet) {
 }
 
 // Berechnet die Identifikations-IDs (Fingerprints) der Spieler neu und speichert diese
+// players: Array von PlayerRecord mit den Spielerdaten
+// optSet: Gesetzte Optionen (und Config)
 function storePlayerIds(players, optSet) {
     const __FINGERPRINTS = [];
 
@@ -3971,6 +3979,10 @@ function storePlayerIds(players, optSet) {
 }
 
 // Sucht fuer den Spieler den Eintrag aus catIds heraus und gibt den (geloeschten) Index zurueck
+// player: PlayerRecord mit den Daten eines Spielers
+// index: Position des Spielers im neuen Array von Spielerdaten
+// catIds: PlayerIdMap zum Finden des Spielers ueber die Spielerdaten
+// return Original-Index der Daten dieses Spielers im Array von Spielerdaten 
 function selectPlayerIndex(player, index, catIds) {
     const __MYCAT = player.getCat();
     const __CATS = catIds[__MYCAT];
@@ -3986,6 +3998,8 @@ function selectPlayerIndex(player, index, catIds) {
 }
 
 // Speichtert die abgeleiteten Werte in den Spieler-Objekten
+// players: Array von PlayerRecord mit den Spielerdaten
+// optSet: Gesetzte Optionen (und Config)
 function setPlayerData(players, optSet) {
     const __ZATAGES = [];
     const __TRAINIERT = [];
@@ -4007,6 +4021,8 @@ function setPlayerData(players, optSet) {
 }
 
 // Berechnet die abgeleiteten Werte in den Spieler-Objekten neu und speichert diese
+// players: Array von PlayerRecord mit den Spielerdaten
+// optSet: Gesetzte Optionen (und Config)
 function calcPlayerData(players, optSet) {
     const __ZATAGES = [];
     const __TRAINIERT = [];
@@ -4027,38 +4043,57 @@ function calcPlayerData(players, optSet) {
     setOpt(optSet.positions, __POSITIONS, false);
 }
 
-// Ermittelt die Werte in den Spieler-Objekten aus den Daten der Seite und speichert diese
-// reloadData: true = Teamuebersicht, false = Spielereinzelwerte
-function storePlayerDataFromHTML(playerRows, optSet, colIdx, offsetUpper = 1, offsetLower = 0, reloadData = false) {
-    if (reloadData) {
-        const __BIRTHDAYS = [];
-        const __TCLASSES = [];
-        const __PROGRESSES = [];
+// Ermittelt die fuer diese Seite relevanten Werte in den Spieler-Objekten aus den Daten der Seite und speichert diese
+// playerRows: Array von Zeilen mit Array cells (Spielertabelle)
+// optSet: Gesetzte Optionen (und Config)
+// colIdx: Liste von Spaltenindices der gesuchten Werte
+// offsetUpper: Ignorierte Zeilen oberhalb der Daten
+// offsetLower: Ignorierte Zeilen unterhalb der Daten
+// page: 1: Teamuebersicht, 2: Spielereinzelwerte, 3: Opt. Skill, 4: Optionen, Default: 0
+function storePlayerDataFromHTML(playerRows, optSet, colIdx, offsetUpper = 1, offsetLower = 0, page = 0) {
+    const __COLDEFS = [ { }, {
+                                'birthdays'  : { 'name' : 'birthdays', 'getFun' : getIntFromHTML, 'params' : [ colIdx.Geb ] },
+                                'tClasses'   : { 'name' : 'tClasses', 'getFun' : getTalentFromHTML, 'params' : [ colIdx.Tal ] },
+                                'progresses' : { 'name' : 'progresses', 'getFun' : getAufwertFromHTML, 'params' : [ colIdx.Auf, getOptValue(optSet.shortAufw, true) ] }
+                            }, {
+                                'skills'     : { 'name' : 'skills', 'getFun' : getSkillsFromHTML, 'params' : [ colIdx ]}
+                            } ][getValueIn(page, 1, 2, 0)];
 
-        for (let i = offsetUpper, j = 0; i < playerRows.length - offsetLower; i++) {
-            const __CELLS = playerRows[i].cells;
+    return storePlayerDataColsFromHTML(playerRows, optSet, __COLDEFS, offsetUpper, offsetLower);
+}
 
-            if (__CELLS.length > 1) {
-                __BIRTHDAYS[j] = getIntFromHTML(__CELLS, colIdx.Geb);
-                __TCLASSES[j] = getTalentFromHTML(__CELLS, colIdx.Tal);
-                __PROGRESSES[j] = getAufwertFromHTML(__CELLS, colIdx.Auf, getOptValue(optSet.shortAufw, true));
-                j++;
+// Ermittelt bestimmte Werte in den Spieler-Objekten aus den Daten der Seite und speichert diese
+// playerRows: Array von Zeilen mit Array cells (Spielertabelle)
+// optSet: Gesetzte Optionen (und Config)
+// colDefs: Informationen zu ausgewaehlten Datenspalten
+// offsetUpper: Ignorierte Zeilen oberhalb der Daten
+// offsetLower: Ignorierte Zeilen unterhalb der Daten
+function storePlayerDataColsFromHTML(playerRows, optSet, colDefs, offsetUpper = 1, offsetLower = 0) {
+    const __DATA = { };
+
+    for (let key in colDefs) {
+        __DATA[key] = [];
+    }
+
+    for (let i = offsetUpper, j = 0; i < playerRows.length - offsetLower; i++) {
+        const __CELLS = playerRows[i].cells;
+
+        if (__CELLS.length > 1) {
+            for (let key in colDefs) {
+                const __COLDEF = colDefs[key];
+
+                __DATA[key][j] = __COLDEF.getFun(__CELLS, ...__COLDEF.params);
             }
+            j++;
         }
-        setOpt(optSet.birthdays, __BIRTHDAYS, false);
-        setOpt(optSet.tClasses, __TCLASSES, false);
-        setOpt(optSet.progresses, __PROGRESSES, false);
-    } else {
-        const __SKILLS = [];
+    }
 
-        for (let i = offsetUpper, j = 0; i < playerRows.length - offsetLower; i++) {
-            const __CELLS = playerRows[i].cells;
+    for (let key in colDefs) {
+        const __COLDEF = colDefs[key];
 
-            if (__CELLS.length > 1) {
-                __SKILLS[j++] = getSkillsFromHTML(__CELLS, colIdx);
-            }
-        }
-        setOpt(optSet.skills, __SKILLS, false);
+        __LOG[7]('Schreibe ' + __COLDEF.name + ': ' + __DATA[key]);
+
+        setOpt(optSet[__COLDEF.name], __DATA[key], false);
     }
 }
 
@@ -4376,21 +4411,23 @@ Class.define(ColumnManager, Object, {
                                    }
                                }
 
-                               // Werte mit Ende 18
-                               if (this.substSkills) {
-                                   convertArrayFromHTML(playerRow.cells, this.colIdx.Einz, player.skillsEnd, function(value, cell, unused, index) {
-                                                                                                                 if (~ __IDXPRI.indexOf(index)) {
-                                                                                                                     formatCell(cell, true, __OSBLAU, __POS1COLOR, 1.0);
-                                                                                                                 }
-                                                                                                                 return value;
-                                                                                                             });
-                               } else if (this.colIdx.Einz) {
-                                   convertArrayFromHTML(playerRow.cells, this.colIdx.Einz, player.skills.length, function(value, cell, unused, index) {
+                               // Einzelwerte mit Ende 18
+                               if (this.colIdx.Einz) {
+                                   if (this.substSkills) {
+                                       convertArrayFromHTML(playerRow.cells, this.colIdx.Einz, player.skillsEnd, function(value, cell, unused, index) {
                                                                                                                      if (~ __IDXPRI.indexOf(index)) {
-                                                                                                                         formatCell(cell, true, __POS1COLOR, null, 1.0);
+                                                                                                                         formatCell(cell, true, __OSBLAU, __POS1COLOR, 1.0);
                                                                                                                      }
                                                                                                                      return value;
                                                                                                                  });
+                                   } else {
+                                       convertArrayFromHTML(playerRow.cells, this.colIdx.Einz, player.skills.length, function(value, cell, unused, index) {
+                                                                                                                         if (~ __IDXPRI.indexOf(index)) {
+                                                                                                                             formatCell(cell, true, __POS1COLOR, null, 1.0);
+                                                                                                                         }
+                                                                                                                         return value;
+                                                                                                                     });
+                                   }
                                }
                                if (this.trE) {
                                    this.addAndFillCell(playerRow, player.getTrainableSkills(player.__TIME.end), __COLOR, null, 1);
@@ -4516,14 +4553,16 @@ Class.define(PlayerRecord, Object, {
 
                                       return result;
                                   },  // Ende this.toString()
-        'initPlayer'            : function(data, index, skillData = false) {  // skillData: true = Skilldaten, false = Basiswerte (Geb., Talent, Aufwertungen)
+        'initPlayer'            : function(data, index, isSkillData = false) {  // isSkillData: true = Skilldaten, false = Basiswerte (Geb., Talent, Aufwertungen) oder keine
                                       if (data !== undefined) {
-                                          if (skillData) {
+                                          if (isSkillData) {
                                               this.setSkills(data[index]);
-                                          } else {
+                                          } else if (data.length >= 2){
                                               this.setGeb(data[0][index]);
                                               this.talent = data[1][index];
                                               this.aufwert = data[2][index];
+                                          } else {
+                                              // keine Daten
                                           }
                                       }
                                   },  // Ende this.initPlayer()
@@ -5780,7 +5819,6 @@ function procTeamuebersicht() {
                                                    'zeigeAnteilPri'     : true,
                                                    'zeigeAnteilSec'     : true,
                                                    'zeigePrios'         : true,
-                                                   'zeigeSkill'         : true,
                                                    'anzahlOpti'         : true,
                                                    'anzahlMW'           : true,
                                                    'zeigeTrainiertEnde' : true,
@@ -5799,11 +5837,12 @@ function procTeamuebersicht() {
                                                },
                                 'formWidth'  : 1
                             }).then(optSet => {
+                const __SAISON = getOptValue(optSet.saison);
                 const __ROWS = getRows(1);
                 const __HEADERS = __ROWS[0];
                 const __TITLECOLOR = getColor('LEI');  // "#FFFFFF"
 
-                const __PLAYERS = init(__ROWS, __OPTSET, __COLUMNINDEX, __ROWOFFSETUPPER, __ROWOFFSETLOWER, true);
+                const __PLAYERS = init(__ROWS, __OPTSET, __COLUMNINDEX, __ROWOFFSETUPPER, __ROWOFFSETLOWER, 1);
                 const __COLMAN = new ColumnManager(__OPTSET, __COLUMNINDEX, {
                                                     'Default'            : true,
                                                     'ersetzeSkills'      : false,
@@ -5818,6 +5857,12 @@ function procTeamuebersicht() {
                 for (let i = __ROWOFFSETUPPER, j = 0; i < __ROWS.length - __ROWOFFSETLOWER; i++) {
                     if (__ROWS[i].cells.length > 1) {
                         __COLMAN.addValues(__PLAYERS[j++], __ROWS[i], __TITLECOLOR);
+                    } else {
+                        const __CELL = __ROWS[i].cells[0];
+                        const __SAI = __CELL.innerHTML.match(/Saison (\d+)/)[1];
+                        const __JG = 13 + __SAISON - __SAI;
+
+                        __CELL.innerHTML = __CELL.innerHTML.replace('Jahrgang', 'U' + __JG + ' - $&');
                     }
                 }
 
@@ -5884,11 +5929,12 @@ function procSpielereinzelwerte() {
                                                },
                                 'formWidth'  : 1
                             }).then(optSet => {
+                const __SAISON = getOptValue(optSet.saison);
                 const __ROWS = getRows(1);
                 const __HEADERS = __ROWS[0];
                 const __TITLECOLOR = getColor('LEI');  // "#FFFFFF"
 
-                const __PLAYERS = init(__ROWS, __OPTSET, __COLUMNINDEX, __ROWOFFSETUPPER, __ROWOFFSETLOWER, false);
+                const __PLAYERS = init(__ROWS, __OPTSET, __COLUMNINDEX, __ROWOFFSETUPPER, __ROWOFFSETLOWER, 2);
                 const __COLMAN = new ColumnManager(__OPTSET, __COLUMNINDEX, true);
 
                 __COLMAN.addTitles(__HEADERS, __TITLECOLOR);
@@ -5896,6 +5942,12 @@ function procSpielereinzelwerte() {
                 for (let i = __ROWOFFSETUPPER, j = 0; i < __ROWS.length - __ROWOFFSETLOWER; i++) {
                     if (__ROWS[i].cells.length > 1) {
                         __COLMAN.addValues(__PLAYERS[j++], __ROWS[i], __TITLECOLOR);
+                    } else {
+                        const __CELL = __ROWS[i].cells[0];
+                        const __SAI = __CELL.innerHTML.match(/Saison (\d+)/)[1];
+                        const __JG = 13 + __SAISON - __SAI;
+
+                        __CELL.innerHTML = __CELL.innerHTML.replace('Jahrgang', 'U' + __JG + ' - $&');
                     }
                 }
 
@@ -5935,27 +5987,73 @@ function procOptSkill() {
     } else {
         return buildOptions(__OPTCONFIG, __OPTSET, {
                                 'menuAnchor' : getTable(0, 'div'),
-                                'hideForm'   : {
-                                                   'zatAges'       : true,
-                                                   'trainiert'     : true,
-                                                   'positions'     : true,
-                                                   'skills'        : true,
-                                                   'shortAufw'     : true
+                                'showForm'   : {
+                                                   'kennzeichenEnde'    : true,
+                                                   'sepStyle'           : true,
+                                                   'sepColor'           : true,
+                                                   'sepWidth'           : true,
+                                                   'saison'             : true,
+                                                   'aktuellerZat'       : true,
+                                                   'foerderung'         : true,
+                                                   'team'               : true,
+                                                   'zeigeBalken'        : true,
+                                                   'absBalken'          : true,
+                                                   'zeigeId'            : true,
+                                                   'ersetzeAlter'       : true,
+                                                   'zeigeAlter'         : true,
+                                                   'zeigeQuote'         : true,
+                                                   'zeigePosition'      : true,
+                                                   'zeigeZatDone'       : true,
+                                                   'zeigeZatLeft'       : true,
+                                                   'zeigeFixSkills'     : true,
+                                                   'zeigeTrainiert'     : true,
+                                                   'zeigeAnteilPri'     : true,
+                                                   'zeigeAnteilSec'     : true,
+                                                   'zeigePrios'         : true,
+                                                   'zeigeAufw'          : true,
+                                                   'zeigeGeb'           : true,
+                                                   'zeigeTal'           : true,
+                                                   'anzahlOpti'         : true,
+                                                   'anzahlMW'           : true,
+                                                   'zeigeTrainiertEnde' : true,
+                                                   'zeigeAnteilPriEnde' : true,
+                                                   'zeigeAnteilSecEnde' : true,
+                                                   'zeigePriosEnde'     : true,
+                                                   'zeigeSkillEnde'     : true,
+                                                   'anzahlOptiEnde'     : true,
+                                                   'anzahlMWEnde'       : true,
+                                                   'zatAges'            : true,
+                                                   'trainiert'          : true,
+                                                   'positions'          : true,
+                                                   'skills'             : true,
+                                                   'reset'              : true,
+                                                   'showForm'           : true
                                                },
                                 'formWidth'  : 1
                             }).then(optSet => {
+                const __SAISON = getOptValue(optSet.saison);
                 const __ROWS = getRows(1);
                 const __HEADERS = __ROWS[0];
                 const __TITLECOLOR = getColor('LEI');  // "#FFFFFF"
 
-                const __PLAYERS = init(__ROWS, __OPTSET, __COLUMNINDEX, __ROWOFFSETUPPER, __ROWOFFSETLOWER, false);
-                const __COLMAN = new ColumnManager(__OPTSET, __COLUMNINDEX, true);
+                const __PLAYERS = init(__ROWS, __OPTSET, __COLUMNINDEX, __ROWOFFSETUPPER, __ROWOFFSETLOWER, 3);
+                const __COLMAN = new ColumnManager(__OPTSET, __COLUMNINDEX, {
+                                                    'Default'            : true,
+                                                    'ersetzeSkills'      : false,
+                                                    'zeigeSkill'         : false
+                                                });
 
-                //__COLMAN.addTitles(__HEADERS, __TITLECOLOR);
+                __COLMAN.addTitles(__HEADERS, __TITLECOLOR);
 
                 for (let i = __ROWOFFSETUPPER, j = 0; i < __ROWS.length - __ROWOFFSETLOWER; i++) {
                     if (__ROWS[i].cells.length > 1) {
-                        //__COLMAN.addValues(__PLAYERS[j++], __ROWS[i], __TITLECOLOR);
+                        __COLMAN.addValues(__PLAYERS[j++], __ROWS[i], __TITLECOLOR);
+                    } else {
+                        const __CELL = __ROWS[i].cells[0];
+                        const __SAI = __CELL.innerHTML.match(/Saison (\d+)/)[1];
+                        const __JG = 13 + __SAISON - __SAI;
+
+                        __CELL.innerHTML = __CELL.innerHTML.replace('Jahrgang', 'U' + __JG + ' - $&');
                     }
                 }
 
