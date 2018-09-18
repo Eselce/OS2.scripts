@@ -78,6 +78,28 @@ const __OPTCONFIG = {
                    'AltHotkey' : 'k',
                    'FormLabel' : "Prognose Einzelwerte"
                },
+    'zeigeJahrgang' : {   // Auswahl, ob ueber jedem Jahrgang die Ueberschriften gezeigt werden sollen oder alles in einem Block (true = Jahrgaenge, false = ein Block)
+                   'Name'      : "showGroupTitle",
+                   'Type'      : __OPTTYPES.SW,
+                   'Default'   : true,
+                   'Action'    : __OPTACTION.NXT,
+                   'Label'     : "Jahrgangs\xFCberschriften",
+                   'Hotkey'    : 'J',
+                   'AltLabel'  : "Nur Trennlinie benutzen",
+                   'AltHotkey' : 'j',
+                   'FormLabel' : "Jahrg\xE4nge gruppieren"
+               },
+    'zeigeUxx' : {        // Auswahl, ob in der Ueberschrift ueber jedem Jahrgang zusaetzlich zur Saison noch der Jahrgang in der Form 'Uxx' angegeben wird
+                   'Name'      : "showUxx",
+                   'Type'      : __OPTTYPES.SW,
+                   'Default'   : true,
+                   'Action'    : __OPTACTION.NXT,
+                   'Label'     : "Jahrg\xE4nge anzeigen",
+                   'Hotkey'    : 'U',
+                   'AltLabel'  : "Nur Saisons anzeigen",
+                   'AltHotkey' : 'u',
+                   'FormLabel' : "Jahrg\xE4nge U13 bis U18"
+               },
     'zeigeBalken' : {     // Spaltenauswahl fuer den Qualitaetsbalken des Talents (true = anzeigen, false = nicht anzeigen)
                    'Name'      : "showRatioBar",
                    'Type'      : __OPTTYPES.SW,
@@ -89,7 +111,7 @@ const __OPTCONFIG = {
                    'AltHotkey' : 'B',
                    'FormLabel' : "Balken Qualit\xE4t"
                },
-    'absBalken' : {      // Spaltenauswahl fuer den Guetebalken des Talents absolut statt nach Foerderung (true = absolut, false = relativ nach Foerderung)
+    'absBalken' : {       // Spaltenauswahl fuer den Guetebalken des Talents absolut statt nach Foerderung (true = absolut, false = relativ nach Foerderung)
                    'Name'      : "absBar",
                    'Type'      : __OPTTYPES.SW,
                    'Default'   : true,
@@ -4103,8 +4125,8 @@ function separateGroups(rows, borderString, colIdxSort = 0, offsetUpper = 1, off
         offsetLeft = colIdxSort;  // ab Sortierspalte
     }
 
-    for (let i = offsetUpper, newVal, oldVal = formatFun(rows[i].cells[colIdxSort].textContent); i < rows.length - offsetLower - 1; i++, oldVal = newVal) {
-        newVal = formatFun(rows[i + 1].cells[colIdxSort].textContent);
+    for (let i = offsetUpper, newVal, oldVal = formatFun((rows[i].cells[colIdxSort] || { }).textContent); i < rows.length - offsetLower - 1; i++, oldVal = newVal) {
+        newVal = formatFun((rows[i + 1].cells[colIdxSort] || { }).textContent);
         if (newVal !== oldVal) {
             for (let j = offsetLeft; j < rows[i].cells.length - offsetRight; j++) {
                 rows[i].cells[j].style.borderBottom = borderString;
@@ -4135,6 +4157,10 @@ function ColumnManager(optSet, colIdx, showCol) {
     const __PROJECTION = (__EINZELSKILLS && __ZATAGES);
 
     this.colIdx = colIdx;
+
+    this.saison = getOptValue(optSet.saison);
+    this.gt = getOptValue(optSet.zeigeJahrgang);
+    this.gtUxx = getOptValue(optSet.zeigeUxx);
 
     this.fpId = (__BIRTHDAYS && __TCLASSES && __POSITIONS && getValue(__SHOWCOL.zeigeId, __SHOWALL) && getOptValue(optSet.zeigeId));
     this.bar = (__PROJECTION && getValue(__SHOWCOL.zeigeBalken, __SHOWALL) && getOptValue(optSet.zeigeBalken));
@@ -4470,7 +4496,18 @@ Class.define(ColumnManager, Object, {
                                        }
                                    }
                                }
-                           }  // Ende addValues(player, playerRow)
+                           },  // Ende addValues(player, playerRow)
+        'setGroupTitle'  : function(tableRow) {
+                               if (this.gtUxx) {
+                                   const __CELL = tableRow.cells[0];
+                                   const __SAI = __CELL.innerHTML.match(/Saison (\d+)/)[1];
+                                   const __JG = 13 + this.saison - __SAI;
+
+                                   __CELL.innerHTML = __CELL.innerHTML.replace('Jahrgang', 'U' + __JG + ' - $&');
+                               }
+
+                               tableRow.style.display = (this.gt ? '' : 'none');
+                           }  // Ende setGroupTitle(tableRow)
     });
 
 // Klasse PlayerRecord ******************************************************************
@@ -5073,6 +5110,13 @@ function getAufwertFromHTML(cells, colIdxAuf, shortForm = true) {
 // return Derselbe Wert
 function sameValue(value) {
     return value;
+}
+
+// Existenzfunktion. Liefert zurueck, ob ein Wert belegt ist
+// value: Der uebergebene Wert
+// return Angabe ob Wert belegt ist
+function existValue(value) {
+    return !! value;
 }
 
 // Liefert den ganzzeiligen Anteil einer Zahl zurueck, indem alles hinter einem Punkt abgeschnitten wird
@@ -5805,6 +5849,8 @@ function procTeamuebersicht() {
                                                    'aktuellerZat'       : true,
                                                    'foerderung'         : true,
                                                    'team'               : true,
+                                                   'zeigeJahrgang'      : true,
+                                                   'zeigeUxx'           : true,
                                                    'zeigeBalken'        : true,
                                                    'absBalken'          : true,
                                                    'zeigeId'            : true,
@@ -5837,7 +5883,6 @@ function procTeamuebersicht() {
                                                },
                                 'formWidth'  : 1
                             }).then(optSet => {
-                const __SAISON = getOptValue(optSet.saison);
                 const __ROWS = getRows(1);
                 const __HEADERS = __ROWS[0];
                 const __TITLECOLOR = getColor('LEI');  // "#FFFFFF"
@@ -5858,18 +5903,16 @@ function procTeamuebersicht() {
                     if (__ROWS[i].cells.length > 1) {
                         __COLMAN.addValues(__PLAYERS[j++], __ROWS[i], __TITLECOLOR);
                     } else {
-                        const __CELL = __ROWS[i].cells[0];
-                        const __SAI = __CELL.innerHTML.match(/Saison (\d+)/)[1];
-                        const __JG = 13 + __SAISON - __SAI;
-
-                        __CELL.innerHTML = __CELL.innerHTML.replace('Jahrgang', 'U' + __JG + ' - $&');
+                        __COLMAN.setGroupTitle(__ROWS[i]);
                     }
                 }
 
                 // Format der Trennlinie zwischen den Jahrgaengen...
-                //const __BORDERSTRING = getOptValue(__OPTSET.sepStyle) + ' ' + getOptValue(__OPTSET.sepColor) + ' ' + getOptValue(__OPTSET.sepWidth);
+                if (! __COLMAN.gt) {
+                    const __BORDERSTRING = getOptValue(__OPTSET.sepStyle) + ' ' + getOptValue(__OPTSET.sepColor) + ' ' + getOptValue(__OPTSET.sepWidth);
 
-                //separateGroups(__ROWS, __BORDERSTRING, __COLUMNINDEX.Age, __ROWOFFSETUPPER, __ROWOFFSETLOWER, -1, 0, floorValue);
+                    separateGroups(__ROWS, __BORDERSTRING, __COLUMNINDEX.Land, __ROWOFFSETUPPER, __ROWOFFSETLOWER, 0, 0, existValue);
+                }
             });
     }
 
@@ -5929,7 +5972,6 @@ function procSpielereinzelwerte() {
                                                },
                                 'formWidth'  : 1
                             }).then(optSet => {
-                const __SAISON = getOptValue(optSet.saison);
                 const __ROWS = getRows(1);
                 const __HEADERS = __ROWS[0];
                 const __TITLECOLOR = getColor('LEI');  // "#FFFFFF"
@@ -5943,18 +5985,16 @@ function procSpielereinzelwerte() {
                     if (__ROWS[i].cells.length > 1) {
                         __COLMAN.addValues(__PLAYERS[j++], __ROWS[i], __TITLECOLOR);
                     } else {
-                        const __CELL = __ROWS[i].cells[0];
-                        const __SAI = __CELL.innerHTML.match(/Saison (\d+)/)[1];
-                        const __JG = 13 + __SAISON - __SAI;
-
-                        __CELL.innerHTML = __CELL.innerHTML.replace('Jahrgang', 'U' + __JG + ' - $&');
+                        __COLMAN.setGroupTitle(__ROWS[i]);
                     }
                 }
 
                 // Format der Trennlinie zwischen den Jahrgaengen...
-                //const __BORDERSTRING = getOptValue(__OPTSET.sepStyle) + ' ' + getOptValue(__OPTSET.sepColor) + ' ' + getOptValue(__OPTSET.sepWidth);
+                if (! __COLMAN.gt) {
+                    const __BORDERSTRING = getOptValue(__OPTSET.sepStyle) + ' ' + getOptValue(__OPTSET.sepColor) + ' ' + getOptValue(__OPTSET.sepWidth);
 
-                //separateGroups(__ROWS, __BORDERSTRING, __COLUMNINDEX.Age, __ROWOFFSETUPPER, __ROWOFFSETLOWER, -1, 0, floorValue);
+                    separateGroups(__ROWS, __BORDERSTRING, __COLUMNINDEX.Land, __ROWOFFSETUPPER, __ROWOFFSETLOWER, 0, 0, existValue);
+                }
             });
     }
 
@@ -5996,6 +6036,8 @@ function procOptSkill() {
                                                    'aktuellerZat'       : true,
                                                    'foerderung'         : true,
                                                    'team'               : true,
+                                                   'zeigeJahrgang'      : true,
+                                                   'zeigeUxx'           : true,
                                                    'zeigeBalken'        : true,
                                                    'absBalken'          : true,
                                                    'zeigeId'            : true,
@@ -6031,7 +6073,6 @@ function procOptSkill() {
                                                },
                                 'formWidth'  : 1
                             }).then(optSet => {
-                const __SAISON = getOptValue(optSet.saison);
                 const __ROWS = getRows(1);
                 const __HEADERS = __ROWS[0];
                 const __TITLECOLOR = getColor('LEI');  // "#FFFFFF"
@@ -6049,18 +6090,16 @@ function procOptSkill() {
                     if (__ROWS[i].cells.length > 1) {
                         __COLMAN.addValues(__PLAYERS[j++], __ROWS[i], __TITLECOLOR);
                     } else {
-                        const __CELL = __ROWS[i].cells[0];
-                        const __SAI = __CELL.innerHTML.match(/Saison (\d+)/)[1];
-                        const __JG = 13 + __SAISON - __SAI;
-
-                        __CELL.innerHTML = __CELL.innerHTML.replace('Jahrgang', 'U' + __JG + ' - $&');
+                        __COLMAN.setGroupTitle(__ROWS[i]);
                     }
                 }
 
                 // Format der Trennlinie zwischen den Jahrgaengen...
-                //const __BORDERSTRING = getOptValue(__OPTSET.sepStyle) + ' ' + getOptValue(__OPTSET.sepColor) + ' ' + getOptValue(__OPTSET.sepWidth);
+                if (! __COLMAN.gt) {
+                    const __BORDERSTRING = getOptValue(__OPTSET.sepStyle) + ' ' + getOptValue(__OPTSET.sepColor) + ' ' + getOptValue(__OPTSET.sepWidth);
 
-                //separateGroups(__ROWS, __BORDERSTRING, __COLUMNINDEX.Age, __ROWOFFSETUPPER, __ROWOFFSETLOWER, -1, 0, floorValue);
+                    separateGroups(__ROWS, __BORDERSTRING, __COLUMNINDEX.Land, __ROWOFFSETUPPER, __ROWOFFSETLOWER, 0, 0, existValue);
+                }
             });
     }
 
