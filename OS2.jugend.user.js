@@ -5271,43 +5271,6 @@ function sortPositionArray(array) {
     }
 }
 
-// Fuegt in die uebergebene Zahl Tausender-Trennpunkte ein
-// Wandelt einen etwaig vorhandenen Dezimalpunkt in ein Komma um
-function getNumberString(numberString) {
-    if (numberString.lastIndexOf('.') !== -1) {
-        // Zahl enthaelt Dezimalpunkt
-        const __VORKOMMA = numberString.substring(0, numberString.lastIndexOf('.'));
-        const __NACHKOMMA = numberString.substring(numberString.lastIndexOf('.') + 1, numberString.length);
-
-        return getNumberString(__VORKOMMA) + ',' + __NACHKOMMA;
-    } else {
-        // Kein Dezimalpunkt, fuege Tausender-Trennpunkte ein:
-        // String umdrehen, nach jedem dritten Zeichen Punkt einfuegen, dann wieder umdrehen:
-        const __TEMP = reverseString(numberString);
-        let result = "";
-
-        for (let i = 0; i < __TEMP.length; i++) {
-            if ((i > 0) && (i % 3 === 0)) {
-                result += '.';
-            }
-            result += __TEMP.substr(i, 1);
-        }
-
-        return reverseString(result);
-    }
-}
-
-// Dreht den uebergebenen String um
-function reverseString(string) {
-    let result = "";
-
-    for (let i = string.length - 1; i >= 0; i--) {
-        result += string.substr(i, 1);
-    }
-
-    return result;
-}
-
 // Schaut nach, ob der uebergebene Index zu einem trainierbaren Skill gehoert
 // Die Indizes gehen von 0 (SCH) bis 16 (EIN)
 function isTrainableSkill(idx) {
