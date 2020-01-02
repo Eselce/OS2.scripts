@@ -5104,7 +5104,7 @@ function convertStringFromHTML(cells, colIdxStr, convertFun = sameValue) {
 // convertFun: Funktion, die die Werte konvertiert
 // return Array mit Spalteneintraegen als String ("" fuer "nicht gefunden")
 function convertArrayFromHTML(cells, colIdxArr, arrOrLength = 1, convertFun = sameValue) {
-    const __ARR = ((typeof arrOrSize === 'number') ? { } : arrOrLength);
+    const __ARR = ((typeof arrOrLength === 'number') ? { } : arrOrLength);
     const __LENGTH = getValue(__ARR.length, arrOrLength);
     const __RET = [];
 
