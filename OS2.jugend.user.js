@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         OS2.jugend
 // @namespace    http://os.ongapo.com/
-// @version      0.61
+// @version      0.70beta1
 // @copyright    2013+
 // @author       Sven Loges (SLC) / Andreas Eckes (Strindheim BK)
 // @description  Jugendteam-Script fuer Online Soccer 2.0
@@ -99,6 +99,50 @@ const __OPTCONFIG = {
                    'AltLabel'  : "Nur Saisons anzeigen",
                    'AltHotkey' : 'u',
                    'FormLabel' : "Jahrg\xE4nge U13 bis U18"
+               },
+    'zeigeWarnung' : {    // Auswahl, ob eine Warnung in der Uebersicht erscheint, wenn Talente gezogen werden sollten
+                   'Name'      : "showWarning",
+                   'Type'      : __OPTTYPES.SW,
+                   'Default'   : true,
+                   'Action'    : __OPTACTION.NXT,
+                   'Label'     : "Ziehwarnung ein",
+                   'Hotkey'    : 'Z',
+                   'AltLabel'  : "Ziehwarnung aus",
+                   'AltHotkey' : 'Z',
+                   'FormLabel' : "Ziehwarnung"
+               },
+    'zeigeWarnungMonat' : {  // Auswahl, ob eine Warnung in der Uebersicht erscheint, wenn zum naechsten Abrechnungs-ZAT Talente gezogen werden sollten
+                   'Name'      : "showWarningMonth",
+                   'Type'      : __OPTTYPES.SW,
+                   'Default'   : true,
+                   'Action'    : __OPTACTION.NXT,
+                   'Label'     : "Ziehwarnung Monat ein",
+                   'Hotkey'    : 'Z',
+                   'AltLabel'  : "Ziehwarnung Monat aus",
+                   'AltHotkey' : 'Z',
+                   'FormLabel' : "Ziehwarnung Monat"
+               },
+    'zeigeWarnungHome' : {  // Auswahl, ob eine extra Meldung im Managerbuero erscheint, wenn Talente gezogen werden sollten
+                   'Name'      : "showWarningHome",
+                   'Type'      : __OPTTYPES.SW,
+                   'Default'   : true,
+                   'Action'    : __OPTACTION.NXT,
+                   'Label'     : "Ziehwarnung B\xFCro ein",
+                   'Hotkey'    : 'z',
+                   'AltLabel'  : "Ziehwarnung B\xFCro aus",
+                   'AltHotkey' : 'z',
+                   'FormLabel' : "Ziehwarnung B\xFCro"
+               },
+    'zeigeWarnungDialog' : {  // Auswahl, ob die extra Meldung im Managerbuero als Dialog erscheinen soll
+                   'Name'      : "showWarningDialog",
+                   'Type'      : __OPTTYPES.SW,
+                   'Default'   : false,
+                   'Action'    : __OPTACTION.NXT,
+                   'Label'     : "Ziehwarnung B\xFCro als Dialog",
+                   'Hotkey'    : 'z',
+                   'AltLabel'  : "Ziehwarnung B\xFCro als Textmeldung",
+                   'AltHotkey' : 'z',
+                   'FormLabel' : "Ziehwarnung B\xFCro Dialog"
                },
     'zeigeBalken' : {     // Spaltenauswahl fuer den Qualitaetsbalken des Talents (true = anzeigen, false = nicht anzeigen)
                    'Name'      : "showRatioBar",
@@ -618,6 +662,21 @@ const __OPTCONFIG = {
                    'Replace'   : null,
                    'Space'     : 0,
                    'Label'     : "Aufwertungen:"
+               },
+    'ziehAnz' : {         // Datenspeicher fuer Anzahl zu ziehender Jugendspieler bis zur naechsten Abrechnung
+                   'Name'      : "drawCounts",
+                   'Type'      : __OPTTYPES.SD,
+                   'Hidden'    : false,
+                   'Serial'    : true,
+                   'AutoReset' : false,
+                   'Permanent' : true,
+                   'Default'   : [],
+                   'Submit'    : undefined,
+                   'Cols'      : 25,
+                   'Rows'      : 1,
+                   'Replace'   : null,
+                   'Space'     : 0,
+                   'Label'     : "Zu ziehen:"
                },
     'zatAges' : {         // Datenspeicher fuer (gebrochene) Alter der Jugendspieler
                    'Name'      : "zatAges",
@@ -3814,6 +3873,7 @@ __TEAMCLASS.optSelect = {
                             'birthdays'    : true,
                             'tClasses'     : true,
                             'progresses'   : true,
+                            'ziehAnz'      : true,
                             'zatAges'      : true,
                             'trainiert'    : true,
                             'positions'    : true,
@@ -4023,20 +4083,30 @@ function selectPlayerIndex(player, index, catIds) {
 // players: Array von PlayerRecord mit den Spielerdaten
 // optSet: Gesetzte Optionen (und Config)
 function setPlayerData(players, optSet) {
+    const __AKTZAT = getOptValue(optSet.aktuellerZat);
+    const __ZIEHANZ = [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ];
     const __ZATAGES = [];
     const __TRAINIERT = [];
     const __POSITIONS = [];
 
     for (let i = 0; i < players.length; i++) {
         const __ZUSATZ = players[i].calcZusatz();
+        const __RESTZAT = players[i].getZatAge(players[i].__TIME.end) - __ZUSATZ.zatAge + __AKTZAT;
 
         if (__ZUSATZ.zatAge !== undefined) {  // braucht Geburtstag fuer gueltige Werte!
-            __ZATAGES[i]    = __ZUSATZ.zatAge;
+            const __INDEX = parseInt(__RESTZAT / 6 + 1) - 1;  // Lfd. Nummer des Abrechnungsmonats (0-basiert)
+
+            if ((__INDEX >= 0) && (__INDEX < __ZIEHANZ.length)) {
+                __ZIEHANZ[__INDEX]++;
+            }
+
+            __ZATAGES[i] = __ZUSATZ.zatAge;
         }
-        __TRAINIERT[i]  = __ZUSATZ.trainiert;
-        __POSITIONS[i]  = __ZUSATZ.bestPos;
+        __TRAINIERT[i] = __ZUSATZ.trainiert;
+        __POSITIONS[i] = __ZUSATZ.bestPos;
     }
 
+    setOpt(optSet.ziehAnz, __ZIEHANZ, false);
     setOpt(optSet.zatAges, __ZATAGES, false);
     setOpt(optSet.trainiert, __TRAINIERT, false);
     setOpt(optSet.positions, __POSITIONS, false);
@@ -4054,10 +4124,10 @@ function calcPlayerData(players, optSet) {
         const __ZUSATZ = players[i].calcZusatz();
 
         if (__ZUSATZ.zatAge !== undefined) {  // braucht Geburtstag fuer gueltige Werte!
-            __ZATAGES[i]    = __ZUSATZ.zatAge;
+            __ZATAGES[i] = __ZUSATZ.zatAge;
         }
-        __TRAINIERT[i]  = __ZUSATZ.trainiert;
-        __POSITIONS[i]  = __ZUSATZ.bestPos;
+        __TRAINIERT[i] = __ZUSATZ.trainiert;
+        __POSITIONS[i] = __ZUSATZ.bestPos;
     }
 
     setOpt(optSet.zatAges, __ZATAGES, false);
@@ -4163,6 +4233,10 @@ function ColumnManager(optSet, colIdx, showCol) {
     this.gtUxx = getOptValue(optSet.zeigeUxx);
 
     this.fpId = (__BIRTHDAYS && __TCLASSES && __POSITIONS && getValue(__SHOWCOL.zeigeId, __SHOWALL) && getOptValue(optSet.zeigeId));
+    this.warn = (__ZATAGES && getValue(__SHOWCOL.zeigeWarnung, __SHOWALL) && getOptValue(optSet.zeigeWarnung));
+    this.warnMonth = (__ZATAGES && getValue(__SHOWCOL.zeigeWarnungMonat, __SHOWALL) && getOptValue(optSet.zeigeWarnungMonat));
+    this.warnHome = (__ZATAGES && getValue(__SHOWCOL.zeigeWarnungHome, __SHOWALL) && getOptValue(optSet.zeigeWarnungHome));
+    this.warnDialog = (__ZATAGES && getValue(__SHOWCOL.zeigeWarnungDialog, __SHOWALL) && getOptValue(optSet.zeigeWarnungDialog));
     this.bar = (__PROJECTION && getValue(__SHOWCOL.zeigeBalken, __SHOWALL) && getOptValue(optSet.zeigeBalken));
     this.barAbs = getOptValue(optSet.absBalken);
     this.donor = getOptValue(optSet.foerderung);
@@ -4346,7 +4420,8 @@ Class.define(ColumnManager, Object, {
         'addValues'      : function(player, playerRow, color = "#FFFFFF") {
                                const __IDXPRI = getIdxPriSkills(player.getPos());
                                const __COLALERT = getColor('STU');  // rot
-                               const __COLOR = ((player.zatLeft < 1) ? __COLALERT : player.isGoalie ? getColor('TOR') : color);
+                               const __MUSTDRAW = ((this.warn || this.warnMonth) && (player.zatLeft < 1));
+                               const __COLOR = (__MUSTDRAW ? __COLALERT : player.isGoalie ? getColor('TOR') : color);
                                const __POS1COLOR = getColor((player.getPosPercent() > 99.99) ? 'LEI' : player.getPos());
                                const __OSBLAU = getColor("");
 
@@ -4386,7 +4461,7 @@ Class.define(ColumnManager, Object, {
                                } else if (this.alter) {
                                    this.addAndFillCell(playerRow, player.getAge(), __COLOR, null, 2);
                                }
-                               if (player.zatLeft < 6) {  // Abrechnungszeitraum vor dem letztmoeglichen Ziehen...
+                               if (__MUSTDRAW || (this.warnMonth && (player.zatLeft < 6))) {  // Abrechnungszeitraum vor dem letztmoeglichen Ziehen...
                                    formatCell(playerRow.cells[this.colIdx.Age], true, __COLALERT, null, 1.0);
                                }
                                if (this.fix) {
@@ -5767,7 +5842,17 @@ function procHaupt() {
 
     return buildOptions(__OPTCONFIG, __OPTSET, {
                             'teamParams' : __TEAMPARAMS,
-                            'hideMenu'   : true
+//                            'menuAnchor' : getTable(0, 'div'),
+                            'hideMenu'   : true,
+                            'showForm'   : {
+                                'zeigeWarnung'       : true,
+                                'zeigeWarnungMonat'  : true,
+                                'zeigeWarnungHome'   : true,
+                                'zeigeWarnungDialog' : true,
+                                'ziehAnz'            : true,
+                                'showForm'           : true
+                            }
+
                         }).then(async optSet => {
             const __ZATCELL = getProp(getProp(getRows(0), 2), 'cells', { })[0];
             const __NEXTZAT = getZATNrFromCell(__ZATCELL);  // "Der naechste ZAT ist ZAT xx und ..."
@@ -5786,16 +5871,54 @@ function procHaupt() {
                 if (__CURRZAT !== __DATAZAT) {
                     __LOG[2](__LOG.changed(__DATAZAT, __CURRZAT));
 
-                    // ... und ZAT-bezogene Daten als veraltet markieren (ausser 'skills' und 'positions')
+                    // ... und ZAT-bezogene Daten als veraltet markieren (ausser 'skills', 'positions' und 'ziehAnz')
                     await __TEAMCLASS.deleteOptions({
                                                     'skills'      : true,
                                                     'positions'   : true,
                                                     'datenZat'    : true,
-                                                    'oldDatenZat' : true
+                                                    'oldDatenZat' : true,
+                                                    'ziehAnz'     : (__CURRZAT > __DATAZAT)  // nur loeschen, wenn < __DATAZAT
                                                 }).catch(defaultCatch);
 
                     // Neuen Daten-ZAT speichern...
                     setOpt(__OPTSET.datenZat, __CURRZAT, false);
+                }
+            }
+
+            const __WARNHOME = getOptValue(optSet.zeigeWarnungHome, true);
+            const __WARNDIALOG = getOptValue(optSet.zeigeWarnungDialog, false);
+
+            if (__WARNHOME || __WARNDIALOG) {
+                const __WARN = getOptValue(optSet.zeigeWarnung, true);
+                const __WARNMONAT = getOptValue(optSet.zeigeWarnungMonat, true);
+                const __ZIEHANZ = getOptValue(optSet.ziehAnz, []);
+                const __INDEX = parseInt(__CURRZAT / 6);
+                const __REST = 5 - (__CURRZAT % 6);
+                const __ANZAHL = __ZIEHANZ[__INDEX];
+
+                if (__ANZAHL > 0) {
+                    const __MSG = { };
+
+                    __MSG.text = "ZAT " + ((__INDEX + 1) * 6) + ' ' + ((__ANZAHL > 1) ? "m\xFCssen " + __ANZAHL : "muss einer") + " deiner Jugendspieler in das Profiteam \xFCbernommen werden!";
+
+                    if (__WARNMONAT && (__REST > 0)) {
+                        __MSG.label = "Warnung";
+                        __MSG.when = "Bis zur n\xE4chsten Abrechnung am ";
+                    } else if ((__WARN || __WARNMONAT) && (__REST === 0)) {
+                        __MSG.label = "LETZTE WARNUNG VOR DER ABRECHNUNG";
+                        __MSG.when = "Bis zum n\xE4chsten ";
+                    }
+
+                    if (__MSG.when) {
+                        if (__WARNHOME) {
+                            const __ANCHOR = getTable(0, 'tbody');
+
+                            __ANCHOR.innerHTML += "<tr><tr>&nbsp;</tr><td class='STU'><b><a href='ju.php'>" + __MSG.label + ": " + __MSG.when + __MSG.text + "</a></b></td></tr><tr>&nbsp;</tr>";
+                        }
+                        if (__WARNDIALOG && (__REST === 0)) {
+                            showAlert(__MSG.label, __MSG.when + __MSG.text);
+                        }
+                    }
                 }
             }
         });
@@ -5808,8 +5931,13 @@ function procOptionen() {
                             'hideMenu'    : true,
                             'getDonation' : true,
                             'showForm'    : {
-                                                'foerderung'    : true,
-                                                'showForm'      : true
+                                                'foerderung'         : true,
+                                                'zeigeWarnung'       : true,
+                                                'zeigeWarnungMonat'  : true,
+                                                'zeigeWarnungHome'   : true,
+                                                'zeigeWarnungDialog' : true,
+                                                'ziehAnz'            : true,
+                                                'showForm'           : true
                                             }
         });
 }
@@ -5851,6 +5979,10 @@ function procTeamuebersicht() {
                                                    'team'               : true,
                                                    'zeigeJahrgang'      : true,
                                                    'zeigeUxx'           : true,
+                                                   'zeigeWarnung'       : true,
+                                                   'zeigeWarnungMonat'  : true,
+                                                   'zeigeWarnungHome'   : true,
+                                                   'zeigeWarnungDialog' : true,
                                                    'zeigeBalken'        : true,
                                                    'absBalken'          : true,
                                                    'zeigeId'            : true,
@@ -5874,6 +6006,7 @@ function procTeamuebersicht() {
                                                    'zeigeSkillEnde'     : true,
                                                    'anzahlOptiEnde'     : true,
                                                    'anzahlMWEnde'       : true,
+                                                   'ziehAnz'            : true,
                                                    'zatAges'            : true,
                                                    'trainiert'          : true,
                                                    'positions'          : true,
@@ -5964,6 +6097,7 @@ function procSpielereinzelwerte() {
         return buildOptions(__OPTCONFIG, __OPTSET, {
                                 'menuAnchor' : getTable(0, 'div'),
                                 'hideForm'   : {
+                                                   'ziehAnz'       : true,
                                                    'zatAges'       : true,
                                                    'trainiert'     : true,
                                                    'positions'     : true,
@@ -6038,6 +6172,10 @@ function procOptSkill() {
                                                    'team'               : true,
                                                    'zeigeJahrgang'      : true,
                                                    'zeigeUxx'           : true,
+                                                   'zeigeWarnung'       : true,
+                                                   'zeigeWarnungMonat'  : true,
+                                                   'zeigeWarnungHome'   : true,
+                                                   'zeigeWarnungDialog' : true,
                                                    'zeigeBalken'        : true,
                                                    'absBalken'          : true,
                                                    'zeigeId'            : true,
