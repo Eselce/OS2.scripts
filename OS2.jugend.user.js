@@ -678,6 +678,22 @@ const __OPTCONFIG = {
                    'Space'     : 0,
                    'Label'     : "Zu ziehen:"
                },
+    'ziehAnzAufstieg' : { // Datenspeicher fuer Anzahl zu ziehender Jugendspieler bis zur naechsten Abrechnung im Falle eines Aufstiegs
+                   'Name'      : "drawCountsAufstieg",
+                   'Type'      : __OPTTYPES.MC,
+                   'ValType'   : 'Number',
+                   'Hidden'    : false,
+                   'AutoReset' : false,
+                   'Permanent' : true,
+                   'FreeValue' : true,
+                   'SelValue'  : false,
+                   'Choice'    : [ 0, 1, 2, 3, 4, 5 ],
+                   'Default'   : 0,
+                   'Action'    : __OPTACTION.NXT,
+                   'Label'     : "Zu ziehen bei Aufstieg: $",
+                   'Hotkey'    : 'z',
+                   'FormLabel' : "Zu ziehen bei Aufstieg:|$"
+               },
     'zatAges' : {         // Datenspeicher fuer (gebrochene) Alter der Jugendspieler
                    'Name'      : "zatAges",
                    'Type'      : __OPTTYPES.SD,
@@ -3874,6 +3890,7 @@ __TEAMCLASS.optSelect = {
                             'tClasses'        : true,
                             'progresses'      : true,
                             'ziehAnz'         : true,
+                            'ziehAnzAufstieg' : true,
                             'zatAges'         : true,
                             'trainiert'       : true,
                             'positions'       : true,
@@ -4084,6 +4101,7 @@ function selectPlayerIndex(player, index, catIds) {
 // optSet: Gesetzte Optionen (und Config)
 function setPlayerData(players, optSet) {
     const __ZIEHANZ = [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ];
+    let ziehAnzAufstieg = 0;
     const __ZATAGES = [];
     const __TRAINIERT = [];
     const __POSITIONS = [];
@@ -4100,11 +4118,15 @@ function setPlayerData(players, optSet) {
 
             __ZATAGES[i] = __ZUSATZ.zatAge;
         }
+        if (players[i].isZiehAufstieg()) {
+            ziehAnzAufstieg++;
+        }
         __TRAINIERT[i] = __ZUSATZ.trainiert;
         __POSITIONS[i] = __ZUSATZ.bestPos;
     }
 
     setOpt(optSet.ziehAnz, __ZIEHANZ, false);
+    setOpt(optSet.ziehAnzAufstieg, ziehAnzAufstieg, false);
     setOpt(optSet.zatAges, __ZATAGES, false);
     setOpt(optSet.trainiert, __TRAINIERT, false);
     setOpt(optSet.positions, __POSITIONS, false);
@@ -4417,7 +4439,7 @@ Class.define(ColumnManager, Object, {
                            },  // Ende addTitles()
         'addValues'      : function(player, playerRow, color = "#FFFFFF") {
                                // Warnlevel des Spielers anpassen...
-                               const __WARNDRAW = player.warnDraw || __NOWARNDRAW;
+                               const __WARNDRAW = player.warnDraw || player.warnDrawAufstieg || __NOWARNDRAW;
                                __WARNDRAW.setWarn(this.warn, this.warnMonat);
 
                                const __IDXPRI = getIdxPriSkills(player.getPos());
@@ -4680,8 +4702,11 @@ Class.define(PlayerRecord, Object, {
 
                                       // Objekte fuer die Verwaltung der Ziehwarnungen...
                                       this.warnDraw = undefined;
+                                      this.warnDrawAufstieg = undefined;
                                       if (this.currZAT + this.getZatLeft() < 72) {  // JG 18er
                                           this.warnDraw = new WarnDrawPlayer(this.getZatLeft(), getColor('STU'));  // rot
+                                      } else if (this.getZatLeft() + this.currZAT < 2 * 72) {  // JG 17er
+                                          this.warnDrawAufstieg = new WarnDrawPlayer(this.getZatLeft(), getColor('OMI'));  // magenta
                                       }
                                   },  // Ende this.initPlayer()
         'setSkills'             : function(skills) {
@@ -4790,6 +4815,9 @@ Class.define(PlayerRecord, Object, {
                                       //const __INDEX = parseInt(__RESTZAT / 6 + 1) - 1;  // Lfd. Nummer des Abrechnungsmonats (0-basiert)
 
                                       return (this.warnDraw && this.warnDraw.calcZiehIndex(this.currZAT));
+                                  },
+        'isZiehAufstieg'        : function() {
+                                      return (this.warnDrawAufstieg && this.warnDrawAufstieg.isZiehAufstieg(this.getGeb()));
                                   },
         'getAge'                : function(when = this.__TIME.now) {
                                       if (this.mwFormel === this.__MWFORMEL.alt) {
@@ -5045,6 +5073,9 @@ Class.define(WarnDrawPlayer, Object, {
 
                                   return __INDEX;
                               },
+        'isZiehAufstieg'    : function(geb) {
+                                  return (geb < 72);
+                              },
         'mustDraw'          : function() {
                                   return ((this.warn || this.warnMonth) && (this.zatLeft < this.__ZATWARNVORLAUF));
                               },
@@ -5158,6 +5189,39 @@ Object.defineProperty(WarnDrawMessage.prototype, 'innerHTML', {
         get : function() {
                   return this.getTopHTML() + "<tr><td" + this.getColor() + "><b><a href='" + this.getLink() + "'>" + this.label + ": " + this.when + this.text + "</a></b></td></tr>" + this.getBottomHTML();
               }
+    });
+
+// Klasse WarnDrawMessageAufstieg *****************************************************************
+
+function WarnDrawMessageAufstieg(optSet, currZAT) {
+    'use strict';
+
+    WarnDrawMessage.call(this, optSet, currZAT);
+}
+
+Class.define(WarnDrawMessageAufstieg, WarnDrawMessage, {
+        'configureZat'      : function() {
+                                  const __ZIEHANZAUFSTIEG = getOptValue(this.optSet.ziehAnzAufstieg, 0);
+                                  const __INDEX = parseInt(this.currZAT / 6);
+
+                                  this.abrZAT = (__INDEX + 1) * 6;
+                                  this.rest   = 5 - (this.currZAT % 6);
+                                  this.anzahl = ((this.currZAT + this.__ZATMONATVORLAUF > 72 - this.__ZATWARNVORLAUF) ? __ZIEHANZAUFSTIEG : 0);
+
+                                  this.warnDialog = false;     // kein Dialog fuer Aufstiegswarnung
+                                  this.warnMonat = this.warn;  // nur im letzten Monat der Saison! 
+                              },
+        'createText'        : function() {
+                                  return "ZAT " + this.abrZAT + " ist im Falle eines Aufstiegs f\xFCr " + ((this.anzahl > 1) ? "" + this.anzahl : "einen") +
+                                         " deiner Jugendspieler m\xF6glicherweise die letzte Chance, " + ((this.anzahl > 1) ? " diese noch vor ihrem" : "ihn noch vor seinem") +
+                                         " Geburtstag in der n\xE4chsten Saison in das Profiteam zu \xFCbernehmen!";
+                              },
+        'getTopHTML'        : function() {
+                                  return "";  // kein Vorschub vor der Zeile
+                              },
+        'getColor'          : function() {
+                                  return " class='OMI'";  // magenta
+                              }
     });
 
 // Ende Hilfs-Klassen *****************************************************************
