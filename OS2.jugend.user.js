@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         OS2.jugend
 // @namespace    http://os.ongapo.com/
-// @version      0.70
+// @version      0.71
 // @copyright    2013+
 // @author       Sven Loges (SLC) / Andreas Eckes (Strindheim BK)
 // @description  Jugendteam-Script fuer Online Soccer 2.0
@@ -516,8 +516,8 @@ const __OPTCONFIG = {
                    'ValType'   : 'Number',
                    'FreeValue' : true,
                    'SelValue'  : false,
-                   'Choice'    : [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19 ],
-                   'Default'   : 12,
+                   'Choice'    : [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25 ],
+                   'Default'   : 16,
                    'Action'    : __OPTACTION.NXT,
                    'Label'     : "Saison: $",
                    'Hotkey'    : 'a',
@@ -3867,18 +3867,18 @@ const __TEAMCLASS = new TeamClassification();
 
 // Optionen mit Daten, die ZAT- und Team-bezogen gemerkt werden...
 __TEAMCLASS.optSelect = {
-                            'datenZat'     : true,
-                            'oldDatenZat'  : true,
-                            'fingerprints' : true,
-                            'birthdays'    : true,
-                            'tClasses'     : true,
-                            'progresses'   : true,
-                            'ziehAnz'      : true,
-                            'zatAges'      : true,
-                            'trainiert'    : true,
-                            'positions'    : true,
-                            'skills'       : true,
-                            'foerderung'   : true
+                            'datenZat'        : true,
+                            'oldDatenZat'     : true,
+                            'fingerprints'    : true,
+                            'birthdays'       : true,
+                            'tClasses'        : true,
+                            'progresses'      : true,
+                            'ziehAnz'         : true,
+                            'zatAges'         : true,
+                            'trainiert'       : true,
+                            'positions'       : true,
+                            'skills'          : true,
+                            'foerderung'      : true
                         };
 
 // Gibt die Teamdaten zurueck und aktualisiert sie ggfs. in der Option
@@ -4083,7 +4083,6 @@ function selectPlayerIndex(player, index, catIds) {
 // players: Array von PlayerRecord mit den Spielerdaten
 // optSet: Gesetzte Optionen (und Config)
 function setPlayerData(players, optSet) {
-    const __AKTZAT = getOptValue(optSet.aktuellerZat);
     const __ZIEHANZ = [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ];
     const __ZATAGES = [];
     const __TRAINIERT = [];
@@ -4091,10 +4090,9 @@ function setPlayerData(players, optSet) {
 
     for (let i = 0; i < players.length; i++) {
         const __ZUSATZ = players[i].calcZusatz();
-        const __RESTZAT = players[i].getZatAge(players[i].__TIME.end) - __ZUSATZ.zatAge + __AKTZAT;
 
         if (__ZUSATZ.zatAge !== undefined) {  // braucht Geburtstag fuer gueltige Werte!
-            const __INDEX = parseInt(__RESTZAT / 6 + 1) - 1;  // Lfd. Nummer des Abrechnungsmonats (0-basiert)
+            const __INDEX = players[i].calcZiehIndex();  // Lfd. Nummer des Abrechnungsmonats (0-basiert)
 
             if ((__INDEX >= 0) && (__INDEX < __ZIEHANZ.length)) {
                 __ZIEHANZ[__INDEX]++;
@@ -4418,10 +4416,12 @@ Class.define(ColumnManager, Object, {
                                }
                            },  // Ende addTitles()
         'addValues'      : function(player, playerRow, color = "#FFFFFF") {
+                               // Warnlevel des Spielers anpassen...
+                               const __WARNDRAW = player.warnDraw || __NOWARNDRAW;
+                               __WARNDRAW.setWarn(this.warn, this.warnMonat);
+
                                const __IDXPRI = getIdxPriSkills(player.getPos());
-                               const __COLALERT = getColor('STU');  // rot
-                               const __MUSTDRAW = ((this.warn || this.warnMonth) && (player.zatLeft < 1));
-                               const __COLOR = (__MUSTDRAW ? __COLALERT : player.isGoalie ? getColor('TOR') : color);
+                               const __COLOR = __WARNDRAW.getColor(player.isGoalie ? getColor('TOR') : color); // Angepasst an Ziehwarnung
                                const __POS1COLOR = getColor((player.getPosPercent() > 99.99) ? 'LEI' : player.getPos());
                                const __OSBLAU = getColor("");
 
@@ -4461,8 +4461,8 @@ Class.define(ColumnManager, Object, {
                                } else if (this.alter) {
                                    this.addAndFillCell(playerRow, player.getAge(), __COLOR, null, 2);
                                }
-                               if (__MUSTDRAW || (this.warnMonth && (player.zatLeft < 6))) {  // Abrechnungszeitraum vor dem letztmoeglichen Ziehen...
-                                   formatCell(playerRow.cells[this.colIdx.Age], true, __COLALERT, null, 1.0);
+                               if (__WARNDRAW.monthDraw()) {  // Abrechnungszeitraum vor dem letztmoeglichen Ziehen...
+                                   formatCell(playerRow.cells[this.colIdx.Age], true, __WARNDRAW.colAlert, null, 1.0);
                                }
                                if (this.fix) {
                                    this.addAndFillCell(playerRow, player.getFixSkills(), __COLOR, null, 0);
@@ -4677,6 +4677,12 @@ Class.define(PlayerRecord, Object, {
                                               // keine Daten
                                           }
                                       }
+
+                                      // Objekte fuer die Verwaltung der Ziehwarnungen...
+                                      this.warnDraw = undefined;
+                                      if (this.currZAT + this.getZatLeft() < 72) {  // JG 18er
+                                          this.warnDraw = new WarnDrawPlayer(this.getZatLeft(), getColor('STU'));  // rot
+                                      }
                                   },  // Ende this.initPlayer()
         'setSkills'             : function(skills) {
                                       // Berechnet die Opti-Werte, sortiert das Positionsfeld und berechnet die Einzelskills mit Ende 18
@@ -4778,6 +4784,12 @@ Class.define(PlayerRecord, Object, {
                                       }
 
                                       return this.zatLeft;
+                                  },
+        'calcZiehIndex'         : function() {
+                                      //const __RESTZAT = this.getZatAge(this.__TIME.end) - this.getZatAge() + this.currZAT;
+                                      //const __INDEX = parseInt(__RESTZAT / 6 + 1) - 1;  // Lfd. Nummer des Abrechnungsmonats (0-basiert)
+
+                                      return (this.warnDraw && this.warnDraw.calcZiehIndex(this.currZAT));
                                   },
         'getAge'                : function(when = this.__TIME.now) {
                                       if (this.mwFormel === this.__MWFORMEL.alt) {
@@ -4994,6 +5006,161 @@ Class.define(PlayerRecord, Object, {
                                       return ((__RET.length === 1) ? __RET[0] : undefined);
                                   }
     });
+
+// Klasse WarnDrawPlayer *****************************************************************
+
+function WarnDrawPlayer(zatLeft, alertColor) {
+    'use strict';
+
+    this.zatLeft = zatLeft;
+
+    if (this.zatLeft !== undefined) {
+        // Default Warnlevel...
+        this.setWarn(true, true);
+        this.colAlert = alertColor || this.alertColor();
+    } else {
+        // Kein Warnlevel...
+        this.setWarn(false, false);
+        this.colAlert = undefined;
+    }
+}
+
+Class.define(WarnDrawPlayer, Object, {
+        '__MONATEBISABR'    : 1,
+        '__ZATWARNVORLAUF'  : 1,
+        '__ZATMONATVORLAUF' : 6,
+        'setWarn'           : function(warn, warnMonat) {
+                                  this.warn = warn;
+                                  this.warnMonat = warnMonat;
+                              },
+        'alertColor'        : function() {
+                                  return getColor('STU');  // rot
+                              },
+        'getColor'          : function(color) {
+                                  return ((this.mustDraw() && this.colAlert) ? this.colAlert : color);
+                              },
+        'calcZiehIndex'     : function(currZAT) {
+                                  const __RESTZAT = this.zatLeft + currZAT;
+                                  const __INDEX = parseInt(__RESTZAT / 6 + 1) - this.__MONATEBISABR;  // Lfd. Nummer des Abrechnungsmonats (0-basiert)
+
+                                  return __INDEX;
+                              },
+        'mustDraw'          : function() {
+                                  return ((this.warn || this.warnMonth) && (this.zatLeft < this.__ZATWARNVORLAUF));
+                              },
+        'monthDraw'         : function() {
+                                  return (this.mustDraw() || (this.warnMonth && (this.zatLeft < this.__ZATMONATVORLAUF)));  // Abrechnungszeitraum vor dem letztmoeglichen Ziehen...
+                              }
+    });
+
+const __NOWARNDRAW = new WarnDrawPlayer(undefined, undefined);  // inaktives Objekt
+
+// Klasse WarnDrawMessage *****************************************************************
+
+function WarnDrawMessage(optSet, currZAT) {
+    'use strict';
+
+    this.label = undefined;
+    this.when = undefined;
+    this.text = undefined;
+
+    this.optSet = optSet;
+
+    this.warn = getOptValue(this.optSet.zeigeWarnung, true);
+    this.warnMonat = getOptValue(this.optSet.zeigeWarnungMonat, true);
+    this.warnHome = getOptValue(this.optSet.zeigeWarnungHome, true);
+    this.warnDialog = getOptValue(this.optSet.zeigeWarnungDialog, false);
+
+    this.setZat(currZAT);
+
+    this.createMessage();
+}
+
+Class.define(WarnDrawMessage, Object, {
+        '__ZATWARNVORLAUF'  : 1,
+        '__ZATMONATVORLAUF' : 6,
+        'setZat'            : function(currZAT) {
+                                  this.currZAT = currZAT;
+
+                                  if (currZAT === undefined) {
+                                      this.abrZAT = undefined;
+                                      this.rest   = undefined;
+                                      this.anzahl = undefined;
+                                  } else {
+                                      this.configureZat();
+                                  }
+                              },
+        'configureZat'      : function() {
+                                  const __ZIEHANZ = getOptValue(this.optSet.ziehAnz, []);
+                                  const __INDEX = parseInt(this.currZAT / 6);
+
+                                  this.abrZAT = (__INDEX + 1) * 6;
+                                  this.rest   = 5 - (this.currZAT % 6);
+                                  this.anzahl = __ZIEHANZ[__INDEX];
+                              },
+        'createText'        : function() {
+                                  return "ZAT " + this.abrZAT + ' ' + ((this.anzahl > 1) ? "m\xFCssen " + this.anzahl : "muss einer") +
+                                         " deiner Jugendspieler in das Profiteam \xFCbernommen werden, ansonsten verschwinde" + ((this.anzahl > 1) ? "n sie" : "t er") + '!';
+                              },
+        'createMessage'     : function() {
+                                  if (this.warnHome || this.warnDialog) {
+                                      if (this.anzahl > 0) {
+                                          this.text = this.createText();
+
+                                          if (this.warnMonat && (this.rest > 0)) {
+                                              this.label = "Warnung";
+                                              this.when = "Bis zur n\xE4chsten Abrechnung am ";
+                                          } else if ((this.warn || this.warnMonat) && (this.rest === 0)) {
+                                              this.label = "LETZTE WARNUNG VOR DER ABRECHNUNG";
+                                              this.when = "Bis zum n\xE4chsten ";
+                                          }
+                                      }
+                                  }
+                              },
+        'hasMessage'        : function() {
+                                  return !! this.when;
+                              },
+        'hasHome'           : function() {
+                                  return this.warnHome;
+                              },
+        'hasDialog'         : function() {
+                                  return (this.warnDialog && (this.rest === 0));
+                              },
+        'showMessage'       : function(anchor) {
+                                  if (this.hasMessage()) {
+                                      if (this.hasHome()) {
+                                          anchor.innerHTML += this.innerHTML;
+                                      }
+                                  }
+                              },
+        'showDialog'        : function(dlgFun) {
+                                  if (this.hasMessage()) {
+                                      if (this.hasDialog()) {
+                                          dlgFun(this.label, this.when + this.text);
+                                      }
+                                  }
+                              },
+        'getLink'           : function() {
+                                  return './ju.php';
+                              },
+        'getTopHTML'        : function() {
+                                  return "<tr>&nbsp;</tr>";
+                              },
+        'getBottomHTML'     : function() {
+                                  return "<tr>&nbsp;</tr>";
+                              },
+        'getColor'          : function() {
+                                  return " class='STU'";  // rot
+                              }
+    });
+
+Object.defineProperty(WarnDrawMessage.prototype, 'innerHTML', {
+        get : function() {
+                  return this.getTopHTML() + "<tr><td" + this.getColor() + "><b><a href='" + this.getLink() + "'>" + this.label + ": " + this.when + this.text + "</a></b></td></tr>" + this.getBottomHTML();
+              }
+    });
+
+// Ende Hilfs-Klassen *****************************************************************
 
 // Funktionen fuer die HTML-Seite *******************************************************
 
@@ -5808,14 +5975,13 @@ function procHaupt() {
 //                            'menuAnchor' : getTable(0, 'div'),
                             'hideMenu'   : true,
                             'showForm'   : {
-                                'zeigeWarnung'       : true,
-                                'zeigeWarnungMonat'  : true,
-                                'zeigeWarnungHome'   : true,
-                                'zeigeWarnungDialog' : true,
-                                'ziehAnz'            : true,
-                                'showForm'           : true
-                            }
-
+                                               'zeigeWarnung'       : true,
+                                               'zeigeWarnungMonat'  : true,
+                                               'zeigeWarnungHome'   : true,
+                                               'zeigeWarnungDialog' : true,
+                                               'ziehAnz'            : true,
+                                               'showForm'           : true
+                                           }
                         }).then(async optSet => {
             const __ZATCELL = getProp(getProp(getRows(0), 2), 'cells', { })[0];
             const __NEXTZAT = getZATNrFromCell(__ZATCELL);  // "Der naechste ZAT ist ZAT xx und ..."
@@ -5848,42 +6014,14 @@ function procHaupt() {
                 }
             }
 
-            const __WARNHOME = getOptValue(optSet.zeigeWarnungHome, true);
-            const __WARNDIALOG = getOptValue(optSet.zeigeWarnungDialog, false);
+            const __ZAT = __CURRZAT;
+            const __MSG = new WarnDrawMessage(optSet, __ZAT);
+            const __MSGAUFSTIEG = new WarnDrawMessageAufstieg(optSet, __ZAT);
+            const __ANCHOR = getTable(0, 'tbody');
 
-            if (__WARNHOME || __WARNDIALOG) {
-                const __WARN = getOptValue(optSet.zeigeWarnung, true);
-                const __WARNMONAT = getOptValue(optSet.zeigeWarnungMonat, true);
-                const __ZIEHANZ = getOptValue(optSet.ziehAnz, []);
-                const __INDEX = parseInt(__CURRZAT / 6);
-                const __REST = 5 - (__CURRZAT % 6);
-                const __ANZAHL = __ZIEHANZ[__INDEX];
-
-                if (__ANZAHL > 0) {
-                    const __MSG = { };
-
-                    __MSG.text = "ZAT " + ((__INDEX + 1) * 6) + ' ' + ((__ANZAHL > 1) ? "m\xFCssen " + __ANZAHL : "muss einer") + " deiner Jugendspieler in das Profiteam \xFCbernommen werden!";
-
-                    if (__WARNMONAT && (__REST > 0)) {
-                        __MSG.label = "Warnung";
-                        __MSG.when = "Bis zur n\xE4chsten Abrechnung am ";
-                    } else if ((__WARN || __WARNMONAT) && (__REST === 0)) {
-                        __MSG.label = "LETZTE WARNUNG VOR DER ABRECHNUNG";
-                        __MSG.when = "Bis zum n\xE4chsten ";
-                    }
-
-                    if (__MSG.when) {
-                        if (__WARNHOME) {
-                            const __ANCHOR = getTable(0, 'tbody');
-
-                            __ANCHOR.innerHTML += "<tr><tr>&nbsp;</tr><td class='STU'><b><a href='ju.php'>" + __MSG.label + ": " + __MSG.when + __MSG.text + "</a></b></td></tr><tr>&nbsp;</tr>";
-                        }
-                        if (__WARNDIALOG && (__REST === 0)) {
-                            showAlert(__MSG.label, __MSG.when + __MSG.text);
-                        }
-                    }
-                }
-            }
+            __MSG.showMessage(__ANCHOR);
+            __MSG.showDialog(showAlert);
+            __MSGAUFSTIEG.showMessage(__ANCHOR);
         });
 }
 
