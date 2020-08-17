@@ -4016,6 +4016,8 @@ function init(playerRows, optSet, colIdx, offsetUpper = 1, offsetLower = 0, page
                 __NEWPLAYER.setZusatz(__ZATAGES[__IDX], __TRAINIERT[__IDX], __POSITIONS[__IDX]);
             }
 
+            __NEWPLAYER.createWarnDraw();
+
             __PLAYERS[j++] = __NEWPLAYER;
         }
     }
@@ -4647,6 +4649,10 @@ function PlayerRecord(land, age, isGoalie, saison, currZAT, donation) {
     // this.trainiert: Anzahl der erfolgreichen Trainingspunkte
     // indirekt this.zatAge und this.bestPos
 
+    // in this.createWarnDraw() definiert:
+    // this.warnDraw: Behandlung von Warnungen Ende 18
+    // this.warnDrawAufstieg: Behandlung von Warnungen bei Aufstieg
+
     // in this.getPos() definiert:
     // this.bestPos: erster (bester) Positionstext
 }
@@ -4699,7 +4705,8 @@ Class.define(PlayerRecord, Object, {
                                               // keine Daten
                                           }
                                       }
-
+                                  },  // Ende this.initPlayer()
+        'createWarnDraw'        : function() {
                                       // Objekte fuer die Verwaltung der Ziehwarnungen...
                                       this.warnDraw = undefined;
                                       this.warnDrawAufstieg = undefined;
@@ -4708,7 +4715,7 @@ Class.define(PlayerRecord, Object, {
                                       } else if (this.getZatLeft() + this.currZAT < 2 * 72) {  // JG 17er
                                           this.warnDrawAufstieg = new WarnDrawPlayer(this.getZatLeft(), getColor('OMI'));  // magenta
                                       }
-                                  },  // Ende this.initPlayer()
+                                  },  // Ende this.createWarnDraw()
         'setSkills'             : function(skills) {
                                       // Berechnet die Opti-Werte, sortiert das Positionsfeld und berechnet die Einzelskills mit Ende 18
                                      this.skills = skills;
@@ -4796,8 +4803,12 @@ Class.define(PlayerRecord, Object, {
         'getZatAge'             : function(when = this.__TIME.now) {
                                       if (when === this.__TIME.end) {
                                           return (18 - 12) * 72 - 1;  // (max.) Trainings-ZATs bis Ende 18
-                                      } else {
+                                      } else if (this.zatAge !== undefined) {
                                           return this.zatAge;
+                                      } else {
+                                          __LOG[4]("Empty getZatAge()");
+
+                                          return NaN;
                                       }
                                   },
         'getZatDone'            : function(when = this.__TIME.now) {
