@@ -100,7 +100,7 @@ const __OPTCONFIG = {
                    'AltHotkey' : 'u',
                    'FormLabel' : "Jahrg\xE4nge U13 bis U18"
                },
-    'zeigeWarnung' : {    // Auswahl, ob eine Warnung in der Uebersicht erscheint, wenn Talente gezogen werden sollten
+    'zeigeWarnung' : {    // Auswahl, ob eine Warnung erscheint, wenn Talente gezogen werden sollten
                    'Name'      : "showWarning",
                    'Type'      : __OPTTYPES.SW,
                    'Default'   : true,
@@ -111,7 +111,7 @@ const __OPTCONFIG = {
                    'AltHotkey' : 'Z',
                    'FormLabel' : "Ziehwarnung"
                },
-    'zeigeWarnungMonat' : {  // Auswahl, ob eine Warnung in der Uebersicht erscheint, wenn zum naechsten Abrechnungs-ZAT Talente gezogen werden sollten
+    'zeigeWarnungMonat' : {  // Auswahl, ob eine Warnung erscheint, wenn zum naechsten Abrechnungs-ZAT Talente gezogen werden sollten
                    'Name'      : "showWarningMonth",
                    'Type'      : __OPTTYPES.SW,
                    'Default'   : true,
@@ -122,7 +122,7 @@ const __OPTCONFIG = {
                    'AltHotkey' : 'Z',
                    'FormLabel' : "Ziehwarnung Monat"
                },
-    'zeigeWarnungHome' : {  // Auswahl, ob eine extra Meldung im Managerbuero erscheint, wenn Talente gezogen werden sollten
+    'zeigeWarnungHome' : {  // Auswahl, ob eine Meldung im Managerbuero erscheint, wenn Talente gezogen werden sollten
                    'Name'      : "showWarningHome",
                    'Type'      : __OPTTYPES.SW,
                    'Default'   : true,
@@ -133,7 +133,7 @@ const __OPTCONFIG = {
                    'AltHotkey' : 'z',
                    'FormLabel' : "Ziehwarnung B\xFCro"
                },
-    'zeigeWarnungDialog' : {  // Auswahl, ob die extra Meldung im Managerbuero als Dialog erscheinen soll
+    'zeigeWarnungDialog' : {  // Auswahl, ob die Meldung im Managerbuero als Dialog erscheinen soll
                    'Name'      : "showWarningDialog",
                    'Type'      : __OPTTYPES.SW,
                    'Default'   : false,
@@ -143,6 +143,28 @@ const __OPTCONFIG = {
                    'AltLabel'  : "Ziehwarnung B\xFCro als Textmeldung",
                    'AltHotkey' : 'z',
                    'FormLabel' : "Ziehwarnung B\xFCro Dialog"
+               },
+    'zeigeWarnungAufstieg' : {  // Auswahl, ob eine Warnung in der Uebersicht erscheint, wenn Talente nach Aufstieg nicht mehr gezogen werden koennen
+                   'Name'      : "showWarningAufstieg",
+                   'Type'      : __OPTTYPES.SW,
+                   'Default'   : true,
+                   'Action'    : __OPTACTION.NXT,
+                   'Label'     : "Ziehwarnung Aufstieg ein",
+                   'Hotkey'    : 'ä',
+                   'AltLabel'  : "Ziehwarnung Aufstieg aus",
+                   'AltHotkey' : 'ä',
+                   'FormLabel' : "Ziehwarnung Aufstieg"
+               },
+    'zeigeWarnungLegende' : {  // Auswahl, ob eine extra Meldung in Teamuebersicht erscheint, die dort als Legende dient
+                   'Name'      : "showWarningLegende",
+                   'Type'      : __OPTTYPES.SW,
+                   'Default'   : true,
+                   'Action'    : __OPTACTION.NXT,
+                   'Label'     : "Ziehwarnung Legende ein",
+                   'Hotkey'    : 'L',
+                   'AltLabel'  : "Ziehwarnung Legende aus",
+                   'AltHotkey' : 'L',
+                   'FormLabel' : "Ziehwarnung Legende"
                },
     'zeigeBalken' : {     // Spaltenauswahl fuer den Qualitaetsbalken des Talents (true = anzeigen, false = nicht anzeigen)
                    'Name'      : "showRatioBar",
@@ -666,7 +688,7 @@ const __OPTCONFIG = {
     'ziehAnz' : {         // Datenspeicher fuer Anzahl zu ziehender Jugendspieler bis zur naechsten Abrechnung
                    'Name'      : "drawCounts",
                    'Type'      : __OPTTYPES.SD,
-                   'Hidden'    : false,
+                   'Hidden'    : true,
                    'Serial'    : true,
                    'AutoReset' : false,
                    'Permanent' : true,
@@ -682,7 +704,7 @@ const __OPTCONFIG = {
                    'Name'      : "drawCountsAufstieg",
                    'Type'      : __OPTTYPES.MC,
                    'ValType'   : 'Number',
-                   'Hidden'    : false,
+                   'Hidden'    : true,
                    'AutoReset' : false,
                    'Permanent' : true,
                    'FreeValue' : true,
@@ -3978,6 +4000,8 @@ function init(playerRows, optSet, colIdx, offsetUpper = 1, offsetLower = 0, page
     const __AKTZAT = getOptValue(optSet.aktuellerZat);
     const __GEALTERT = ((__AKTZAT >= 72) ? (getIntFromHTML(playerRows[playerRows.length - offsetLower - 1].cells, colIdx.Age) < 13) : false);
     const __CURRZAT = (__GEALTERT ? 0 : __AKTZAT);
+    const __LGNR = __TEAMCLASS.team.LgNr;
+    const __KLASSE = (__LGNR > 1) ? (__LGNR > 3) ? 3 : 2 : 1;
     const __DONATION = getOptValue(optSet.foerderung);
     const __BIRTHDAYS = getOptValue(optSet.birthdays, []);
     const __TCLASSES = getOptValue(optSet.tClasses, []);
@@ -4002,6 +4026,8 @@ function init(playerRows, optSet, colIdx, offsetUpper = 1, offsetLower = 0, page
             const __LAND = getStringFromHTML(__CELLS, colIdx.Land);
             const __AGE = getIntFromHTML(__CELLS, colIdx.Age);
             const __ISGOALIE = isGoalieFromHTML(__CELLS, colIdx.Age);
+            const __AKTION = getElementFromHTML(__CELLS, colIdx.Akt);
+
             const __NEWPLAYER = new PlayerRecord(__LAND, __AGE, __ISGOALIE, __SAISON, __CURRZAT, __DONATION);
 
             __NEWPLAYER.initPlayer(__DATA[0], j, __ISSKILLPAGE);
@@ -4016,7 +4042,7 @@ function init(playerRows, optSet, colIdx, offsetUpper = 1, offsetLower = 0, page
                 __NEWPLAYER.setZusatz(__ZATAGES[__IDX], __TRAINIERT[__IDX], __POSITIONS[__IDX]);
             }
 
-            __NEWPLAYER.createWarnDraw();
+            __NEWPLAYER.createWarnDraw(__AKTION, __KLASSE);
 
             __PLAYERS[j++] = __NEWPLAYER;
         }
@@ -4102,7 +4128,7 @@ function selectPlayerIndex(player, index, catIds) {
 // players: Array von PlayerRecord mit den Spielerdaten
 // optSet: Gesetzte Optionen (und Config)
 function setPlayerData(players, optSet) {
-    const __ZIEHANZ = [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ];
+    const __ZIEHANZAHL = [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ];
     let ziehAnzAufstieg = 0;
     const __ZATAGES = [];
     const __TRAINIERT = [];
@@ -4114,8 +4140,8 @@ function setPlayerData(players, optSet) {
         if (__ZUSATZ.zatAge !== undefined) {  // braucht Geburtstag fuer gueltige Werte!
             const __INDEX = players[i].calcZiehIndex();  // Lfd. Nummer des Abrechnungsmonats (0-basiert)
 
-            if ((__INDEX >= 0) && (__INDEX < __ZIEHANZ.length)) {
-                __ZIEHANZ[__INDEX]++;
+            if ((__INDEX >= 0) && (__INDEX < __ZIEHANZAHL.length)) {
+                __ZIEHANZAHL[__INDEX]++;
             }
 
             __ZATAGES[i] = __ZUSATZ.zatAge;
@@ -4127,7 +4153,7 @@ function setPlayerData(players, optSet) {
         __POSITIONS[i] = __ZUSATZ.bestPos;
     }
 
-    setOpt(optSet.ziehAnz, __ZIEHANZ, false);
+    setOpt(optSet.ziehAnz, __ZIEHANZAHL, false);
     setOpt(optSet.ziehAnzAufstieg, ziehAnzAufstieg, false);
     setOpt(optSet.zatAges, __ZATAGES, false);
     setOpt(optSet.trainiert, __TRAINIERT, false);
@@ -4259,6 +4285,8 @@ function ColumnManager(optSet, colIdx, showCol) {
     this.warnMonth = (__ZATAGES && getValue(__SHOWCOL.zeigeWarnungMonat, __SHOWALL) && getOptValue(optSet.zeigeWarnungMonat));
     this.warnHome = (__ZATAGES && getValue(__SHOWCOL.zeigeWarnungHome, __SHOWALL) && getOptValue(optSet.zeigeWarnungHome));
     this.warnDialog = (__ZATAGES && getValue(__SHOWCOL.zeigeWarnungDialog, __SHOWALL) && getOptValue(optSet.zeigeWarnungDialog));
+    this.warnAufstieg = (__ZATAGES && getValue(__SHOWCOL.zeigeWarnungAufstieg, __SHOWALL) && getOptValue(optSet.zeigeWarnungAufstieg));
+    this.warnLegende = (__ZATAGES && getValue(__SHOWCOL.zeigeWarnungLegende, __SHOWALL) && getOptValue(optSet.zeigeWarnungLegende));
     this.bar = (__PROJECTION && getValue(__SHOWCOL.zeigeBalken, __SHOWALL) && getOptValue(optSet.zeigeBalken));
     this.barAbs = getOptValue(optSet.absBalken);
     this.donor = getOptValue(optSet.foerderung);
@@ -4442,7 +4470,7 @@ Class.define(ColumnManager, Object, {
         'addValues'      : function(player, playerRow, color = "#FFFFFF") {
                                // Warnlevel des Spielers anpassen...
                                const __WARNDRAW = player.warnDraw || player.warnDrawAufstieg || __NOWARNDRAW;
-                               __WARNDRAW.setWarn(this.warn, this.warnMonat);
+                               __WARNDRAW.setWarn(this.warn, this.warnMonth, this.warnAufstieg);
 
                                const __IDXPRI = getIdxPriSkills(player.getPos());
                                const __COLOR = __WARNDRAW.getColor(player.isGoalie ? getColor('TOR') : color); // Angepasst an Ziehwarnung
@@ -4706,14 +4734,21 @@ Class.define(PlayerRecord, Object, {
                                           }
                                       }
                                   },  // Ende this.initPlayer()
-        'createWarnDraw'        : function() {
+        'createWarnDraw'        : function(ziehmich = null, klasse = 1) {  // ziehmich: input Element zum Ziehen; klasse: Spielklasse 1, 2, 3
                                       // Objekte fuer die Verwaltung der Ziehwarnungen...
                                       this.warnDraw = undefined;
                                       this.warnDrawAufstieg = undefined;
-                                      if (this.currZAT + this.getZatLeft() < 72) {  // JG 18er
-                                          this.warnDraw = new WarnDrawPlayer(this.getZatLeft(), getColor('STU'));  // rot
-                                      } else if (this.getZatLeft() + this.currZAT < 2 * 72) {  // JG 17er
-                                          this.warnDrawAufstieg = new WarnDrawPlayer(this.getZatLeft(), getColor('OMI'));  // magenta
+                                      if (ziehmich) {
+                                          if (this.currZAT + this.getZatLeft() < 72) {  // JG 18er
+                                              this.warnDraw = new WarnDrawPlayer(this.getZatLeft(), getColor('STU'));  // rot
+                                              __LOG[4](this.getAge().toFixed(2), "rot");
+                                          } else if (this.getZatLeft() + this.currZAT < (klasse - 1) * 72) {
+                                              // do nothing
+                                          } else if (this.getZatLeft() + this.currZAT < klasse * 72) {  // JG 17er/16er je nach Liga 2/3
+                                              this.warnDrawAufstieg = new WarnDrawPlayer(72 /* zunaechst */, getColor('OMI'));  // magenta
+                                              this.warnDrawAufstieg.setAufstieg(this.zatGeb, this.currZAT);
+                                              __LOG[4](this.getAge().toFixed(2), "magenta");
+                                          }
                                       }
                                   },  // Ende this.createWarnDraw()
         'setSkills'             : function(skills) {
@@ -5051,15 +5086,15 @@ Class.define(PlayerRecord, Object, {
 function WarnDrawPlayer(zatLeft, alertColor) {
     'use strict';
 
-    this.zatLeft = zatLeft;
+    this.setZatLeft(zatLeft);
 
     if (this.zatLeft !== undefined) {
         // Default Warnlevel...
-        this.setWarn(true, true);
+        this.setWarn(true, true, true);
         this.colAlert = alertColor || this.alertColor();
     } else {
         // Kein Warnlevel...
-        this.setWarn(false, false);
+        this.setWarn(false, false, false);
         this.colAlert = undefined;
     }
 }
@@ -5068,9 +5103,12 @@ Class.define(WarnDrawPlayer, Object, {
         '__MONATEBISABR'    : 1,
         '__ZATWARNVORLAUF'  : 1,
         '__ZATMONATVORLAUF' : 6,
-        'setWarn'           : function(warn, warnMonat) {
-                                  this.warn = warn;
-                                  this.warnMonat = warnMonat;
+        'setZatLeft'        : function(zatLeft) {
+                                  this.zatLeft = zatLeft;
+                              },
+        'setWarn'           : function(warn, warnMonth, warnAufstieg) {
+                                  this.warn = (this.aufstieg ? warnAufstieg : warn);
+                                  this.warnMonth = warnMonth;
                               },
         'alertColor'        : function() {
                                   return getColor('STU');  // rot
@@ -5085,13 +5123,22 @@ Class.define(WarnDrawPlayer, Object, {
                                   return __INDEX;
                               },
         'isZiehAufstieg'    : function(geb) {
-                                  return (geb < 72);
+                                  return this.aufstieg && (geb < 72);
+                              },
+        'setAufstieg'       : function(geb, currZAT) {
+                                  this.aufstieg = true;
+
+                                  if (this.isZiehAufstieg(geb)) {
+                                      this.setZatLeft(72 - currZAT - this.__ZATWARNVORLAUF);
+                                  }
+
+                                  return this.zatLeft;
                               },
         'mustDraw'          : function() {
                                   return ((this.warn || this.warnMonth) && (this.zatLeft < this.__ZATWARNVORLAUF));
                               },
         'monthDraw'         : function() {
-                                  return (this.mustDraw() || (this.warnMonth && (this.zatLeft < this.__ZATMONATVORLAUF)));  // Abrechnungszeitraum vor dem letztmoeglichen Ziehen...
+                                  return (this.mustDraw() || (this.warn && (this.aufstieg || this.warnMonth) && (this.zatLeft < this.__ZATMONATVORLAUF)));  // Abrechnungszeitraum vor dem letztmoeglichen Ziehen...
                               }
     });
 
@@ -5102,25 +5149,35 @@ const __NOWARNDRAW = new WarnDrawPlayer(undefined, undefined);  // inaktives Obj
 function WarnDrawMessage(optSet, currZAT) {
     'use strict';
 
-    this.label = undefined;
-    this.when = undefined;
-    this.text = undefined;
-
     this.optSet = optSet;
 
     this.warn = getOptValue(this.optSet.zeigeWarnung, true);
-    this.warnMonat = getOptValue(this.optSet.zeigeWarnungMonat, true);
+    this.warnMonth = getOptValue(this.optSet.zeigeWarnungMonat, true);
     this.warnHome = getOptValue(this.optSet.zeigeWarnungHome, true);
     this.warnDialog = getOptValue(this.optSet.zeigeWarnungDialog, false);
+    this.warnAufstieg = getOptValue(this.optSet.zeigeWarnungAufstieg, true);
+    this.warnLegende = getOptValue(this.optSet.zeigeWarnungLegende, true);
 
-    this.setZat(currZAT);
+    this.out = {
+                   'supertag' : true,
+                   'top'      : true,
+                   'link'     : true,
+                   'label'    : true,
+                   'bottom'   : true
+               };
 
-    this.createMessage();
+    this.setOptionHome();
+
+    this.startMessage(currZAT);
 }
 
 Class.define(WarnDrawMessage, Object, {
         '__ZATWARNVORLAUF'  : 1,
         '__ZATMONATVORLAUF' : 6,
+        'startMessage'      : function(currZAT) {
+                                  this.setZat(currZAT);
+                                  this.createMessage();
+                              },
         'setZat'            : function(currZAT) {
                                   this.currZAT = currZAT;
 
@@ -5132,27 +5189,37 @@ Class.define(WarnDrawMessage, Object, {
                                       this.configureZat();
                                   }
                               },
+        'setOptionHome'     : function() {
+                                  this.warnOption = this.hasHome();
+                              },
+        'setOptionLegende'  : function() {
+                                  this.warnOption = this.hasLegende();
+                              },
         'configureZat'      : function() {
-                                  const __ZIEHANZ = getOptValue(this.optSet.ziehAnz, []);
+                                  const __ZIEHANZAHL = getOptValue(this.optSet.ziehAnz, []);
                                   const __INDEX = parseInt(this.currZAT / 6);
 
                                   this.abrZAT = (__INDEX + 1) * 6;
                                   this.rest   = 5 - (this.currZAT % 6);
-                                  this.anzahl = __ZIEHANZ[__INDEX];
+                                  this.anzahl = __ZIEHANZAHL[__INDEX];
                               },
-        'createText'        : function() {
+        'getTextMessage'    : function() {
                                   return "ZAT " + this.abrZAT + ' ' + ((this.anzahl > 1) ? "m\xFCssen " + this.anzahl : "muss einer") +
                                          " deiner Jugendspieler in das Profiteam \xFCbernommen werden, ansonsten verschwinde" + ((this.anzahl > 1) ? "n sie" : "t er") + '!';
                               },
         'createMessage'     : function() {
-                                  if (this.warnHome || this.warnDialog) {
-                                      if (this.anzahl > 0) {
-                                          this.text = this.createText();
+                                  this.label = undefined;
+                                  this.when = undefined;
+                                  this.text = undefined;
 
-                                          if (this.warnMonat && (this.rest > 0)) {
+                                  if (this.hasHome() || this.hasLegende() || this.hasDialog()) {
+                                      if (this.anzahl > 0) {
+                                          this.text = this.getTextMessage();
+
+                                          if (this.warnMonth && (this.rest > 0)) {
                                               this.label = "Warnung";
                                               this.when = "Bis zur n\xE4chsten Abrechnung am ";
-                                          } else if ((this.warn || this.warnMonat) && (this.rest === 0)) {
+                                          } else if ((this.warn || this.warnMonth) && (this.rest === 0)) {
                                               this.label = "LETZTE WARNUNG VOR DER ABRECHNUNG";
                                               this.when = "Bis zum n\xE4chsten ";
                                           }
@@ -5165,40 +5232,95 @@ Class.define(WarnDrawMessage, Object, {
         'hasHome'           : function() {
                                   return this.warnHome;
                               },
-        'hasDialog'         : function() {
-                                  return (this.warnDialog && (this.rest === 0));
+        'hasLegende'        : function() {
+                                  return this.warnLegende;
                               },
-        'showMessage'       : function(anchor) {
+        'hasOption'         : function() {
+                                  return this.warnOption;
+                              },
+        'hasDialog'         : function() {
+                                  return this.warnDialog;
+                              },
+        'showMessage'       : function(anchor, tag, appendFind = true) {  // appendFind: true = append, false = insertBefore, "..." search string = insert at find position
+                                  let ret = (anchor || { }).innerHTML;
+
                                   if (this.hasMessage()) {
-                                      if (this.hasHome()) {
-                                          anchor.innerHTML += this.innerHTML;
+                                      if (this.hasOption()) {
+                                          const __OLDHTML = ret;
+                                          const __HTML = this.getHTML(tag);
+
+                                          if ((typeof appendFind) === 'string') {
+                                              const __INDEX = __OLDHTML.indexOf(appendFind);
+                                              const __POS = (~ __INDEX) ? __INDEX : __OLDHTML.length;
+
+                                              ret = __OLDHTML.substring(0, __POS) + __HTML + __OLDHTML.substring(__POS);
+                                          } else if (appendFind) {
+                                              ret = __OLDHTML + __HTML;
+                                          } else {
+                                              ret = __HTML + __OLDHTML;
+                                          }
+
+                                          anchor.innerHTML = ret;
                                       }
                                   }
+
+                                  return ret;
                               },
         'showDialog'        : function(dlgFun) {
                                   if (this.hasMessage()) {
-                                      if (this.hasDialog()) {
+                                      if (this.hasDialog() && (this.rest === 0)) {
                                           dlgFun(this.label, this.when + this.text);
                                       }
                                   }
                               },
+        'tagText'           : function(tag, text) {
+                                  return ((tag !== undefined) ? this.getOpeningTag(tag) + text + this.getClosingTag(tag) : text);
+                              },
+        'tagParagraph'      : function(tag, text) {
+                                  return this.tagText(tag, this.tagText(this.getSubTag(tag), text));
+                              },
+        'getSubTag'         : function(tag) {
+                                  return ((tag === 'tr') ? 'td' + this.getColorTD() : ((tag === 'p') ? this.getColorTag() : undefined));
+                              },
+        'getSuperTag'       : function(tag) {
+                                  return ((tag === 'p') ? 'div' : undefined);
+                              },
+        'getOpeningTag'     : function(tag) {
+                                  return '<' + tag + '>';
+                              },
+        'getClosingTag'     : function(tag) {
+                                  const __INDEX1 = (tag ? tag.indexOf(' ') : -1);
+                                  const __INDEX2 = (tag ? tag.indexOf('=') : -1);
+                                  const __INDEX = ((~ __INDEX1) && (~ __INDEX2)) ? Math.min(__INDEX1, __INDEX2) : Math.max(__INDEX1, __INDEX2);
+                                  const __TAGNAME = ((~ __INDEX) ? tag.substring(0, __INDEX) : tag);
+
+                                  return "</" + __TAGNAME + '>';
+                              },
         'getLink'           : function() {
                                   return './ju.php';
                               },
-        'getTopHTML'        : function() {
-                                  return "<tr>&nbsp;</tr>";
+        'getTopHTML'        : function(tag) {
+                                  return this.tagParagraph(tag, "&nbsp;");
                               },
-        'getBottomHTML'     : function() {
-                                  return "<tr>&nbsp;</tr>";
+        'getBottomHTML'     : function(tag) {
+                                  return this.tagParagraph(tag, "&nbsp;");
                               },
-        'getColor'          : function() {
+        'getColorTag'       : function() {
+                                  return "color='red'";  // rot
+                              },
+        'getColorTD'        : function() {
                                   return " class='STU'";  // rot
+                              },
+        'getHTML'           : function(tag = 'p') {
+                                  return this.tagParagraph((this.out.supertag ? this.getSuperTag(tag) : undefined), (this.out.top ? this.getTopHTML(tag) : "") +
+                                         this.tagParagraph(tag, this.tagText('b', this.tagText((this.out.link ? "a href='" + this.getLink() + "'" : undefined),
+                                         (this.out.label ? this.label + ": " : "") + this.when + this.text))) + (this.out.bottom ? this.getBottomHTML(tag) : ""));
                               }
     });
 
 Object.defineProperty(WarnDrawMessage.prototype, 'innerHTML', {
         get : function() {
-                  return this.getTopHTML() + "<tr><td" + this.getColor() + "><b><a href='" + this.getLink() + "'>" + this.label + ": " + this.when + this.text + "</a></b></td></tr>" + this.getBottomHTML();
+                  return this.getHTML('p');
               }
     });
 
@@ -5208,6 +5330,11 @@ function WarnDrawMessageAufstieg(optSet, currZAT) {
     'use strict';
 
     WarnDrawMessage.call(this, optSet, currZAT);
+
+    this.out.top = false;  // kein Vorschub vor der Zeile
+
+    this.warn &&= this.warnAufstieg;  // kann man ausschalten
+    this.startMessage(currZAT);  // 2. Aufruf (zur Korrektur)
 }
 
 Class.define(WarnDrawMessageAufstieg, WarnDrawMessage, {
@@ -5220,17 +5347,17 @@ Class.define(WarnDrawMessageAufstieg, WarnDrawMessage, {
                                   this.anzahl = ((this.currZAT + this.__ZATMONATVORLAUF > 72 - this.__ZATWARNVORLAUF) ? __ZIEHANZAUFSTIEG : 0);
 
                                   this.warnDialog = false;     // kein Dialog fuer Aufstiegswarnung
-                                  this.warnMonat = this.warn;  // nur im letzten Monat der Saison! 
+                                  this.warnMonth = this.warn;  // nur im letzten Monat der Saison! 
                               },
-        'createText'        : function() {
+        'getTextMessage'    : function() {
                                   return "ZAT " + this.abrZAT + " ist im Falle eines Aufstiegs f\xFCr " + ((this.anzahl > 1) ? "" + this.anzahl : "einen") +
                                          " deiner Jugendspieler m\xF6glicherweise die letzte Chance, " + ((this.anzahl > 1) ? " diese noch vor ihrem" : "ihn noch vor seinem") +
                                          " Geburtstag in der n\xE4chsten Saison in das Profiteam zu \xFCbernehmen!";
                               },
-        'getTopHTML'        : function() {
-                                  return "";  // kein Vorschub vor der Zeile
+        'getColorTag'       : function() {
+                                  return "color='magenta'";  // magenta
                               },
-        'getColor'          : function() {
+        'getColorTD'        : function() {
                                   return " class='OMI'";  // magenta
                               }
     });
@@ -5288,6 +5415,16 @@ function getStringFromHTML(cells, colIdxStr) {
     const __TEXT = __CELL.textContent;
 
     return getValue(__TEXT.toString(), "");
+}
+
+// Liest ein erstes Element aus der Spalte einer Zeile der Tabelle aus
+// cells: Die Zellen einer Zeile
+// colIdxStr: Spaltenindex der gesuchten Werte
+// return Spalteneintrag als Element (null fuer "nicht gefunden")
+function getElementFromHTML(cells, colIdxStr) {
+    const __CELL = getValue(cells[colIdxStr], { });
+
+    return __CELL.firstElementChild;
 }
 
 // Liest die Talentklasse ("wenig", "normal", "hoch") aus der Spalte einer Zeile der Tabelle aus
@@ -6050,12 +6187,14 @@ function procHaupt() {
 //                            'menuAnchor' : getTable(0, 'div'),
                             'hideMenu'   : true,
                             'showForm'   : {
-                                               'zeigeWarnung'       : true,
-                                               'zeigeWarnungMonat'  : true,
-                                               'zeigeWarnungHome'   : true,
-                                               'zeigeWarnungDialog' : true,
-                                               'ziehAnz'            : true,
-                                               'showForm'           : true
+                                               'zeigeWarnung'         : true,
+                                               'zeigeWarnungMonat'    : true,
+                                               'zeigeWarnungHome'     : true,
+                                               'zeigeWarnungDialog'   : true,
+                                               'zeigeWarnungAufstieg' : true,
+                                               'zeigeWarnungLegende'  : true,
+                                               'ziehAnz'              : true,
+                                               'showForm'             : true
                                            }
                         }).then(async optSet => {
             const __ZATCELL = getProp(getProp(getRows(0), 2), 'cells', { })[0];
@@ -6089,14 +6228,13 @@ function procHaupt() {
                 }
             }
 
-            const __ZAT = __CURRZAT;
-            const __MSG = new WarnDrawMessage(optSet, __ZAT);
-            const __MSGAUFSTIEG = new WarnDrawMessageAufstieg(optSet, __ZAT);
+            const __MSG = new WarnDrawMessage(optSet, __CURRZAT);
+            const __MSGAUFSTIEG = new WarnDrawMessageAufstieg(optSet, __CURRZAT);
             const __ANCHOR = getTable(0, 'tbody');
 
-            __MSG.showMessage(__ANCHOR);
+            __MSG.showMessage(__ANCHOR, 'tr', true);
             __MSG.showDialog(showAlert);
-            __MSGAUFSTIEG.showMessage(__ANCHOR);
+            __MSGAUFSTIEG.showMessage(__ANCHOR, 'tr', true);
         });
 }
 
@@ -6107,13 +6245,15 @@ function procOptionen() {
                             'hideMenu'    : true,
                             'getDonation' : true,
                             'showForm'    : {
-                                                'foerderung'         : true,
-                                                'zeigeWarnung'       : true,
-                                                'zeigeWarnungMonat'  : true,
-                                                'zeigeWarnungHome'   : true,
-                                                'zeigeWarnungDialog' : true,
-                                                'ziehAnz'            : true,
-                                                'showForm'           : true
+                                                'foerderung'           : true,
+                                                'zeigeWarnung'         : true,
+                                                'zeigeWarnungMonat'    : true,
+                                                'zeigeWarnungHome'     : true,
+                                                'zeigeWarnungDialog'   : true,
+                                                'zeigeWarnungAufstieg' : true,
+                                                'zeigeWarnungLegende'  : true,
+                                                'ziehAnz'              : true,
+                                                'showForm'             : true
                                             }
         });
 }
@@ -6144,51 +6284,53 @@ function procTeamuebersicht() {
         return buildOptions(__OPTCONFIG, __OPTSET, {
                                 'menuAnchor' : getTable(0, 'div'),
                                 'showForm'   : {
-                                                   'kennzeichenEnde'    : true,
-                                                   'shortAufw'          : true,
-                                                   'sepStyle'           : true,
-                                                   'sepColor'           : true,
-                                                   'sepWidth'           : true,
-                                                   'saison'             : true,
-                                                   'aktuellerZat'       : true,
-                                                   'foerderung'         : true,
-                                                   'team'               : true,
-                                                   'zeigeJahrgang'      : true,
-                                                   'zeigeUxx'           : true,
-                                                   'zeigeWarnung'       : true,
-                                                   'zeigeWarnungMonat'  : true,
-                                                   'zeigeWarnungHome'   : true,
-                                                   'zeigeWarnungDialog' : true,
-                                                   'zeigeBalken'        : true,
-                                                   'absBalken'          : true,
-                                                   'zeigeId'            : true,
-                                                   'ersetzeAlter'       : true,
-                                                   'zeigeAlter'         : true,
-                                                   'zeigeQuote'         : true,
-                                                   'zeigePosition'      : true,
-                                                   'zeigeZatDone'       : true,
-                                                   'zeigeZatLeft'       : true,
-                                                   'zeigeFixSkills'     : true,
-                                                   'zeigeTrainiert'     : true,
-                                                   'zeigeAnteilPri'     : true,
-                                                   'zeigeAnteilSec'     : true,
-                                                   'zeigePrios'         : true,
-                                                   'anzahlOpti'         : true,
-                                                   'anzahlMW'           : true,
-                                                   'zeigeTrainiertEnde' : true,
-                                                   'zeigeAnteilPriEnde' : true,
-                                                   'zeigeAnteilSecEnde' : true,
-                                                   'zeigePriosEnde'     : true,
-                                                   'zeigeSkillEnde'     : true,
-                                                   'anzahlOptiEnde'     : true,
-                                                   'anzahlMWEnde'       : true,
-                                                   'ziehAnz'            : true,
-                                                   'zatAges'            : true,
-                                                   'trainiert'          : true,
-                                                   'positions'          : true,
-                                                   'skills'             : true,
-                                                   'reset'              : true,
-                                                   'showForm'           : true
+                                                   'kennzeichenEnde'      : true,
+                                                   'shortAufw'            : true,
+                                                   'sepStyle'             : true,
+                                                   'sepColor'             : true,
+                                                   'sepWidth'             : true,
+                                                   'saison'               : true,
+                                                   'aktuellerZat'         : true,
+                                                   'foerderung'           : true,
+                                                   'team'                 : true,
+                                                   'zeigeJahrgang'        : true,
+                                                   'zeigeUxx'             : true,
+                                                   'zeigeWarnung'         : true,
+                                                   'zeigeWarnungMonat'    : true,
+                                                   'zeigeWarnungHome'     : true,
+                                                   'zeigeWarnungDialog'   : true,
+                                                   'zeigeWarnungAufstieg' : true,
+                                                   'zeigeWarnungLegende'  : true,
+                                                   'zeigeBalken'          : true,
+                                                   'absBalken'            : true,
+                                                   'zeigeId'              : true,
+                                                   'ersetzeAlter'         : true,
+                                                   'zeigeAlter'           : true,
+                                                   'zeigeQuote'           : true,
+                                                   'zeigePosition'        : true,
+                                                   'zeigeZatDone'         : true,
+                                                   'zeigeZatLeft'         : true,
+                                                   'zeigeFixSkills'       : true,
+                                                   'zeigeTrainiert'       : true,
+                                                   'zeigeAnteilPri'       : true,
+                                                   'zeigeAnteilSec'       : true,
+                                                   'zeigePrios'           : true,
+                                                   'anzahlOpti'           : true,
+                                                   'anzahlMW'             : true,
+                                                   'zeigeTrainiertEnde'   : true,
+                                                   'zeigeAnteilPriEnde'   : true,
+                                                   'zeigeAnteilSecEnde'   : true,
+                                                   'zeigePriosEnde'       : true,
+                                                   'zeigeSkillEnde'       : true,
+                                                   'anzahlOptiEnde'       : true,
+                                                   'anzahlMWEnde'         : true,
+                                                   'ziehAnz'              : true,
+                                                   'zatAges'              : true,
+                                                   'trainiert'            : true,
+                                                   'positions'            : true,
+                                                   'skills'               : true,
+                                                   'reset'                : true,
+                                                   'showForm'             : true
                                                },
                                 'formWidth'  : 1
                             }).then(optSet => {
@@ -6222,6 +6364,27 @@ function procTeamuebersicht() {
 
                     separateGroups(__ROWS, __BORDERSTRING, __COLUMNINDEX.Land, __ROWOFFSETUPPER, __ROWOFFSETLOWER, 0, 0, existValue);
                 }
+
+                const __CURRZAT = getOptValue(__OPTSET.datenZat);
+                const __MSG = new WarnDrawMessage(__OPTSET, __CURRZAT);
+                const __MSGAUFSTIEG = new WarnDrawMessageAufstieg(__OPTSET, __CURRZAT);
+                const __ANCHOR = getTable(0, 'div');
+                const __SEARCH = '<form method="POST">';
+
+                // Kompaktere Darstellung und ohne Links...
+                __MSG.out.top = false;
+                __MSG.out.label = false;
+                __MSG.out.link = false;
+                __MSG.out.bottom = false;
+                __MSGAUFSTIEG.out.label = false;
+                __MSGAUFSTIEG.out.link = false;
+                __MSGAUFSTIEG.out.bottom = false;
+
+                __MSG.setOptionLegende();
+                __MSGAUFSTIEG.setOptionLegende();
+
+                __MSG.showMessage(__ANCHOR, 'p', __SEARCH);
+                __MSGAUFSTIEG.showMessage(__ANCHOR, 'p', __SEARCH);
             });
     }
 
@@ -6273,12 +6436,18 @@ function procSpielereinzelwerte() {
         return buildOptions(__OPTCONFIG, __OPTSET, {
                                 'menuAnchor' : getTable(0, 'div'),
                                 'hideForm'   : {
-                                                   'ziehAnz'       : true,
-                                                   'zatAges'       : true,
-                                                   'trainiert'     : true,
-                                                   'positions'     : true,
-                                                   'skills'        : true,
-                                                   'shortAufw'     : true
+                                                   'zeigeWarnung'         : false,
+                                                   'zeigeWarnungMonat'    : false,
+                                                   'zeigeWarnungHome'     : false,
+                                                   'zeigeWarnungDialog'   : false,
+                                                   'zeigeWarnungAufstieg' : false,
+                                                   'zeigeWarnungLegende'  : false,
+                                                   'ziehAnz'              : true,
+                                                   'zatAges'              : true,
+                                                   'trainiert'            : true,
+                                                   'positions'            : true,
+                                                   'skills'               : true,
+                                                   'shortAufw'            : true
                                                },
                                 'formWidth'  : 1
                             }).then(optSet => {
@@ -6338,52 +6507,54 @@ function procOptSkill() {
         return buildOptions(__OPTCONFIG, __OPTSET, {
                                 'menuAnchor' : getTable(0, 'div'),
                                 'showForm'   : {
-                                                   'kennzeichenEnde'    : true,
-                                                   'sepStyle'           : true,
-                                                   'sepColor'           : true,
-                                                   'sepWidth'           : true,
-                                                   'saison'             : true,
-                                                   'aktuellerZat'       : true,
-                                                   'foerderung'         : true,
-                                                   'team'               : true,
-                                                   'zeigeJahrgang'      : true,
-                                                   'zeigeUxx'           : true,
-                                                   'zeigeWarnung'       : true,
-                                                   'zeigeWarnungMonat'  : true,
-                                                   'zeigeWarnungHome'   : true,
-                                                   'zeigeWarnungDialog' : true,
-                                                   'zeigeBalken'        : true,
-                                                   'absBalken'          : true,
-                                                   'zeigeId'            : true,
-                                                   'ersetzeAlter'       : true,
-                                                   'zeigeAlter'         : true,
-                                                   'zeigeQuote'         : true,
-                                                   'zeigePosition'      : true,
-                                                   'zeigeZatDone'       : true,
-                                                   'zeigeZatLeft'       : true,
-                                                   'zeigeFixSkills'     : true,
-                                                   'zeigeTrainiert'     : true,
-                                                   'zeigeAnteilPri'     : true,
-                                                   'zeigeAnteilSec'     : true,
-                                                   'zeigePrios'         : true,
-                                                   'zeigeAufw'          : true,
-                                                   'zeigeGeb'           : true,
-                                                   'zeigeTal'           : true,
-                                                   'anzahlOpti'         : true,
-                                                   'anzahlMW'           : true,
-                                                   'zeigeTrainiertEnde' : true,
-                                                   'zeigeAnteilPriEnde' : true,
-                                                   'zeigeAnteilSecEnde' : true,
-                                                   'zeigePriosEnde'     : true,
-                                                   'zeigeSkillEnde'     : true,
-                                                   'anzahlOptiEnde'     : true,
-                                                   'anzahlMWEnde'       : true,
-                                                   'zatAges'            : true,
-                                                   'trainiert'          : true,
-                                                   'positions'          : true,
-                                                   'skills'             : true,
-                                                   'reset'              : true,
-                                                   'showForm'           : true
+                                                   'kennzeichenEnde'      : true,
+                                                   'sepStyle'             : true,
+                                                   'sepColor'             : true,
+                                                   'sepWidth'             : true,
+                                                   'saison'               : true,
+                                                   'aktuellerZat'         : true,
+                                                   'foerderung'           : true,
+                                                   'team'                 : true,
+                                                   'zeigeJahrgang'        : true,
+                                                   'zeigeUxx'             : true,
+                                                   'zeigeWarnung'         : false,
+                                                   'zeigeWarnungMonat'    : false,
+                                                   'zeigeWarnungHome'     : false,
+                                                   'zeigeWarnungDialog'   : false,
+                                                   'zeigeWarnungAufstieg' : false,
+                                                   'zeigeWarnungLegende'  : false,
+                                                   'zeigeBalken'          : true,
+                                                   'absBalken'            : true,
+                                                   'zeigeId'              : true,
+                                                   'ersetzeAlter'         : true,
+                                                   'zeigeAlter'           : true,
+                                                   'zeigeQuote'           : true,
+                                                   'zeigePosition'        : true,
+                                                   'zeigeZatDone'         : true,
+                                                   'zeigeZatLeft'         : true,
+                                                   'zeigeFixSkills'       : true,
+                                                   'zeigeTrainiert'       : true,
+                                                   'zeigeAnteilPri'       : true,
+                                                   'zeigeAnteilSec'       : true,
+                                                   'zeigePrios'           : true,
+                                                   'zeigeAufw'            : true,
+                                                   'zeigeGeb'             : true,
+                                                   'zeigeTal'             : true,
+                                                   'anzahlOpti'           : true,
+                                                   'anzahlMW'             : true,
+                                                   'zeigeTrainiertEnde'   : true,
+                                                   'zeigeAnteilPriEnde'   : true,
+                                                   'zeigeAnteilSecEnde'   : true,
+                                                   'zeigePriosEnde'       : true,
+                                                   'zeigeSkillEnde'       : true,
+                                                   'anzahlOptiEnde'       : true,
+                                                   'anzahlMWEnde'         : true,
+                                                   'zatAges'              : true,
+                                                   'trainiert'            : true,
+                                                   'positions'            : true,
+                                                   'skills'               : true,
+                                                   'reset'                : true,
+                                                   'showForm'             : true
                                                },
                                 'formWidth'  : 1
                             }).then(optSet => {
