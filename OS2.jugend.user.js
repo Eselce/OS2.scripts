@@ -4109,7 +4109,7 @@ function storePlayerIds(players, optSet) {
 // player: PlayerRecord mit den Daten eines Spielers
 // index: Position des Spielers im neuen Array von Spielerdaten
 // catIds: PlayerIdMap zum Finden des Spielers ueber die Spielerdaten
-// return Original-Index der Daten dieses Spielers im Array von Spielerdaten 
+// return Original-Index der Daten dieses Spielers im Array von Spielerdaten
 function selectPlayerIndex(player, index, catIds) {
     const __MYCAT = player.getCat();
     const __CATS = catIds[__MYCAT];
@@ -5347,7 +5347,7 @@ Class.define(WarnDrawMessageAufstieg, WarnDrawMessage, {
                                   this.anzahl = ((this.currZAT + this.__ZATMONATVORLAUF > 72 - this.__ZATWARNVORLAUF) ? __ZIEHANZAUFSTIEG : 0);
 
                                   this.warnDialog = false;     // kein Dialog fuer Aufstiegswarnung
-                                  this.warnMonth = this.warn;  // nur im letzten Monat der Saison! 
+                                  this.warnMonth = this.warn;  // nur im letzten Monat der Saison!
                               },
         'getTextMessage'    : function() {
                                   return "ZAT " + this.abrZAT + " ist im Falle eines Aufstiegs f\xFCr " + ((this.anzahl > 1) ? "" + this.anzahl : "einen") +
