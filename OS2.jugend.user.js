@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         OS2.jugend
 // @namespace    http://os.ongapo.com/
-// @version      0.71
+// @version      0.72
 // @copyright    2013+
 // @author       Sven Loges (SLC) / Andreas Eckes (Strindheim BK)
 // @description  Jugendteam-Script fuer Online Soccer 2.0
@@ -4742,9 +4742,9 @@ Class.define(PlayerRecord, Object, {
                                           if (this.currZAT + this.getZatLeft() < 72) {  // JG 18er
                                               this.warnDraw = new WarnDrawPlayer(this.getZatLeft(), getColor('STU'));  // rot
                                               __LOG[4](this.getAge().toFixed(2), "rot");
-                                          } else if (this.getZatLeft() + this.currZAT < (klasse - 1) * 72) {
+                                          } else if (this.getZatLeft() + this.currZAT < klasse * 72) {
                                               // do nothing
-                                          } else if (this.getZatLeft() + this.currZAT < klasse * 72) {  // JG 17er/16er je nach Liga 2/3
+                                          } else if (this.getZatLeft() + this.currZAT < (klasse + 1) * 72) {  // JG 17er/16er je nach Liga 2/3
                                               this.warnDrawAufstieg = new WarnDrawPlayer(72 /* zunaechst */, getColor('OMI'));  // magenta
                                               this.warnDrawAufstieg.setAufstieg(this.zatGeb, this.currZAT);
                                               __LOG[4](this.getAge().toFixed(2), "magenta");
@@ -5333,7 +5333,7 @@ function WarnDrawMessageAufstieg(optSet, currZAT) {
 
     this.out.top = false;  // kein Vorschub vor der Zeile
 
-    this.warn &&= this.warnAufstieg;  // kann man ausschalten
+    this.warn = (this.warn && this.warnAufstieg);  // kann man ausschalten
     this.startMessage(currZAT);  // 2. Aufruf (zur Korrektur)
 }
 
