@@ -5333,7 +5333,7 @@ function WarnDrawMessageAufstieg(optSet, currZAT) {
 
     this.out.top = false;  // kein Vorschub vor der Zeile
 
-    this.warn &&= this.warnAufstieg;  // kann man ausschalten
+    this.warn = (this.warn && this.warnAufstieg);  // kann man ausschalten
     this.startMessage(currZAT);  // 2. Aufruf (zur Korrektur)
 }
 
