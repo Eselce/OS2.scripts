@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         OS2.jugend
 // @namespace    http://os.ongapo.com/
-// @version      0.72
+// @version      0.73
 // @copyright    2013+
 // @author       Sven Loges (SLC) / Andreas Eckes (Strindheim BK)
 // @description  Jugendteam-Script fuer Online Soccer 2.0
@@ -4739,14 +4739,16 @@ Class.define(PlayerRecord, Object, {
                                       this.warnDraw = undefined;
                                       this.warnDrawAufstieg = undefined;
                                       if (ziehmich) {
-                                          if (this.currZAT + this.getZatLeft() < 72) {  // JG 18er
-                                              this.warnDraw = new WarnDrawPlayer(this.getZatLeft(), getColor('STU'));  // rot
+                                          const __LASTZAT = this.currZAT + this.getZatLeft();
+
+                                          if (__LASTZAT < 72) {  // U19
+                                              this.warnDraw = new WarnDrawPlayer(this, getColor('STU'));  // rot
                                               __LOG[4](this.getAge().toFixed(2), "rot");
-                                          } else if (this.getZatLeft() + this.currZAT < klasse * 72) {
+                                          } else if (__LASTZAT < Math.max(2, klasse) * 72) {  // Rest bis inkl. U18 (Liga 1 und 2) bzw. U17 (Liga 3)
                                               // do nothing
-                                          } else if (this.getZatLeft() + this.currZAT < (klasse + 1) * 72) {  // JG 17er/16er je nach Liga 2/3
-                                              this.warnDrawAufstieg = new WarnDrawPlayer(72 /* zunaechst */, getColor('OMI'));  // magenta
-                                              this.warnDrawAufstieg.setAufstieg(this.zatGeb, this.currZAT);
+                                          } else if (__LASTZAT < (klasse + 1) * 72) {  // U17/U16 je nach Liga 2/3
+                                              this.warnDrawAufstieg = new WarnDrawPlayer(this, getColor('OMI'));  // magenta
+                                              this.warnDrawAufstieg.setAufstieg();
                                               __LOG[4](this.getAge().toFixed(2), "magenta");
                                           }
                                       }
@@ -4863,7 +4865,7 @@ Class.define(PlayerRecord, Object, {
                                       return (this.warnDraw && this.warnDraw.calcZiehIndex(this.currZAT));
                                   },
         'isZiehAufstieg'        : function() {
-                                      return (this.warnDrawAufstieg && this.warnDrawAufstieg.isZiehAufstieg(this.getGeb()));
+                                      return (this.warnDrawAufstieg && this.warnDrawAufstieg.isZiehAufstieg());
                                   },
         'getAge'                : function(when = this.__TIME.now) {
                                       if (this.mwFormel === this.__MWFORMEL.alt) {
@@ -5083,17 +5085,21 @@ Class.define(PlayerRecord, Object, {
 
 // Klasse WarnDrawPlayer *****************************************************************
 
-function WarnDrawPlayer(zatLeft, alertColor) {
+function WarnDrawPlayer(player, alertColor) {
     'use strict';
 
-    this.setZatLeft(zatLeft);
+    this.player = player;
 
-    if (this.zatLeft !== undefined) {
+    if (this.player !== undefined) {
         // Default Warnlevel...
+        this.setZatLeft(player.getZatLeft());
+        this.currZAT = player.currZAT;
         this.setWarn(true, true, true);
         this.colAlert = alertColor || this.alertColor();
     } else {
         // Kein Warnlevel...
+        this.setZatLeft(undefined);
+        this.currZAT = undefined;
         this.setWarn(false, false, false);
         this.colAlert = undefined;
     }
@@ -5122,14 +5128,14 @@ Class.define(WarnDrawPlayer, Object, {
 
                                   return __INDEX;
                               },
-        'isZiehAufstieg'    : function(geb) {
-                                  return this.aufstieg && (geb < 72);
+        'isZiehAufstieg'    : function() {
+                                  return this.aufstieg;
                               },
-        'setAufstieg'       : function(geb, currZAT) {
+        'setAufstieg'       : function() {
                                   this.aufstieg = true;
 
-                                  if (this.isZiehAufstieg(geb)) {
-                                      this.setZatLeft(72 - currZAT - this.__ZATWARNVORLAUF);
+                                  if (this.isZiehAufstieg()) {
+                                      this.setZatLeft(72 - this.currZAT - this.__ZATWARNVORLAUF);
                                   }
 
                                   return this.zatLeft;
