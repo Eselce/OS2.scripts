@@ -98,7 +98,7 @@ const __OPTCONFIG = {
                    'Hotkey'    : 'U',
                    'AltLabel'  : "Nur Saisons anzeigen",
                    'AltHotkey' : 'u',
-                   'FormLabel' : "Jahrg\xE4nge U13 bis U18"
+                   'FormLabel' : "Jahrg\xE4nge U13 bis U19"
                },
     'zeigeWarnung' : {    // Auswahl, ob eine Warnung erscheint, wenn Talente gezogen werden sollten
                    'Name'      : "showWarning",
