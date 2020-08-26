@@ -7,6 +7,7 @@
 // @description  OS 2.0 - Berechnet die Trainingswahrscheinlichkeiten abhaengig von der Art des Einsatzes
 // @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/haupt\.php(\?changetosecond=\w+(&\S+)*)?$/
 // @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/training\.php(\?\S+(&\S+)*)?$/
+// @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/zar\.php(\?\S+(&\S+)*)?$/
 // @grant        GM.getValue
 // @grant        GM.setValue
 // @grant        GM.deleteValue
@@ -135,6 +136,40 @@ const __OPTCONFIG = {
                    'Label'     : "ZAT: $",
                    'Hotkey'    : 'Z',
                    'FormLabel' : "ZAT:|$"
+               },
+    'datenZat' : {        // Stand der Daten zum Team und ZAT
+                   'Name'      : "dataZAT",
+                   'Type'      : __OPTTYPES.SD,
+                   'ValType'   : 'Number',
+                   'Hidden'    : true,
+                   'Serial'    : true,
+                   'AutoReset' : true,
+                   'Permanent' : true,
+                   'Default'   : undefined,
+                   'Action'    : __OPTACTION.SET,
+                   'Submit'    : undefined,
+                   'Cols'      : 1,
+                   'Rows'      : 1,
+                   'Replace'   : null,
+                   'Space'     : 0,
+                   'Label'     : "Daten-ZAT:"
+               },
+    'oldDatenZat' : {     // Stand der Daten zum Team und ZAT
+                   'Name'      : "oldDataZAT",
+                   'Type'      : __OPTTYPES.SD,
+                   'ValType'   : 'Number',
+                   'Hidden'    : true,
+                   'Serial'    : true,
+                   'AutoReset' : true,
+                   'Permanent' : true,
+                   'Default'   : undefined,
+                   'Action'    : __OPTACTION.SET,
+                   'Submit'    : undefined,
+                   'Cols'      : 1,
+                   'Rows'      : 1,
+                   'Replace'   : null,
+                   'Space'     : 0,
+                   'Label'     : "Vorheriger Daten-ZAT:"
                },
     'team' : {            // Datenspeicher fuer Daten des Erst- bzw. Zweitteams
                    'Name'      : "team",
@@ -3244,7 +3279,10 @@ const __OPTSET = { };
 const __TEAMCLASS = new TeamClassification();
 
 // Optionen mit Daten, die ZAT- und Team-bezogen gemerkt werden...
-__TEAMCLASS.optSelect = { };
+__TEAMCLASS.optSelect = {
+                            'datenZat'        : true,
+                            'oldDatenZat'     : true
+                        };
 
 // Gibt die Teamdaten zurueck und aktualisiert sie ggfs. in der Option
 // optSet: Platz fuer die gesetzten Optionen
@@ -4256,12 +4294,29 @@ function procHaupt() {
             const __ZATCELL = getProp(getProp(getRows(0), 2), 'cells', { })[0];
             const __NEXTZAT = getZATNrFromCell(__ZATCELL);  // "Der naechste ZAT ist ZAT xx und ..."
             const __CURRZAT = __NEXTZAT - 1;
+            const __DATAZAT = getOptValue(__OPTSET.datenZat);
+
+            // Stand der alten Daten merken...
+            setOpt(__OPTSET.oldDatenZat, __DATAZAT, false);
 
             if (__CURRZAT >= 0) {
                 __LOG[2]("Aktueller ZAT: " + __CURRZAT);
 
                 // Neuen aktuellen ZAT speichern...
                 setOpt(__OPTSET.aktuellerZat, __CURRZAT, false);
+
+                if (__CURRZAT !== __DATAZAT) {
+                    __LOG[2](__LOG.changed(__DATAZAT, __CURRZAT));
+
+                    // ... und ZAT-bezogene Daten als veraltet markieren (ausser '<TODO>')
+                    await __TEAMCLASS.deleteOptions({
+                                                    'datenZat'    : true,
+                                                    'oldDatenZat' : true
+                                                }).catch(defaultCatch);
+
+                    // Neuen Daten-ZAT speichern...
+                    setOpt(__OPTSET.datenZat, __CURRZAT, false);
+                }
             }
         });
 }
@@ -4299,9 +4354,7 @@ function procTraining() {
             'Durch' : 3
         };
 
-    if (getElement('transfer') !== undefined) {
-        __LOG[2]("Ziehen-Seite");
-    } else if (getRows(1) === undefined) {
+    if (getRows(2) === undefined) {
         __LOG[2]("Diese Seite ist ohne Team nicht verf\xFCgbar!");
     } else {
         return buildOptions(__OPTCONFIG, __OPTSET, {
@@ -4318,38 +4371,33 @@ function procTraining() {
                                                },
                                 'formWidth'  : 1
                             }).then(optSet => {
-                const __ROWS = getRows(1);
+                const __ROWS = getRows(2);
                 const __HEADERS = __ROWS[0];
-                const __TITLECOLOR = getColor('LEI');  // "#FFFFFF"
-
-                const __TRAINING = getTable(2);
-                const __TRAININGROW = __TRAINING.rows;
-                const __TITLEROW = __TRAININGROW[0];
 
                 // Ueberschriften hinzufuegen
-                const __ORGLENGTH = __TITLEROW.cells.length;
-                appendCell(__TITLEROW, __TITLE.Prob1);
-                appendCell(__TITLEROW, __TITLE.Prob2);
-                appendCell(__TITLEROW, __TITLE.Prob3);
+                const __ORGLENGTH = __HEADERS.cells.length;
+                appendCell(__HEADERS, __TITLE.Prob1);
+                appendCell(__HEADERS, __TITLE.Prob2);
+                appendCell(__HEADERS, __TITLE.Prob3);
 
-                const __COL2LENGTH = __TITLEROW.cells.length;
-                appendCell(__TITLEROW, __TITLE.PS);
-                appendCell(__TITLEROW, __TITLE.Value);
-                appendCell(__TITLEROW, __TITLE.WS0);
-                appendCell(__TITLEROW, __TITLE.Min0);
-                appendCell(__TITLEROW, __TITLE.Min3);
-                //appendCell(__TITLEROW, __TITLE.Gehalt);
+                const __COL2LENGTH = __HEADERS.cells.length;
+                appendCell(__HEADERS, __TITLE.PS);
+                appendCell(__HEADERS, __TITLE.Value);
+                appendCell(__HEADERS, __TITLE.WS0);
+                appendCell(__HEADERS, __TITLE.Min0);
+                appendCell(__HEADERS, __TITLE.Min3);
+                //appendCell(__HEADERS, __TITLE.Gehalt);
 
                 // Breite der neuen Spalten festlegen
-                for (let i = __ORGLENGTH + 1; i < __TITLEROW.cells.length; i++) {
-                    __TITLEROW.cells[i].setAttribute("width", (i < __COL2LENGTH) ? __COLWIDTH : __COLWIDTH2, false);
+                for (let i = __ORGLENGTH + 1; i < __HEADERS.cells.length; i++) {
+                    __HEADERS.cells[i].setAttribute("width", (i < __COL2LENGTH) ? __COLWIDTH : __COLWIDTH2, false);
                 }
 
                 // Wahrscheinlichkeiten eintragen
                 let value = 0.0;
                 let sum = 0.0;
-                for (let i = 1; i < __TRAININGROW.length; i++) {
-                    const __CURRENTROW = __TRAININGROW[i];
+                for (let i = 1; i < __ROWS.length; i++) {
+                    const __CURRENTROW = __ROWS[i];
                     const __POS = getPos(__CURRENTROW, __COLUMNINDEX.Chance);
                     const __SKILL = getSkill(__CURRENTROW, __COLUMNINDEX.Skill);
                     const __COLOR = getColor(__POS);
@@ -4410,20 +4458,52 @@ function procTraining() {
     return Promise.resolve();
 }
 
+// Verarbeitet Ansicht "ZAT-Report"
+function procZatReport() {
+    if (getRows(1) === undefined) {
+        __LOG[2]("Diese Seite ist ohne Team nicht verf\xFCgbar!");
+    } else {
+        return buildOptions(__OPTCONFIG, __OPTSET, {
+                                'menuAnchor' : getTable(0, 'div'),
+                                'showForm'   : {
+                                                   'sepStyle'             : true,
+                                                   'sepColor'             : true,
+                                                   'sepWidth'             : true,
+                                                   'saison'               : true,
+                                                   'aktuellerZat'         : true,
+                                                   'team'                 : true,
+                                                   'reset'                : true,
+                                                   'showForm'             : true
+                                               },
+                                'formWidth'  : 1
+                            }).then(optSet => {
+                const __ROWS = getRows(1);
+                const __HEADERS = __ROWS[0];
+                const __TITLECOLOR = getColor('LEI');  // "#FFFFFF"
+            });
+    }
+
+    // Promise fuer alle Faelle ohne Rueckgabewert...
+    return Promise.resolve();
+}
+
 (() => {
     (async () => {
         try {
             // URL-Legende:
             // page=0: Managerbuero
             // page=1: Training
+            // page=2: ZAT-Report
 
             // Verzweige in unterschiedliche Verarbeitungen je nach Wert von page:
             switch (getPageIdFromURL(window.location.href, {
                                                                'haupt.php'    : 0,  // Ansicht "Haupt" (Managerbuero)
-                                                               'training.php' : 1   // Ansicht "Training"
+                                                               'training.php' : 1,  // Ansicht "Training"
+                                                               'zar.php'      : 2   // Ansicht "ZAT-Report"
                                                            }, undefined)) {
                 case 0  : await procHaupt().catch(defaultCatch); break;
                 case 1  : await procTraining().catch(defaultCatch); break;
+                case 2  : await procZatReport().catch(defaultCatch); break;
                 default : break;
             }
 
