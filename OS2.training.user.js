@@ -194,7 +194,7 @@ const __OPTCONFIG = {
                    'Serial'    : true,
                    'AutoReset' : true,
                    'Permanent' : true,
-                   'Default'   : [],
+                   'Default'   : [null, null, null, null, null, null],
                    'Submit'    : undefined,
                    'Cols'      : 36,
                    'Rows'      : 2,
@@ -202,7 +202,67 @@ const __OPTCONFIG = {
                    'Space'     : 0,
                    'Label'     : "Trainer:"
                },
-    'ids' : {            // Datenspeicher fuer ID der Spieler
+    'tGehaelter' : {      // Datenspeicher fuer Trainer-Gehaelter aller Trainer
+                   'Name'      : "tGehaelter",
+                   'Type'      : __OPTTYPES.SD,
+                   'Hidden'    : false,
+                   'Serial'    : true,
+                   'AutoReset' : true,
+                   'Permanent' : true,
+                   'Default'   : [0, 0, 0, 0, 0, 0],
+                   'Submit'    : undefined,
+                   'Cols'      : 36,
+                   'Rows'      : 2,
+                   'Replace'   : null,
+                   'Space'     : 0,
+                   'Label'     : "Trainer-Geh\xE4lter:"
+               },
+    'tVertraege' : {      // Datenspeicher fuer Laengen der Trainer-Vertraege aller Trainer
+                   'Name'      : "tVertraege",
+                   'Type'      : __OPTTYPES.SD,
+                   'Hidden'    : false,
+                   'Serial'    : true,
+                   'AutoReset' : true,
+                   'Permanent' : true,
+                   'Default'   : [0, 0, 0, 0, 0, 0],
+                   'Submit'    : undefined,
+                   'Cols'      : 36,
+                   'Rows'      : 2,
+                   'Replace'   : null,
+                   'Space'     : 0,
+                   'Label'     : "Trainer-Vertr\xE4ge:"
+               },
+    'tReste' : {          // Datenspeicher fuer Rest-Laengen der Trainer-Vertraege aller Trainer
+                   'Name'      : "tReste",
+                   'Type'      : __OPTTYPES.SD,
+                   'Hidden'    : false,
+                   'Serial'    : true,
+                   'AutoReset' : true,
+                   'Permanent' : true,
+                   'Default'   : [0, 0, 0, 0, 0, 0],
+                   'Submit'    : undefined,
+                   'Cols'      : 36,
+                   'Rows'      : 2,
+                   'Replace'   : null,
+                   'Space'     : 0,
+                   'Label'     : "Trainer-Restlaufzeit:"
+               },
+    'tAnzahlen' : {       // Datenspeicher fuer Anzahl zugeordneter Spieler zu den jeweiligen Trainern
+                   'Name'      : "tAnzahlen",
+                   'Type'      : __OPTTYPES.SD,
+                   'Hidden'    : false,
+                   'Serial'    : true,
+                   'AutoReset' : true,
+                   'Permanent' : true,
+                   'Default'   : [0, 0, 0, 0, 0, 0],
+                   'Submit'    : undefined,
+                   'Cols'      : 36,
+                   'Rows'      : 1,
+                   'Replace'   : null,
+                   'Space'     : 0,
+                   'Label'     : "Anzahl Spieler:"
+               },
+    'ids' : {             // Datenspeicher fuer ID der Spieler
                    'Name'      : "ids",
                    'Type'      : __OPTTYPES.SD,
                    'Hidden'    : false,
@@ -217,7 +277,7 @@ const __OPTCONFIG = {
                    'Space'     : 0,
                    'Label'     : "Spieler-IDs:"
                },
-    'names' : {            // Datenspeicher fuer Name der Spieler
+    'names' : {           // Datenspeicher fuer Name der Spieler
                    'Name'      : "names",
                    'Type'      : __OPTTYPES.SD,
                    'Hidden'    : false,
@@ -247,6 +307,51 @@ const __OPTCONFIG = {
                    'Space'     : 0,
                    'Label'     : "Alter:"
                },
+    'positions' : {       // Datenspeicher fuer Spieler-Positionen
+                   'Name'      : "positions",
+                   'Type'      : __OPTTYPES.SD,
+                   'Hidden'    : false,
+                   'Serial'    : true,
+                   'AutoReset' : true,
+                   'Permanent' : true,
+                   'Default'   : [],
+                   'Submit'    : undefined,
+                   'Cols'      : 36,
+                   'Rows'      : 3,
+                   'Replace'   : null,
+                   'Space'     : 0,
+                   'Label'     : "Positionen:"
+               },
+    'opti27' : {          // Datenspeicher fuer ganzzahlige Opti-Punkte (mal 27) der Spieler
+                   'Name'      : "opti27",
+                   'Type'      : __OPTTYPES.SD,
+                   'Hidden'    : false,
+                   'Serial'    : true,
+                   'AutoReset' : true,
+                   'Permanent' : true,
+                   'Default'   : [],
+                   'Submit'    : undefined,
+                   'Cols'      : 36,
+                   'Rows'      : 2,
+                   'Replace'   : null,
+                   'Space'     : 0,
+                   'Label'     : "Opti (x27):"
+               },
+    'verletzt' : {        // Datenspeicher fuer Verletzungsdauer der Spieler
+                   'Name'      : "verletzt",
+                   'Type'      : __OPTTYPES.SD,
+                   'Hidden'    : false,
+                   'Serial'    : true,
+                   'AutoReset' : true,
+                   'Permanent' : true,
+                   'Default'   : [],
+                   'Submit'    : undefined,
+                   'Cols'      : 36,
+                   'Rows'      : 2,
+                   'Replace'   : null,
+                   'Space'     : 0,
+                   'Label'     : "Verletzungen:"
+               },
     'skills' : {          // Datenspeicher fuer vorherige Werte der Spieler-Skills
                    'Name'      : "skills",
                    'Type'      : __OPTTYPES.SD,
@@ -262,8 +367,8 @@ const __OPTCONFIG = {
                    'Space'     : 0,
                    'Label'     : "Skills:"
                },
-    'tskills' : {         // Datenspeicher fuer Skills der Trainer
-                   'Name'      : "tskills",
+    'tSkills' : {         // Datenspeicher fuer Skills der Trainer
+                   'Name'      : "tSkills",
                    'Type'      : __OPTTYPES.SD,
                    'Hidden'    : false,
                    'Serial'    : true,
@@ -290,7 +395,37 @@ const __OPTCONFIG = {
                    'Rows'      : 2,
                    'Replace'   : null,
                    'Space'     : 0,
-                   'Label'     : "Trainer:"
+                   'Label'     : "Trainer-Nummern:"
+               },
+    'skillPos' : {        // Datenspeicher fuer Zuordnung der Trainings (Skill-Positionen)
+                   'Name'      : "skillPos",
+                   'Type'      : __OPTTYPES.SD,
+                   'Hidden'    : false,
+                   'Serial'    : true,
+                   'AutoReset' : true,
+                   'Permanent' : true,
+                   'Default'   : [],
+                   'Submit'    : undefined,
+                   'Cols'      : 36,
+                   'Rows'      : 2,
+                   'Replace'   : null,
+                   'Space'     : 0,
+                   'Label'     : "Skill-Positionen:"
+               },
+    'isPrio' : {          // Datenspeicher fuer Zuordnung der Trainings (Primaerskill ja/nein)
+                   'Name'      : "isPrio",
+                   'Type'      : __OPTTYPES.SD,
+                   'Hidden'    : false,
+                   'Serial'    : true,
+                   'AutoReset' : true,
+                   'Permanent' : true,
+                   'Default'   : [],
+                   'Submit'    : undefined,
+                   'Cols'      : 36,
+                   'Rows'      : 2,
+                   'Replace'   : null,
+                   'Space'     : 0,
+                   'Label'     : "Prio-Training:"
                },
     'einsaetze' : {       // Datenspeicher fuer Einsatzarten der Spieler
                    'Name'      : "einsaetze",
@@ -305,7 +440,7 @@ const __OPTCONFIG = {
                    'Rows'      : 2,
                    'Replace'   : null,
                    'Space'     : 0,
-                   'Label'     : "Eins\xE4tze:"
+                   'Label'     : "Einsatz-Typen:"
                },
     'prozente' : {        // Datenspeicher fuer Trainingswahrscheinlichkeiten (in Prozent)
                    'Name'      : "prozente",
@@ -320,10 +455,10 @@ const __OPTCONFIG = {
                    'Rows'      : 2,
                    'Replace'   : null,
                    'Space'     : 0,
-                   'Label'     : "Prozente:"
+                   'Label'     : "Trainings-Prozente:"
                },
-    'positions' : {       // Datenspeicher fuer Spieler-Positionen
-                   'Name'      : "positions",
+    'erwartungen' : {     // Datenspeicher fuer Erwartungswert des Trainings (Prios 5fach)
+                   'Name'      : "erwartungen",
                    'Type'      : __OPTTYPES.SD,
                    'Hidden'    : false,
                    'Serial'    : true,
@@ -332,10 +467,10 @@ const __OPTCONFIG = {
                    'Default'   : [],
                    'Submit'    : undefined,
                    'Cols'      : 36,
-                   'Rows'      : 3,
+                   'Rows'      : 2,
                    'Replace'   : null,
                    'Space'     : 0,
-                   'Label'     : "Positionen:"
+                   'Label'     : "Trainings-EW:"
                },
     'erfolge' : {         // Datenspeicher fuer Trainingserfolge
                    'Name'      : "erfolge",
@@ -350,7 +485,22 @@ const __OPTCONFIG = {
                    'Rows'      : 2,
                    'Replace'   : null,
                    'Space'     : 0,
-                   'Label'     : "Trainingserfolge:"
+                   'Label'     : "Trainings-Erfolge:"
+               },
+    'blessuren' : {         // Datenspeicher fuer Trainingsblessuren
+                   'Name'      : "blessuren",
+                   'Type'      : __OPTTYPES.SD,
+                   'Hidden'    : false,
+                   'Serial'    : true,
+                   'AutoReset' : true,
+                   'Permanent' : true,
+                   'Default'   : [],
+                   'Submit'    : undefined,
+                   'Cols'      : 36,
+                   'Rows'      : 2,
+                   'Replace'   : null,
+                   'Space'     : 0,
+                   'Label'     : "Trainings-Blessuren:"
                },
     'reset' : {           // Optionen auf die "Werkseinstellungen" zuruecksetzen
                    'FormPrio'  : undefined,
@@ -3450,16 +3600,26 @@ __TEAMCLASS.optSelect = {
                             'datenZat'        : true,
                             'oldDatenZat'     : true,
                             'trainer'         : true,
+                            'tGehaelter'      : true,
+                            'tVertraege'      : true,
+                            'tReste'          : true,
+                            'tAnzahlen'       : true,
                             'ids'             : true,
                             'names'           : true,
                             'ages'            : true,
+                            'positions'       : true,
+                            'opti27'          : true,
+                            'verletzt'        : true,
                             'skills'          : true,
-                            'tskills'         : true,
+                            'tSkills'         : true,
                             'trainiert'       : true,
+                            'skillPos'        : true,
+                            'isPrio'          : true,
                             'einsaetze'       : true,
                             'prozente'        : true,
-                            'positions'       : true,
-                            'erfolge'         : true
+                            'erwartungen'     : true,
+                            'erfolge'         : true,
+                            'blessuren'       : true
                         };
 
 // Gibt die Teamdaten zurueck und aktualisiert sie ggfs. in der Option
@@ -3805,14 +3965,28 @@ function getAllSkillNames(isGoalie = false) {
 function getSkillName(idx, isGoalie = false) {
     const __ALLNAMES = getAllSkillNames(isGoalie);
 
-    return __ALLNAMES[idx];
+    return ((idx != undefined) ? __ALLNAMES[idx] : idx);
 }
 
-// Gibt den Skill-Namen zu einem Index-Array zurueck
+// Gibt die Skill-Namen zu einem Index-Array zurueck
 function getSkillNameArray(idxArr, isGoalie = false) {
     return (idxArr ? idxArr.map(function(item) {
                                     return getSkillName(item, isGoalie);
                                 }) : idxArr);
+}
+
+// Gibt den Index zu einem Skill-Namen zurueck
+function getSkillID(skillName, isGoalie = false) {
+    const __ALLNAMES = getAllSkillNames(isGoalie);
+
+    return ((skillName != undefined) ? __ALLNAMES.indexOf(skillName) : skillName);
+}
+
+// Gibt die Indices zu einem Skill-Namen-Array zurueck
+function getSkillIdArray(nameArr, isGoalie = false) {
+    return (nameArr ? nameArr.map(function(item) {
+                                      return getSkillID(item, isGoalie);
+                                  }) : nameArr);
 }
 
 // Gibt die Indizes aller Skills zurueck
@@ -3903,13 +4077,20 @@ const __FACTORS = [ 1.00, 1.10, 1.25, 1.35 ];  // Tribuene, Bank, teilweise, dur
 // Format der Rueckgabe: "aaa.bb %", "aa.bb %" bzw. "a.bb %" (keine Deckelung bei 99.00 %)
 // probStr: Basis-Wahrscheinlichkeit (= Tribuene) als Prozent-String
 // mode: Art des Einsatzes: 0 - Tribuene, 1 - Bank, 2 - Teilweiser Einsatz, 3 - Volleinsatz
-function getProbability(probStr, mode) {
+// unit: Einheitensymbol (Default: " %")
+// fixed: Nachkommastellen (Default: 2)
+// limit: Obere Grenze, z.B. 99.0 (Default: aus)
+function getProbabilityStr(probStr, mode, unit = " %", fixed = 2, limit = undefined) {
     if ((probStr == "0.00 %") || (probStr == "Trainerskill zu niedrig!")) {
         return "";
     } else {
-        const __RET = parseFloat(probStr) * __FACTORS[mode];
+        let ret = parseFloat(probStr) * __FACTORS[mode];
 
-        return __RET.toFixed(2).toString() + " %";
+        if (limit) {
+            ret = Math.min(limit, ret);
+        }
+
+        return ret.toFixed(fixed).toString() + unit;
     }
 }
 
@@ -3937,8 +4118,8 @@ function getSpieler(row, colIdxSpieler) {
     const __INDEX2 = __HTML.indexOf(')', __INDEX1);
     const __INDEX3 = __HTML.indexOf('>', __INDEX2);
     const __INDEX4 = __HTML.indexOf("</a>", __INDEX3);
-    const __SID = ((~__INDEX1) ? parseInt(__HTML.substring(__INDEX1 + __SEARCH.length, __INDEX2), 10) : undefined);
-    const __SNAME = ((~__INDEX3) ? __HTML.substring(__INDEX3 + 1, __INDEX4) : undefined);
+    const __SID = ((~ __INDEX1) ? parseInt(__HTML.substring(__INDEX1 + __SEARCH.length, __INDEX2), 10) : undefined);
+    const __SNAME = ((~ __INDEX3) ? __HTML.substring(__INDEX3 + 1, __INDEX4) : undefined);
 
     return {
                'id'   : __SID,
@@ -4538,7 +4719,25 @@ function procHaupt() {
 
 // Verarbeitet Ansicht "Zugabgabe - Aufstellung"
 function procAufstellung() {
-    if (getRows(1) === undefined) {
+    const __COLUMNINDEX = {
+            'Raster'   : 0,
+            'Spieler'  : 1,
+            'Age'      : 2,
+            'U'        : 3,
+            'MOR'      : 4,
+            'FIT'      : 5,
+            'Skill'    : 6,
+            'Opti'     : 7,
+            'S'        : 8
+        };
+    const __EINSATZ = {
+            'Trib'  : 0,
+            'Bank'  : 1,
+            'Teil'  : 2,
+            'Durch' : 3
+        };
+
+    if (getRows(4) === undefined) {
         __LOG[2]("Diese Seite ist ohne Team nicht verf\xFCgbar!");
     } else {
         return buildOptions(__OPTCONFIG, __OPTSET, {
@@ -4547,13 +4746,71 @@ function procAufstellung() {
                                                    'saison'               : true,
                                                    'aktuellerZat'         : true,
                                                    'team'                 : true,
+                                                   'ids'                  : true,
+                                                   'names'                : true,
+                                                   'einsaetze'            : true,
                                                    'reset'                : true,
                                                    'showForm'             : true
                                                },
                                 'formWidth'  : 1
                             }).then(optSet => {
-                const __ROWS = getRows(1);
+                // Gespeicherte Daten...
+                //const __TRAINER = getOptValue(optSet.trainer, []);
+                const __IDS = getOptValue(optSet.ids, []);
+                //const __NAMES = getOptValue(optSet.names, []);
+                //const __AGES = getOptValue(optSet.ages, []);
+                //const __POSITIONS = getOptValue(optSet.positions, []);
+                //const __OPTI27 = getOptValue(optSet.opti24, []);
+                //const __VERLETZT = getOptValue(optSet.verletzt, []);
+                //const __SKILLS = getOptValue(optSet.skills, []);
+                //const __TSKILLS = getOptValue(optSet.tSkills, []);
+                const __TRAINIERT = getOptValue(optSet.trainiert, []);
+                //const __SKILLPOS = getOptValue(optSet.skillPos, []);
+                const __ISPRIO = getOptValue(optSet.isPrio, []);
+                const __EINSAETZE = getOptValue(optSet.einsaetze, []);
+                const __PROZENTE = getOptValue(optSet.prozente, []);
+                const __EW = getOptValue(optSet.erwartungen, []);
+                //const __ERFOLGE = getOptValue(optSet.erfolge, []);
+                //const __BLESSUREN = getOptValue(optSet.blessuren, []);
+
+                const __ROWS = getRows(4);
                 const __HEADERS = __ROWS[0];
+                const __SLENGTH = __ROWS.length - 6;
+                //const __TLENGTH = 6;
+
+                __EINSAETZE.length = __SLENGTH;
+                __EINSAETZE.fill(__EINSATZ.Trib);
+
+                for (let i = 1; i < __ROWS.length - 5; i++) {
+                    const __CURRENTROW = __ROWS[i];
+                    const __SPIELER = getSpieler(__CURRENTROW, __COLUMNINDEX.Spieler);
+                    const __ID = __SPIELER.id;
+                    const __NAME = __SPIELER.name;
+                    const __INDEX = __IDS.indexOf(__ID);
+                    const __RASTER = getSelection("ra[" + __ID + ']');
+
+                    if (~ __INDEX) {
+                        __EINSAETZE[__INDEX] = ((__RASTER === '-') ? __EINSATZ.Trib : ((~ "UVWXYZ".indexOf(__RASTER)) ? __EINSATZ.Bank : __EINSATZ.Durch));
+                    }
+                }
+
+                //setOpt(optSet.trainer, __TRAINER, false);
+                //setOpt(optSet.ids, __IDS, false);
+                //setOpt(optSet.names, __NAMES, false);
+                //setOpt(optSet.ages, __AGES, false);
+                //setOpt(optSet.positions, __POSITIONS, false);
+                //setOpt(optSet.opti27, __OPTI27, false);
+                //setOpt(optSet.verletzt, __VERLETZT, false);
+                //setOpt(optSet.skills, __SKILLS, false);
+                //setOpt(optSet.tSkills, __TSKILLS, false);
+                //setOpt(optSet.trainiert, __TRAINIERT, false);
+                //setOpt(optSet.skillPos, __SKILLPOS, false);
+                //setOpt(optSet.isPrio, __ISPRIO, false);
+                setOpt(optSet.einsaetze, __EINSAETZE, false);
+                //setOpt(optSet.prozente, __PROZENTE, false);
+                //setOpt(optSet.erwartungen, __EW, false);
+                //setOpt(optSet.erfolge, __ERFOLGE, false);
+                //setOpt(optSet.blessuren, __BLESSUREN, false);
             });
     }
 
@@ -4658,7 +4915,8 @@ function procTraining() {
             'Prob3'    : "Durchgehend",
             'PS'       : "Primary",
             'Value'    : "EW",
-            'WS0'      : "WS",
+            'WS0'      : "WS0",
+            'WS'       : "WS",
             'Min0'     : "min.",
             'Min3'     : "max.",
             'Gehalt'   : "Gehalt"
@@ -4676,40 +4934,57 @@ function procTraining() {
         return buildOptions(__OPTCONFIG, __OPTSET, {
                                 'menuAnchor' : getTable(0, 'div'),
                                 'showForm'   : {
-                                                   'sepStyle'             : true,
-                                                   'sepColor'             : true,
-                                                   'sepWidth'             : true,
-                                                   'saison'               : true,
-                                                   'aktuellerZat'         : true,
-                                                   'team'                 : true,
-                                                   'trainer'              : true,
-                                                   'ids'                  : true,
-                                                   'names'                : true,
-                                                   'ages'                 : true,
-                                                   'skills'               : true,
-                                                   'tskills'              : true,
-                                                   'trainiert'            : true,
-                                                   'einsaetze'            : true,
-                                                   'prozente'             : true,
-                                                   'positions'            : true,
-                                                   'erfolge'              : true,
-                                                   'reset'                : true,
-                                                   'showForm'             : true
+                                                   'sepStyle'        : true,
+                                                   'sepColor'        : true,
+                                                   'sepWidth'        : true,
+                                                   'saison'          : true,
+                                                   'aktuellerZat'    : true,
+                                                   'team'            : true,
+                                                   'trainer'         : true,
+                                                   'tGehaelter'      : true,
+                                                   'tVertraege'      : true,
+                                                   'tReste'          : true,
+                                                   'tAnzahlen'       : true,
+                                                   'ids'             : true,
+                                                   'names'           : true,
+                                                   'ages'            : true,
+                                                   'positions'       : true,
+                                                   'opti27'          : true,
+                                                   'verletzt'        : true,
+                                                   'skills'          : true,
+                                                   'tSkills'         : true,
+                                                   'trainiert'       : true,
+                                                   'skillPos'        : true,
+                                                   'isPrio'          : true,
+                                                   'einsaetze'       : true,
+                                                   'prozente'        : true,
+                                                   'erwartungen'     : true,
+                                                   'erfolge'         : true,
+                                                   'blessuren'       : true,
+                                                   'reset'           : true,
+                                                   'showForm'        : true
                                                },
                                 'formWidth'  : 1
                             }).then(optSet => {
                 // Gespeicherte Daten...
                 const __TRAINER = [];  // neu aufbauen! getOptValue(optSet.trainer, []);
+                const __TANZAHL = [0, 0, 0, 0, 0, 0];  // neu aufbauen! getOptValue(optSet.tAnzahlen, []);
                 const __IDS = getOptValue(optSet.ids, []);
                 const __NAMES = getOptValue(optSet.names, []);
                 const __AGES = getOptValue(optSet.ages, []);
+                const __POSITIONS = getOptValue(optSet.positions, []);
+                const __OPTI27 = getOptValue(optSet.opti24, []);
+                //const __VERLETZT = getOptValue(optSet.verletzt, []);
                 const __SKILLS = getOptValue(optSet.skills, []);
-                const __TSKILLS = getOptValue(optSet.tskills, []);
+                const __TSKILLS = getOptValue(optSet.tSkills, []);
                 const __TRAINIERT = getOptValue(optSet.trainiert, []);
+                const __SKILLPOS = getOptValue(optSet.skillPos, []);
+                const __ISPRIO = getOptValue(optSet.isPrio, []);
                 const __EINSAETZE = getOptValue(optSet.einsaetze, []);
                 const __PROZENTE = getOptValue(optSet.prozente, []);
-                const __POSITIONS = getOptValue(optSet.positions, []);
+                const __EW = getOptValue(optSet.erwartungen, []);
                 const __ERFOLGE = getOptValue(optSet.erfolge, []);
+                const __BLESSUREN = getOptValue(optSet.blessuren, []);
 
                 const __ROWS = getRows(2);
                 const __HEADERS = __ROWS[0];
@@ -4724,6 +4999,7 @@ function procTraining() {
                 appendCell(__HEADERS, __TITLE.PS);
                 appendCell(__HEADERS, __TITLE.Value);
                 appendCell(__HEADERS, __TITLE.WS0);
+                appendCell(__HEADERS, __TITLE.WS);
                 appendCell(__HEADERS, __TITLE.Min0);
                 appendCell(__HEADERS, __TITLE.Min3);
                 //appendCell(__HEADERS, __TITLE.Gehalt);
@@ -4737,16 +5013,23 @@ function procTraining() {
                 const __TLENGTH = 6;
 
                 __TRAINER.length = __TLENGTH;
+                __TANZAHL.length = __TLENGTH;
                 __IDS.length = __SLENGTH;
                 __NAMES.length = __SLENGTH;
                 __AGES.length = __SLENGTH;
+                __POSITIONS.length = __SLENGTH;
+                __OPTI27.length = __SLENGTH;
+                //__VERLETZT.length = __SLENGTH;
                 __SKILLS.length = __SLENGTH;
                 __TSKILLS.length = __SLENGTH;
                 __TRAINIERT.length = __SLENGTH;
+                __SKILLPOS.length = __SLENGTH;
+                __ISPRIO.length = __SLENGTH;
                 __EINSAETZE.length = __SLENGTH;
                 __PROZENTE.length = __SLENGTH;
-                __POSITIONS.length = __SLENGTH;
+                __EW.length = __SLENGTH;
                 __ERFOLGE.length = __SLENGTH;
+                __BLESSUREN.length = __SLENGTH;
 
                 // Wahrscheinlichkeiten eintragen
                 let value = 0.0;
@@ -4755,14 +5038,16 @@ function procTraining() {
                     const __INDEX = i - 1;
                     const __CURRENTROW = __ROWS[i];
                     const __SPIELER = getSpieler(__CURRENTROW, __COLUMNINDEX.Spieler);
-                    const __POS = getPos(__CURRENTROW, __COLUMNINDEX.Chance);
                     const __SKILL = getSkill(__CURRENTROW, __COLUMNINDEX.Skill);
+                    const __POS = getPos(__CURRENTROW, __COLUMNINDEX.Chance);
                     const __COLOR = getColor(__POS);
-                    const __PROBSTR = getProbString(__CURRENTROW, __COLUMNINDEX.Chance);
-                    const __PRACTICE = (getProbability(__PROBSTR, __EINSATZ.Trib) !== "");
+                    const __PROBINDEX = __ORGLENGTH - 1;  // derzeit letzte Spalte enthaelt die Prozente
+                    const __EINSART = getValue(__EINSAETZE[__INDEX], __EINSATZ.Trib);
+                    const __PROBSTRING = getProbString(__CURRENTROW, __COLUMNINDEX.Chance);
+                    const __PRACTICE = (getProbabilityStr(__PROBSTRING, __EINSATZ.Trib) !== "");
                     const __PRACTICEPS = __PRACTICE && isPrimarySkill(__POS, __SKILL);
                     if (__PRACTICE) {
-                        value = parseFloat(__PROBSTR) * (__PRACTICEPS ? 5 : 1) / 100.0;
+                        value = parseFloat(getProbabilityStr(__PROBSTRING, __EINSART, "", 2, 99)) * (__PRACTICEPS ? 5 : 1) / 100.0;
                         sum += value;
                     } else {
                         value = 0.0;
@@ -4770,34 +5055,47 @@ function procTraining() {
 
                     const __VALUESTR = value.toFixed(2).toString();
                     const __ALTER = getAlter(__CURRENTROW, __COLUMNINDEX.Age);
+                    const __GOALIE = isGoalieFromHTML(__CURRENTROW.cells, __COLUMNINDEX.Spieler);
+                    const __OPTI = getFloatFromHTML(__CURRENTROW.cells, __COLUMNINDEX.Opti);
                     const __PSKILL = getPSkill(__CURRENTROW, __COLUMNINDEX.PSkill);
                     const __TSKILL = getTSkill(__CURRENTROW, __COLUMNINDEX.TSkill);
                     const __TNR = getTrainerNr(__CURRENTROW, __COLUMNINDEX.Trainer);
                     const __PROBSTR0 = calcProbPercent(__ALTER, __PSKILL, __TSKILL);
-                    const __MINSTR0 = calcMinPSkill(__ALTER, __TSKILL);
+                    const __PROBSTR = calcProbPercent(__ALTER, __PSKILL, __TSKILL, __EINSART);
+                    const __MINSTR0 = calcMinPSkill(__ALTER, __TSKILL, __EINSATZ.Trib);
                     const __MINSTR3 = calcMinPSkill(__ALTER, __TSKILL, __EINSATZ.Durch);
                     //const __GEHALT = calcTGehalt(__TSKILL);
 
                     if (__TNR) {
                         __TRAINER[__TNR - 1] = __TSKILL;
+                        __TANZAHL[__TNR - 1]++;
                     }
                     __IDS[__INDEX] = __SPIELER.id;
                     __NAMES[__INDEX] = __SPIELER.name;
                     __AGES[__INDEX] = __ALTER;
+                    __POSITIONS[__INDEX] = __POS;
+                    __OPTI27[__INDEX] = parseInt((27 * __OPTI).toFixed(0), 10);
+                    //__VERLETZT[__INDEX] = 0;
                     __SKILLS[__INDEX] = __PSKILL;
                     __TSKILLS[__INDEX] = __TSKILL;
                     __TRAINIERT[__INDEX] = __TNR;
+                    __SKILLPOS[__INDEX] = getSkillID((__PRACTICE ? __SKILL : undefined), __GOALIE);
+                    __ISPRIO[__INDEX] = (__PRACTICEPS ? 1 : 0);
                     //__EINSAETZE[__INDEX] = 0;
-                    __PROZENTE[__INDEX] = parseInt(__PROBSTR0.toFixed(0), 10);
-                    __POSITIONS[__INDEX] = __POS;
-                    //__ERFOLGE[__INDEX] = 0;
+                    __PROZENTE[__INDEX] = (__PRACTICE ? Math.min(99, parseInt(__PROBSTR.toFixed(0), 10)) : undefined);
+                    __EW[__INDEX] = parseFloat(__VALUESTR, 10);
+                    __ERFOLGE[__INDEX] = false;
+                    __BLESSUREN[__INDEX] = 0;
 
                     for (let j = __EINSATZ.Bank; j <= __EINSATZ.Durch; j++) {
-                        appendCell(__CURRENTROW, getProbability(__PROBSTR, j), __COLOR);
+                        appendCell(__CURRENTROW, getProbabilityStr(__PROBSTRING, j), __COLOR);
                     }
+                    formatCell(__CURRENTROW.cells[__PROBINDEX + __EINSART], true);  // fett
+
                     appendCell(__CURRENTROW, __PRACTICEPS ? __SKILL : "", __COLOR);
                     appendCell(__CURRENTROW, __VALUESTR, __COLOR);
                     appendCell(__CURRENTROW, __PROBSTR0.toFixed(2), __COLOR);
+                    appendCell(__CURRENTROW, __PROBSTR.toFixed(2), __COLOR);
                     appendCell(__CURRENTROW, value ? __MINSTR0.toFixed(0) : "", __COLOR);
                     appendCell(__CURRENTROW, value ? __MINSTR3.toFixed(0) : "", __COLOR);
                     //appendCell(__CURRENTROW, __GEHALT.toFixed(0), __COLOR);
@@ -4825,16 +5123,23 @@ function procTraining() {
                 __NEWCELL12.textContent = __WARN2;
 
                 setOpt(optSet.trainer, __TRAINER, false);
+                setOpt(optSet.tAnzahlen, __TANZAHL, false);
                 setOpt(optSet.ids, __IDS, false);
                 setOpt(optSet.names, __NAMES, false);
                 setOpt(optSet.ages, __AGES, false);
+                setOpt(optSet.positions, __POSITIONS, false);
+                setOpt(optSet.opti27, __OPTI27, false);
+                //setOpt(optSet.verletzt, __VERLETZT, false);
                 setOpt(optSet.skills, __SKILLS, false);
-                setOpt(optSet.tskills, __TSKILLS, false);
+                setOpt(optSet.tSkills, __TSKILLS, false);
                 setOpt(optSet.trainiert, __TRAINIERT, false);
+                setOpt(optSet.skillPos, __SKILLPOS, false);
+                setOpt(optSet.isPrio, __ISPRIO, false);
                 //setOpt(optSet.einsaetze, __EINSAETZE, false);
                 setOpt(optSet.prozente, __PROZENTE, false);
-                setOpt(optSet.positions, __POSITIONS, false);
+                setOpt(optSet.erwartungen, __EW, false);
                 //setOpt(optSet.erfolge, __ERFOLGE, false);
+                //setOpt(optSet.blessuren, __BLESSUREN, false);
             });
     }
 
