@@ -6,8 +6,10 @@
 // @author       Sven Loges (SLC) / Andreas Eckes (Strindheim BK)
 // @description  OS 2.0 - Berechnet die Trainingswahrscheinlichkeiten abhaengig von der Art des Einsatzes
 // @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/haupt\.php(\?changetosecond=\w+(&\S+)*)?$/
+// @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/trainer\.php(\?\S+(&\S+)*)?$/
 // @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/training\.php(\?\S+(&\S+)*)?$/
 // @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/zar\.php(\?\S+(&\S+)*)?$/
+// @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/zugabgabe\.php(\?\S+(&\S+)*)?$/
 // @grant        GM.getValue
 // @grant        GM.setValue
 // @grant        GM.deleteValue
@@ -184,6 +186,171 @@ const __OPTCONFIG = {
                    'Replace'   : null,
                    'Space'     : 1,
                    'Label'     : "Verein:"
+               },
+    'trainer' : {         // Datenspeicher fuer Trainer-Skills aller Trainer
+                   'Name'      : "trainer",
+                   'Type'      : __OPTTYPES.SD,
+                   'Hidden'    : false,
+                   'Serial'    : true,
+                   'AutoReset' : true,
+                   'Permanent' : true,
+                   'Default'   : [],
+                   'Submit'    : undefined,
+                   'Cols'      : 36,
+                   'Rows'      : 2,
+                   'Replace'   : null,
+                   'Space'     : 0,
+                   'Label'     : "Trainer:"
+               },
+    'ids' : {            // Datenspeicher fuer ID der Spieler
+                   'Name'      : "ids",
+                   'Type'      : __OPTTYPES.SD,
+                   'Hidden'    : false,
+                   'Serial'    : true,
+                   'AutoReset' : true,
+                   'Permanent' : true,
+                   'Default'   : [],
+                   'Submit'    : undefined,
+                   'Cols'      : 36,
+                   'Rows'      : 2,
+                   'Replace'   : null,
+                   'Space'     : 0,
+                   'Label'     : "Spieler-IDs:"
+               },
+    'names' : {            // Datenspeicher fuer Name der Spieler
+                   'Name'      : "names",
+                   'Type'      : __OPTTYPES.SD,
+                   'Hidden'    : false,
+                   'Serial'    : true,
+                   'AutoReset' : true,
+                   'Permanent' : true,
+                   'Default'   : [],
+                   'Submit'    : undefined,
+                   'Cols'      : 36,
+                   'Rows'      : 10,
+                   'Replace'   : null,
+                   'Space'     : 0,
+                   'Label'     : "Spielernamen:"
+               },
+    'ages' : {            // Datenspeicher fuer Alter der Spieler
+                   'Name'      : "ages",
+                   'Type'      : __OPTTYPES.SD,
+                   'Hidden'    : false,
+                   'Serial'    : true,
+                   'AutoReset' : true,
+                   'Permanent' : true,
+                   'Default'   : [],
+                   'Submit'    : undefined,
+                   'Cols'      : 36,
+                   'Rows'      : 2,
+                   'Replace'   : null,
+                   'Space'     : 0,
+                   'Label'     : "Alter:"
+               },
+    'skills' : {          // Datenspeicher fuer vorherige Werte der Spieler-Skills
+                   'Name'      : "skills",
+                   'Type'      : __OPTTYPES.SD,
+                   'Hidden'    : false,
+                   'Serial'    : true,
+                   'AutoReset' : true,
+                   'Permanent' : true,
+                   'Default'   : [],
+                   'Submit'    : undefined,
+                   'Cols'      : 36,
+                   'Rows'      : 2,
+                   'Replace'   : null,
+                   'Space'     : 0,
+                   'Label'     : "Skills:"
+               },
+    'tskills' : {         // Datenspeicher fuer Skills der Trainer
+                   'Name'      : "tskills",
+                   'Type'      : __OPTTYPES.SD,
+                   'Hidden'    : false,
+                   'Serial'    : true,
+                   'AutoReset' : true,
+                   'Permanent' : true,
+                   'Default'   : [],
+                   'Submit'    : undefined,
+                   'Cols'      : 36,
+                   'Rows'      : 2,
+                   'Replace'   : null,
+                   'Space'     : 0,
+                   'Label'     : "Trainer-Skills:"
+               },
+    'trainiert' : {       // Datenspeicher fuer Zuordnung der Trainer
+                   'Name'      : "trainiert",
+                   'Type'      : __OPTTYPES.SD,
+                   'Hidden'    : false,
+                   'Serial'    : true,
+                   'AutoReset' : true,
+                   'Permanent' : true,
+                   'Default'   : [],
+                   'Submit'    : undefined,
+                   'Cols'      : 36,
+                   'Rows'      : 2,
+                   'Replace'   : null,
+                   'Space'     : 0,
+                   'Label'     : "Trainer:"
+               },
+    'einsaetze' : {       // Datenspeicher fuer Einsatzarten der Spieler
+                   'Name'      : "einsaetze",
+                   'Type'      : __OPTTYPES.SD,
+                   'Hidden'    : false,
+                   'Serial'    : true,
+                   'AutoReset' : true,
+                   'Permanent' : true,
+                   'Default'   : [],
+                   'Submit'    : undefined,
+                   'Cols'      : 36,
+                   'Rows'      : 2,
+                   'Replace'   : null,
+                   'Space'     : 0,
+                   'Label'     : "Eins\xE4tze:"
+               },
+    'prozente' : {        // Datenspeicher fuer Trainingswahrscheinlichkeiten (in Prozent)
+                   'Name'      : "prozente",
+                   'Type'      : __OPTTYPES.SD,
+                   'Hidden'    : false,
+                   'Serial'    : true,
+                   'AutoReset' : true,
+                   'Permanent' : true,
+                   'Default'   : [],
+                   'Submit'    : undefined,
+                   'Cols'      : 36,
+                   'Rows'      : 2,
+                   'Replace'   : null,
+                   'Space'     : 0,
+                   'Label'     : "Prozente:"
+               },
+    'positions' : {       // Datenspeicher fuer Spieler-Positionen
+                   'Name'      : "positions",
+                   'Type'      : __OPTTYPES.SD,
+                   'Hidden'    : false,
+                   'Serial'    : true,
+                   'AutoReset' : true,
+                   'Permanent' : true,
+                   'Default'   : [],
+                   'Submit'    : undefined,
+                   'Cols'      : 36,
+                   'Rows'      : 3,
+                   'Replace'   : null,
+                   'Space'     : 0,
+                   'Label'     : "Positionen:"
+               },
+    'erfolge' : {         // Datenspeicher fuer Trainingserfolge
+                   'Name'      : "erfolge",
+                   'Type'      : __OPTTYPES.SD,
+                   'Hidden'    : false,
+                   'Serial'    : true,
+                   'AutoReset' : true,
+                   'Permanent' : true,
+                   'Default'   : [],
+                   'Submit'    : undefined,
+                   'Cols'      : 36,
+                   'Rows'      : 2,
+                   'Replace'   : null,
+                   'Space'     : 0,
+                   'Label'     : "Trainingserfolge:"
                },
     'reset' : {           // Optionen auf die "Werkseinstellungen" zuruecksetzen
                    'FormPrio'  : undefined,
@@ -3281,7 +3448,18 @@ const __TEAMCLASS = new TeamClassification();
 // Optionen mit Daten, die ZAT- und Team-bezogen gemerkt werden...
 __TEAMCLASS.optSelect = {
                             'datenZat'        : true,
-                            'oldDatenZat'     : true
+                            'oldDatenZat'     : true,
+                            'trainer'         : true,
+                            'ids'             : true,
+                            'names'           : true,
+                            'ages'            : true,
+                            'skills'          : true,
+                            'tskills'         : true,
+                            'trainiert'       : true,
+                            'einsaetze'       : true,
+                            'prozente'        : true,
+                            'positions'       : true,
+                            'erfolge'         : true
                         };
 
 // Gibt die Teamdaten zurueck und aktualisiert sie ggfs. in der Option
@@ -3751,6 +3929,33 @@ function getSkill(row, colIdxSkill) {
     return __SKILL;
 }
 
+// Gibt den Spieler in dieser Zeile zurueck
+function getSpieler(row, colIdxSpieler) {
+    const __HTML = row.cells[colIdxSpieler].innerHTML;
+    const __SEARCH = "javascript:spielerinfo(";
+    const __INDEX1 = __HTML.indexOf(__SEARCH);
+    const __INDEX2 = __HTML.indexOf(')', __INDEX1);
+    const __INDEX3 = __HTML.indexOf('>', __INDEX2);
+    const __INDEX4 = __HTML.indexOf("</a>", __INDEX3);
+    const __SID = ((~__INDEX1) ? parseInt(__HTML.substring(__INDEX1 + __SEARCH.length, __INDEX2), 10) : undefined);
+    const __SNAME = ((~__INDEX3) ? __HTML.substring(__INDEX3 + 1, __INDEX4) : undefined);
+
+    return {
+               'id'   : __SID,
+               'name' : __SNAME
+           };
+}
+
+// Gibt die Spieler-ID in dieser Zeile zurueck
+function getSpielerID(row, colIdxSpieler) {
+    return getSpieler(row, colIdxSpieler).id;
+}
+
+// Gibt den Spielernamen in dieser Zeile zurueck
+function getSpielerName(row, colIdxSpieler) {
+    return getSpieler(row, colIdxSpieler).name;
+}
+
 // Gibt die Wahrscheinlichkeit fuer eine Aufwertung zurueck
 function getProbString(row, colIdxChance) {
     const __PROBSTR = row.cells[colIdxChance].textContent;
@@ -3780,6 +3985,16 @@ function getTSkill(row, colIdxTSkill) {
     const __TSKILL = ((__TSKILLSTR.substr(0, 1) === '/') ? undefined : parseFloat(__TSKILLSTR.substr(0, __TSKILLSTR.indexOf('<'))));
 
     return __TSKILL;
+}
+
+// Gibt die Trainer-Zuordnung dieser Zeile zurueck
+function getTrainerNr(row, colIdxTrainer) {
+    const __HTML = row.cells[colIdxTrainer].innerHTML;
+    //const __TRAINERSTR = __HTML.substr(__HTML.indexOf("\"selected\"") + 13);
+    const __TRAINERSTR = __HTML.substr(__HTML.indexOf("selected=\"\"") + 14);
+    const __TRAINERNR = ((__TRAINERSTR.substr(2, 1) === '/') ? undefined : parseInt(__TRAINERSTR.substr(0, 1), 10));
+
+    return __TRAINERNR;
 }
 
 // Gibt das Gehalt eines Trainers zurueck
@@ -4308,7 +4523,7 @@ function procHaupt() {
                 if (__CURRZAT !== __DATAZAT) {
                     __LOG[2](__LOG.changed(__DATAZAT, __CURRZAT));
 
-                    // ... und ZAT-bezogene Daten als veraltet markieren (ausser '<TODO>')
+                    // ... und ZAT-bezogene Daten als veraltet markieren
                     await __TEAMCLASS.deleteOptions({
                                                     'datenZat'    : true,
                                                     'oldDatenZat' : true
@@ -4321,31 +4536,132 @@ function procHaupt() {
         });
 }
 
+// Verarbeitet Ansicht "Zugabgabe - Aufstellung"
+function procAufstellung() {
+    if (getRows(1) === undefined) {
+        __LOG[2]("Diese Seite ist ohne Team nicht verf\xFCgbar!");
+    } else {
+        return buildOptions(__OPTCONFIG, __OPTSET, {
+                                'menuAnchor' : getTable(0, 'div'),
+                                'showForm'   : {
+                                                   'saison'               : true,
+                                                   'aktuellerZat'         : true,
+                                                   'team'                 : true,
+                                                   'reset'                : true,
+                                                   'showForm'             : true
+                                               },
+                                'formWidth'  : 1
+                            }).then(optSet => {
+                const __ROWS = getRows(1);
+                const __HEADERS = __ROWS[0];
+            });
+    }
+
+    // Promise fuer alle Faelle ohne Rueckgabewert...
+    return Promise.resolve();
+}
+
+// Verarbeitet Ansicht "Zugabgabe - Aktionen"
+function procAktionen() {
+    if (getRows(1) === undefined) {
+        __LOG[2]("Diese Seite ist ohne Team nicht verf\xFCgbar!");
+    } else {
+        return buildOptions(__OPTCONFIG, __OPTSET, {
+                                'menuAnchor' : getTable(0, 'div'),
+                                'showForm'   : {
+                                                   'saison'               : true,
+                                                   'aktuellerZat'         : true,
+                                                   'team'                 : true,
+                                                   'reset'                : true,
+                                                   'showForm'             : true
+                                               },
+                                'formWidth'  : 1
+                            }).then(optSet => {
+                const __ROWS = getRows(1);
+                const __HEADERS = __ROWS[0];
+            });
+    }
+
+    // Promise fuer alle Faelle ohne Rueckgabewert...
+    return Promise.resolve();
+}
+
+// Verarbeitet Ansicht "Zugabgabe - Einstellungen"
+function procEinstellungen() {
+    if (getRows(1) === undefined) {
+        __LOG[2]("Diese Seite ist ohne Team nicht verf\xFCgbar!");
+    } else {
+        return buildOptions(__OPTCONFIG, __OPTSET, {
+                                'menuAnchor' : getTable(0, 'div'),
+                                'showForm'   : {
+                                                   'saison'               : true,
+                                                   'aktuellerZat'         : true,
+                                                   'team'                 : true,
+                                                   'reset'                : true,
+                                                   'showForm'             : true
+                                               },
+                                'formWidth'  : 1
+                            }).then(optSet => {
+                const __ROWS = getRows(1);
+                const __HEADERS = __ROWS[0];
+            });
+    }
+
+    // Promise fuer alle Faelle ohne Rueckgabewert...
+    return Promise.resolve();
+}
+
+// Verarbeitet Ansicht "Trainer"
+function procTrainer() {
+    if (getRows(1) === undefined) {
+        __LOG[2]("Diese Seite ist ohne Team nicht verf\xFCgbar!");
+    } else {
+        return buildOptions(__OPTCONFIG, __OPTSET, {
+                                'menuAnchor' : getTable(0, 'div'),
+                                'showForm'   : {
+                                                   'saison'               : true,
+                                                   'aktuellerZat'         : true,
+                                                   'team'                 : true,
+                                                   'reset'                : true,
+                                                   'showForm'             : true
+                                               },
+                                'formWidth'  : 1
+                            }).then(optSet => {
+                const __ROWS = getRows(1);
+                const __HEADERS = __ROWS[0];
+            });
+    }
+
+    // Promise fuer alle Faelle ohne Rueckgabewert...
+    return Promise.resolve();
+}
+
 // Verarbeitet Ansicht "Training"
 function procTraining() {
     const __COLWIDTH  = 80;
     const __COLWIDTH2 = 40;
 
     const __COLUMNINDEX = {
-            '0'      : 0,
-            '1'      : 1,
-            'Age'    : 2,
-            '3'      : 3,
-            'TSkill' : 4,
-            'Skill'  : 5,
-            'PSkill' : 6,
-            'Chance' : 7
+            'Verletzt' : 0,
+            'Spieler'  : 1,
+            'Age'      : 2,
+            'Opti'     : 3,
+            'Trainer'  : 4,
+            'TSkill'   : 4,
+            'Skill'    : 5,
+            'PSkill'   : 6,
+            'Chance'   : 7
         };
     const __TITLE = {
-            'Prob1'  : "Bankeinsatz",
-            'Prob2'  : "Teilweise",
-            'Prob3'  : "Durchgehend",
-            'PS'     : "Primary",
-            'Value'  : "EW",
-            'WS0'    : "WS",
-            'Min0'   : "min.",
-            'Min3'   : "max.",
-            'Gehalt' : "Gehalt"
+            'Prob1'    : "Bankeinsatz",
+            'Prob2'    : "Teilweise",
+            'Prob3'    : "Durchgehend",
+            'PS'       : "Primary",
+            'Value'    : "EW",
+            'WS0'      : "WS",
+            'Min0'     : "min.",
+            'Min3'     : "max.",
+            'Gehalt'   : "Gehalt"
         };
     const __EINSATZ = {
             'Trib'  : 0,
@@ -4366,11 +4682,35 @@ function procTraining() {
                                                    'saison'               : true,
                                                    'aktuellerZat'         : true,
                                                    'team'                 : true,
+                                                   'trainer'              : true,
+                                                   'ids'                  : true,
+                                                   'names'                : true,
+                                                   'ages'                 : true,
+                                                   'skills'               : true,
+                                                   'tskills'              : true,
+                                                   'trainiert'            : true,
+                                                   'einsaetze'            : true,
+                                                   'prozente'             : true,
+                                                   'positions'            : true,
+                                                   'erfolge'              : true,
                                                    'reset'                : true,
                                                    'showForm'             : true
                                                },
                                 'formWidth'  : 1
                             }).then(optSet => {
+                // Gespeicherte Daten...
+                const __TRAINER = [];  // neu aufbauen! getOptValue(optSet.trainer, []);
+                const __IDS = getOptValue(optSet.ids, []);
+                const __NAMES = getOptValue(optSet.names, []);
+                const __AGES = getOptValue(optSet.ages, []);
+                const __SKILLS = getOptValue(optSet.skills, []);
+                const __TSKILLS = getOptValue(optSet.tskills, []);
+                const __TRAINIERT = getOptValue(optSet.trainiert, []);
+                const __EINSAETZE = getOptValue(optSet.einsaetze, []);
+                const __PROZENTE = getOptValue(optSet.prozente, []);
+                const __POSITIONS = getOptValue(optSet.positions, []);
+                const __ERFOLGE = getOptValue(optSet.erfolge, []);
+
                 const __ROWS = getRows(2);
                 const __HEADERS = __ROWS[0];
 
@@ -4393,11 +4733,28 @@ function procTraining() {
                     __HEADERS.cells[i].setAttribute("width", (i < __COL2LENGTH) ? __COLWIDTH : __COLWIDTH2, false);
                 }
 
+                const __SLENGTH = __ROWS.length - 1;
+                const __TLENGTH = 6;
+
+                __TRAINER.length = __TLENGTH;
+                __IDS.length = __SLENGTH;
+                __NAMES.length = __SLENGTH;
+                __AGES.length = __SLENGTH;
+                __SKILLS.length = __SLENGTH;
+                __TSKILLS.length = __SLENGTH;
+                __TRAINIERT.length = __SLENGTH;
+                __EINSAETZE.length = __SLENGTH;
+                __PROZENTE.length = __SLENGTH;
+                __POSITIONS.length = __SLENGTH;
+                __ERFOLGE.length = __SLENGTH;
+
                 // Wahrscheinlichkeiten eintragen
                 let value = 0.0;
                 let sum = 0.0;
                 for (let i = 1; i < __ROWS.length; i++) {
+                    const __INDEX = i - 1;
                     const __CURRENTROW = __ROWS[i];
+                    const __SPIELER = getSpieler(__CURRENTROW, __COLUMNINDEX.Spieler);
                     const __POS = getPos(__CURRENTROW, __COLUMNINDEX.Chance);
                     const __SKILL = getSkill(__CURRENTROW, __COLUMNINDEX.Skill);
                     const __COLOR = getColor(__POS);
@@ -4415,10 +4772,25 @@ function procTraining() {
                     const __ALTER = getAlter(__CURRENTROW, __COLUMNINDEX.Age);
                     const __PSKILL = getPSkill(__CURRENTROW, __COLUMNINDEX.PSkill);
                     const __TSKILL = getTSkill(__CURRENTROW, __COLUMNINDEX.TSkill);
+                    const __TNR = getTrainerNr(__CURRENTROW, __COLUMNINDEX.Trainer);
                     const __PROBSTR0 = calcProbPercent(__ALTER, __PSKILL, __TSKILL);
                     const __MINSTR0 = calcMinPSkill(__ALTER, __TSKILL);
                     const __MINSTR3 = calcMinPSkill(__ALTER, __TSKILL, __EINSATZ.Durch);
                     //const __GEHALT = calcTGehalt(__TSKILL);
+
+                    if (__TNR) {
+                        __TRAINER[__TNR - 1] = __TSKILL;
+                    }
+                    __IDS[__INDEX] = __SPIELER.id;
+                    __NAMES[__INDEX] = __SPIELER.name;
+                    __AGES[__INDEX] = __ALTER;
+                    __SKILLS[__INDEX] = __PSKILL;
+                    __TSKILLS[__INDEX] = __TSKILL;
+                    __TRAINIERT[__INDEX] = __TNR;
+                    //__EINSAETZE[__INDEX] = 0;
+                    __PROZENTE[__INDEX] = parseInt(__PROBSTR0.toFixed(0), 10);
+                    __POSITIONS[__INDEX] = __POS;
+                    //__ERFOLGE[__INDEX] = 0;
 
                     for (let j = __EINSATZ.Bank; j <= __EINSATZ.Durch; j++) {
                         appendCell(__CURRENTROW, getProbability(__PROBSTR, j), __COLOR);
@@ -4451,6 +4823,18 @@ function procTraining() {
                 const __NEWCELL12 = __TABLE.insertRow(-1).insertCell(-1);
                 __NEWCELL12.setAttribute("colspan", 3, false);
                 __NEWCELL12.textContent = __WARN2;
+
+                setOpt(optSet.trainer, __TRAINER, false);
+                setOpt(optSet.ids, __IDS, false);
+                setOpt(optSet.names, __NAMES, false);
+                setOpt(optSet.ages, __AGES, false);
+                setOpt(optSet.skills, __SKILLS, false);
+                setOpt(optSet.tskills, __TSKILLS, false);
+                setOpt(optSet.trainiert, __TRAINIERT, false);
+                //setOpt(optSet.einsaetze, __EINSAETZE, false);
+                setOpt(optSet.prozente, __PROZENTE, false);
+                setOpt(optSet.positions, __POSITIONS, false);
+                //setOpt(optSet.erfolge, __ERFOLGE, false);
             });
     }
 
@@ -4491,19 +4875,29 @@ function procZatReport() {
     (async () => {
         try {
             // URL-Legende:
-            // page=0: Managerbuero
-            // page=1: Training
-            // page=2: ZAT-Report
+            // page=0: Zugabgabe Aufstellung
+            // page=1: Zugabgabe Aktionen
+            // page=2: Zugabgabe Einstellungen
+            // page=3: Managerbuero
+            // page=4: Trainer
+            // page=5: Training
+            // page=6: ZAT-Report
 
-            // Verzweige in unterschiedliche Verarbeitungen je nach Wert von page:
+            // Verzweige in unterschiedliche Verarbeitungen je nach Wert von p:
             switch (getPageIdFromURL(window.location.href, {
-                                                               'haupt.php'    : 0,  // Ansicht "Haupt" (Managerbuero)
-                                                               'training.php' : 1,  // Ansicht "Training"
-                                                               'zar.php'      : 2   // Ansicht "ZAT-Report"
-                                                           }, undefined)) {
-                case 0  : await procHaupt().catch(defaultCatch); break;
-                case 1  : await procTraining().catch(defaultCatch); break;
-                case 2  : await procZatReport().catch(defaultCatch); break;
+                                                               'zugabgabe.php' : 0,  // Ansicht "Zugabgabe" (p = 0, 1, 2)
+                                                               'haupt.php'     : 3,  // Ansicht "Haupt" (Managerbuero)
+                                                               'trainer.php'   : 4,  // Ansicht "Trainer"
+                                                               'training.php'  : 5,  // Ansicht "Training"
+                                                               'zar.php'       : 6   // Ansicht "ZAT-Report"
+                                                           }, 'p')) {
+                case 0  : await procAufstellung().catch(defaultCatch); break;
+                case 1  : await procAktionen().catch(defaultCatch); break;
+                case 2  : await procEinstellungen().catch(defaultCatch); break;
+                case 3  : await procHaupt().catch(defaultCatch); break;
+                case 4  : await procTrainer().catch(defaultCatch); break;
+                case 5  : await procTraining().catch(defaultCatch); break;
+                case 6  : await procZatReport().catch(defaultCatch); break;
                 default : break;
             }
 
