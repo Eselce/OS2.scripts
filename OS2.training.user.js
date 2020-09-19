@@ -70,6 +70,218 @@ const __OPTMEM = {
 
 // Moegliche Optionen (hier die Standardwerte editieren oder ueber das Benutzermenu setzen):
 const __OPTCONFIG = {
+    'zeigeId' : {         // Spaltenauswahl fuer Identifizierung der trainierten Spieler (true = anzeigen, false = nicht anzeigen)
+                   'Name'      : "showId",
+                   'Type'      : __OPTTYPES.SW,
+                   'Hidden'    : true,
+                   'Default'   : false,
+                   'Action'    : __OPTACTION.NXT,
+                   'Label'     : "Identifikation ein",
+                   'Hotkey'    : 'I',
+                   'AltLabel'  : "Identifikation aus",
+                   'AltHotkey' : 'I',
+                   'FormLabel' : "Identifikation"
+               },
+    'zeigeAlter' : {      // Spaltenauswahl fuer Alter der trainierten Spieler (true = anzeigen, false = nicht anzeigen)
+                   'Name'      : "showAge",
+                   'Type'      : __OPTTYPES.SW,
+                   'Default'   : true,
+                   'Action'    : __OPTACTION.NXT,
+                   'Label'     : "Alter ein",
+                   'Hotkey'    : 'A',
+                   'AltLabel'  : "Alter aus",
+                   'AltHotkey' : 'A',
+                   'FormLabel' : "Alter"
+               },
+    'zeigePosition' : {   // Spaltenauswahl fuer Position der trainierten Spieler (true = anzeigen, false = nicht anzeigen)
+                   'Name'      : "showPos",
+                   'Type'      : __OPTTYPES.SW,
+                   'Default'   : true,
+                   'Action'    : __OPTACTION.NXT,
+                   'Label'     : "Position ein",
+                   'Hotkey'    : 'P',
+                   'AltLabel'  : "Position aus",
+                   'AltHotkey' : 'P',
+                   'FormLabel' : "Position"
+               },
+    'zeigeTOR' : {        // Spaltenauswahl fuer Torwarte der trainierten Spieler (true = anzeigen, false = nicht anzeigen)
+                   'Name'      : "showTOR",
+                   'Type'      : __OPTTYPES.SW,
+                   'Hidden'    : true,
+                   'Default'   : false,
+                   'Action'    : __OPTACTION.NXT,
+                   'Label'     : "TOR ein",
+                   'Hotkey'    : 'T',
+                   'AltLabel'  : "TOR aus",
+                   'AltHotkey' : 'T',
+                   'FormLabel' : "Torwart?"
+               },
+    'zeigeOpti' : {       // Spaltenauswahl fuer die aktuellen Werte (true = anzeigen, false = nicht anzeigen)
+                   'Name'      : "showOpti",
+                   'Type'      : __OPTTYPES.SW,
+                   'Default'   : true,
+                   'Action'    : __OPTACTION.NXT,
+                   'Label'     : "Opti ein",
+                   'Hotkey'    : 'O',
+                   'AltLabel'  : "Opti aus",
+                   'AltHotkey' : 'O',
+                   'FormLabel' : "Opti"
+               },
+    'zeigeVerletzung' : { // Spaltenauswahl fuer Verletzungsdauer der trainierten Spieler (true = anzeigen, false = nicht anzeigen)
+                   'Name'      : "showVerl",
+                   'Type'      : __OPTTYPES.SW,
+                   'Hidden'    : true,
+                   'Default'   : true,
+                   'Action'    : __OPTACTION.NXT,
+                   'Label'     : "TOR ein",
+                   'Hotkey'    : 'T',
+                   'AltLabel'  : "TOR aus",
+                   'AltHotkey' : 'T',
+                   'FormLabel' : "Torwart?"
+               },
+    'zeigeBlessur' : {    // Spaltenauswahl fuer Blessur der trainierten Spieler (true = anzeigen, false = nicht anzeigen)
+                   'Name'      : "showBlessur",
+                   'Type'      : __OPTTYPES.SW,
+                   'Default'   : true,
+                   'Action'    : __OPTACTION.NXT,
+                   'Label'     : "Blessur ein",
+                   'Hotkey'    : 'S',
+                   'AltLabel'  : "Blessur aus",
+                   'AltHotkey' : 'S',
+                   'FormLabel' : "Blessur"
+               },
+    'zeigeSkillPos' : {   // Spaltenauswahl fuer trainierten Skill der trainierten Spieler (true = anzeigen, false = nicht anzeigen)
+                   'Name'      : "showSkillPos",
+                   'Type'      : __OPTTYPES.SW,
+                   'Default'   : true,
+                   'Action'    : __OPTACTION.NXT,
+                   'Label'     : "Trainierter Skill ein",
+                   'Hotkey'    : 's',
+                   'AltLabel'  : "Trainierter Skill aus",
+                   'AltHotkey' : 's',
+                   'FormLabel' : "Trainierter Skill"
+               },
+    'zeigeSkill' : {      // Spaltenauswahl fuer trainierten Skillwert der trainierten Spieler (true = anzeigen, false = nicht anzeigen)
+                   'Name'      : "showSkill",
+                   'Type'      : __OPTTYPES.SW,
+                   'Default'   : true,
+                   'Action'    : __OPTACTION.NXT,
+                   'Label'     : "Skillwert ein",
+                   'Hotkey'    : 'S',
+                   'AltLabel'  : "Skillwert aus",
+                   'AltHotkey' : 'S',
+                   'FormLabel' : "Skillwert"
+               },
+    'zeigeSkillUp' : {    // Spaltenauswahl fuer erhoehten der trainierten Spieler (true = anzeigen, false = nicht anzeigen)
+                   'Name'      : "showSkillUp",
+                   'Type'      : __OPTTYPES.SW,
+                   'Default'   : true,
+                   'Action'    : __OPTACTION.NXT,
+                   'Label'     : "Neuer Skillwert ein",
+                   'Hotkey'    : 'n',
+                   'AltLabel'  : "Neuer Skillwert aus",
+                   'AltHotkey' : 'S',
+                   'FormLabel' : "Neuer Skillwert"
+               },
+    'zeigeTSkill' : {     // Spaltenauswahl fuer Trainerskill der trainierten Spieler (true = anzeigen, false = nicht anzeigen)
+                   'Name'      : "showTSkill",
+                   'Type'      : __OPTTYPES.SW,
+                   'Default'   : true,
+                   'Action'    : __OPTACTION.NXT,
+                   'Label'     : "Trainer-Skill ein",
+                   'Hotkey'    : 'T',
+                   'AltLabel'  : "Trainer-Skill aus",
+                   'AltHotkey' : 'T',
+                   'FormLabel' : "Trainer-Skill"
+               },
+    'zeigeTNr' : {        // Spaltenauswahl fuer Trainernummer der trainierten Spieler (true = anzeigen, false = nicht anzeigen)
+                   'Name'      : "showTNr",
+                   'Type'      : __OPTTYPES.SW,
+                   'Default'   : true,
+                   'Action'    : __OPTACTION.NXT,
+                   'Label'     : "Trainer-Nummer ein",
+                   'Hotkey'    : 't',
+                   'AltLabel'  : "Trainer-Nummer aus",
+                   'AltHotkey' : 't',
+                   'FormLabel' : "Trainer-Nummer"
+               },
+    'zeigePrio' : {       // Spaltenauswahl fuer Training eines Primaerskills der trainierten Spieler (true = anzeigen, false = nicht anzeigen)
+                   'Name'      : "showTSkill",
+                   'Type'      : __OPTTYPES.SW,
+                   'Default'   : true,
+                   'Action'    : __OPTACTION.NXT,
+                   'Label'     : "Prim\xE4rskill ein",
+                   'Hotkey'    : 'p',
+                   'AltLabel'  : "Prim\xE4rskill aus",
+                   'AltHotkey' : 'p',
+                   'FormLabel' : "Prim\xE4rskill?"
+               },
+    'zeigeEinsatz' : {    // Spaltenauswahl fuer Spielereinsatz der trainierten Spieler (true = anzeigen, false = nicht anzeigen)
+                   'Name'      : "showEins",
+                   'Type'      : __OPTTYPES.SW,
+                   'Default'   : true,
+                   'Action'    : __OPTACTION.NXT,
+                   'Label'     : "Einsatz ein",
+                   'Hotkey'    : 'E',
+                   'AltLabel'  : "Einsatz aus",
+                   'AltHotkey' : 'E',
+                   'FormLabel' : "Einsatz"
+               },
+    'zeigeProzent' : {    // Spaltenauswahl fuer Trainingsprozente der trainierten Spieler (true = anzeigen, false = nicht anzeigen)
+                   'Name'      : "showProz",
+                   'Type'      : __OPTTYPES.SW,
+                   'Default'   : true,
+                   'Action'    : __OPTACTION.NXT,
+                   'Label'     : "Trainings-Prozente ein",
+                   'Hotkey'    : 'P',
+                   'AltLabel'  : "Trainings-Prozente aus",
+                   'AltHotkey' : 'P',
+                   'FormLabel' : "Trainings-Prozente"
+               },
+    'zeigeProzentBalken' : { // Spaltenauswahl fuer Balken Trainingsprozente der trainierten Spieler (true = anzeigen, false = nicht anzeigen)
+                   'Name'      : "showProzBar",
+                   'Type'      : __OPTTYPES.SW,
+                   'Default'   : true,
+                   'Action'    : __OPTACTION.NXT,
+                   'Label'     : "Prozente-Balken ein",
+                   'Hotkey'    : 'p',
+                   'AltLabel'  : "Prozente-Balken aus",
+                   'AltHotkey' : 'p',
+                   'FormLabel' : "Prozente-Balken"
+               },
+    'zeigeErwartung' : {  // Spaltenauswahl fuer Trainingserwartung der trainierten Spieler (true = anzeigen, false = nicht anzeigen)
+                   'Name'      : "showEw",
+                   'Type'      : __OPTTYPES.SW,
+                   'Default'   : true,
+                   'Action'    : __OPTACTION.NXT,
+                   'Label'     : "Trainings-EW ein",
+                   'Hotkey'    : 'E',
+                   'AltLabel'  : "Trainings-EW aus",
+                   'AltHotkey' : 'E',
+                   'FormLabel' : "Trainings-EW"
+               },
+    'zeigeErwartungBalken' : { // Spaltenauswahl fuer Balken Trainingserwartung der trainierten Spieler (true = anzeigen, false = nicht anzeigen)
+                   'Name'      : "showEwBar",
+                   'Type'      : __OPTTYPES.SW,
+                   'Default'   : true,
+                   'Action'    : __OPTACTION.NXT,
+                   'Label'     : "Erwartungswert-Balken ein",
+                   'Hotkey'    : 'e',
+                   'AltLabel'  : "Erwartungswert-Balken aus",
+                   'AltHotkey' : 'e',
+                   'FormLabel' : "Erwartungswert-Balken"
+               },
+    'zeigeErfolg' : {     // Spaltenauswahl fuer Trainingsaufwertung der trainierten Spieler (true = anzeigen, false = nicht anzeigen)
+                   'Name'      : "showErf",
+                   'Type'      : __OPTTYPES.SW,
+                   'Default'   : false,
+                   'Action'    : __OPTACTION.NXT,
+                   'Label'     : "Erfolgswert ein",
+                   'Hotkey'    : 'a',
+                   'AltLabel'  : "Erfolgswert aus",
+                   'AltHotkey' : 'a',
+                   'FormLabel' : "Erfolgswert"
+               },
     'sepStyle' : {        // Stil der Trennlinie
                    'Name'      : "sepStyle",
                    'Type'      : __OPTTYPES.MC,
@@ -585,6 +797,16 @@ if (Function.prototype.name === undefined) {
                       return /function ([^(\s]*)/.exec(this.toString())[1];
                   }
         });
+}
+
+// Fuehrt eine Map-Function auf ein Object aus
+// obj: Das Object, das gemappt wird
+// fun: Eine Mapping-Funktion
+// return Ein neues Object mit gemappten Werten
+Object.map = function(obj, fun) {
+    return Object.fromEntries(
+            Object.entries(obj).map(
+                    ([key, value], index) => [key, fun(value, key, index)]));
 }
 
 // Ergaenzung fuer Strings: Links oder rechts auffuellen nach Vorlage
@@ -2863,6 +3085,41 @@ async function deleteOptions(optSet, optSelect = undefined, force = false, reset
     return Promise.resolve();
 }
 
+// Speichert eine (ueber Menu) gesetzte Option (ggfs. erneut)
+// opt: Gesetzte Option
+// return Promise von setOptValue() (oder void)
+function saveOption(opt) {
+    const __CONFIG = getOptConfig(opt);
+
+    if (__CONFIG !== undefined) {
+        const __NAME = getOptName(opt);
+        const __VALUE = getOptValue(opt);
+
+        __LOG[4]("SAVE " + __NAME);
+
+        return setOpt(opt, __VALUE, false);
+    }
+
+    return Promise.resolve();
+}
+
+// Speichert die (ueber Menu) gesetzten Optionen im Speicher
+// optSet: Gesetzte Optionen
+// optSelect: Liste von ausgewaehlten Optionen, true = speichern, false = nicht speichern
+// return Promise auf diesen Vorgang
+async function saveOptions(optSet, optSelect = undefined) {
+    const __SAVEALL = ((optSelect === undefined) || (optSelect === true));
+    const __OPTSELECT = getValue(optSelect, { });
+
+    for (let opt in optSet) {
+        if (getValue(__OPTSELECT[opt], __SAVEALL)) {
+            await saveOption(optSet[opt]);
+        }
+    }
+
+    return Promise.resolve();
+}
+
 // Benennt eine Option um und laedt sie ggfs. nach
 // opt: Gesetzte Option
 // name: Neu zu setzender Name (Speicheradresse)
@@ -3478,11 +3735,11 @@ function addForm(anchor, form = "", script = "") {
 // ==================== Abschnitt fuer Klasse Classification ====================
 
 // Basisklasse fuer eine Klassifikation der Optionen nach Kriterium (z.B. Erst- und Zweitteam oder Fremdteam)
-function Classification() {
+function Classification(prefix) {
     'use strict';
 
     this.renameFun = prefixName;
-    //this.renameParamFun = undefined;
+    this.prefix = (prefix || "old");
     this.optSet = undefined;
     this.optSelect = { };
 }
@@ -3498,14 +3755,23 @@ Class.define(Classification, Object, {
                                                return Promise.resolve();
                                            }
                                        },
+                    'saveOptions'    : function(ignList) {
+                                           const __OPTSELECT = addProps([], this.optSelect, null, ignList);
+
+                                           return saveOptions(this.optSet, __OPTSELECT);
+                                       },
                     'deleteOptions'  : function(ignList) {
                                            const __OPTSELECT = addProps([], this.optSelect, null, ignList);
 
                                            return deleteOptions(this.optSet, __OPTSELECT, true, true);
                                        },
-                    'renameParamFun' : function() {
+                    'prefixParamFun' : function() {
                                            // Parameter fuer 'prefixName': Prefix "old:"
-                                           return "old:";
+                                           return ((this.prefix !== undefined) ? this.prefix + ':' : this.prefix);
+                                       },
+                    'renameParamFun' : function() {
+                                           // Parameter fuer 'renameFun': Default ist 'prefixName' ("old:")
+                                           return this.prefixParamFun();
                                        }
                 });
 
@@ -3518,6 +3784,8 @@ function ClassificationPair(classA, classB) {
     'use strict';
 
     Classification.call(this);
+
+    this.prefix = undefined;
 
     this.A = classA;
     this.B = classB;
@@ -3566,12 +3834,13 @@ Class.define(ClassificationPair, Classification, {
                                            return (this.A ? this.A.renameOptions() : Promise.resolve()).then(retValue =>
                                                    (this.B ? this.B.renameOptions() : Promise.resolve()));
                                        },
+                    'saveOptions'    : function(ignList) {
+                                           return (this.A ? this.A.saveOptions(ignList) : Promise.resolve()).then(retValue =>
+                                                   (this.B ? this.B.saveOptions(ignList) : Promise.resolve()));
+                                       },
                     'deleteOptions'  : function(ignList) {
                                            return (this.A ? this.A.deleteOptions(ignList) : Promise.resolve()).then(retValue =>
                                                    (this.B ? this.B.deleteOptions(ignList) : Promise.resolve()));
-                                       },
-                    'renameParamFun' : function() {
-                                           return undefined;
                                        }
                 });
 
@@ -3585,6 +3854,8 @@ function TeamClassification() {
 
     Classification.call(this);
 
+    this.prefix = undefined;
+
     this.team = undefined;
     this.teamParams = undefined;
 }
@@ -3595,10 +3866,12 @@ Class.define(TeamClassification, Classification, {
 
                                            if (__MYTEAM.LdNr) {
                                                // Prefix fuer die Optionen mit gesonderten Behandlung...
-                                               return __MYTEAM.LdNr.toString() + '.' + __MYTEAM.LgNr.toString() + ':';
+                                               this.prefix = __MYTEAM.LdNr.toString() + '.' + __MYTEAM.LgNr.toString();
                                            } else {
-                                               return undefined;
+                                               this.prefix = undefined;
                                            }
+
+                                           return this.prefixParamFun();
                                        }
                 });
 
@@ -3693,7 +3966,7 @@ __TEAMCLASS.optSelect = {
                         };
 
 // Teamparameter fuer getrennte Speicherung der Optionen fuer Erst- und Zweitteam...
-const __LASTZATCLASS = new Classification();
+const __LASTZATCLASS = new Classification("old");
 
 // Optionen mit Daten, die ZAT-bezogen (fuer jetzigen und vergangenen ZAT) gemerkt werden...
 __LASTZATCLASS.optSelect = {
@@ -3782,10 +4055,10 @@ function ColumnManager(optSet, colIdx, showCol) {
 
     __LOG[3]("ColumnManager()");
 
+/***
     const __SHOWCOL = getValue(showCol, true);
     const __SHOWALL = ((__SHOWCOL === true) || (__SHOWCOL.Default === true));
 
-/***
     const __BIRTHDAYS = getOptValue(optSet.birthdays, []).length;
     const __TCLASSES = getOptValue(optSet.tClasses, []).length;
     const __PROGRESSES = getOptValue(optSet.progresses, []).length;
@@ -3850,8 +4123,17 @@ Class.define(ColumnManager, Object, {
 
                                return __RESULT;
                            },
+        'insertRow'      : function(table, rowIdx = 0) {
+                               return table.insertRow(rowIdx);
+                           },
+        'addRow'         : function(table) {
+                               return this.insertRow(table, -1);
+                           },
+        'insertCell'     : function(tableRow, colIdx) {
+                               return tableRow.insertCell(colIdx);
+                           },
         'addCell'        : function(tableRow) {
-                               return tableRow.insertCell(-1);
+                               return this.insertCell(tableRow, -1);
                            },
         'addAndFillCell' : function(tableRow, value, color, align, digits = 2) {
                                let text = value;
@@ -3900,6 +4182,7 @@ Class.define(ColumnManager, Object, {
                                // HTML-Code fuer Anteilsbalken...
                                return '<img src="images/balken/' + __IMAGE + '.GIF" width="' + __WIDTH + '" height=' + __HEIGHT + '>';
                            },
+        'insertTitles'   : function(table, titleColor = "#FFFFFF") { },  // Ende insertTitles()
         'addTitles'      : function(headers, titleColor = "#FFFFFF") { },  // Ende addTitles()
         'addValues'      : function(player, playerRow, color = "#FFFFFF") { }  // Ende addValues(player, playerRow)
     });
@@ -3912,6 +4195,40 @@ function ColumnManagerZatReport(optSet, colIdx, showCol) {
     ColumnManager.call(this, optSet, colIdx, showCol);
 
     __LOG[3]("ColumnManagerZatReport()");
+
+    const __SHOWCOL = getValue(showCol, true);
+    const __SHOWALL = ((__SHOWCOL === true) || (__SHOWCOL.Default === true));
+
+    const __SAISON = getOptValue(optSet.saison);
+    const __AKTZAT = getOptValue(optSet.aktuellerZat);
+    const __GEALTERT = ((__AKTZAT >= 72) ? true : false);
+    const __CURRZAT = (__GEALTERT ? 0 : __AKTZAT);
+    const __TEAMDATA = true;  // TODO
+    const __EINSDATA = true;  // TODO
+    const __LASTZAT = true;  // TODO
+
+    this.saison = __SAISON;
+    this.currZAT = __CURRZAT;
+
+    this.id = (getValue(__SHOWCOL.zeigeId, __SHOWALL) && getOptValue(optSet.zeigeId));
+    this.alter = (__TEAMDATA && getValue(__SHOWCOL.zeigeAlter, __SHOWALL) && getOptValue(optSet.zeigeAlter));
+    this.pos = (__TEAMDATA && getValue(__SHOWCOL.zeigePosition, __SHOWALL) && getOptValue(optSet.zeigePosition));
+    this.goalie = (__TEAMDATA && getValue(__SHOWCOL.zeigeTOR, __SHOWALL) && getOptValue(optSet.zeigeTOR));
+    this.opti = (__TEAMDATA && getValue(__SHOWCOL.zeigeOpti, __SHOWALL) && getOptValue(optSet.zeigeOpti));
+    this.verl = (__TEAMDATA && getValue(__SHOWCOL.zeigeVerletzung, __SHOWALL) && getOptValue(optSet.zeigeVerletzung));
+    this.blessur = (getValue(__SHOWCOL.zeigeBlessur, __SHOWALL) && getOptValue(optSet.zeigeBlessur));
+    this.skillPos = (__TEAMDATA && __LASTZAT && getValue(__SHOWCOL.zeigeSkillPos, __SHOWALL) && getOptValue(optSet.zeigeSkillPos));
+    this.skill = (__TEAMDATA && __LASTZAT && getValue(__SHOWCOL.zeigeSkill, __SHOWALL) && getOptValue(optSet.zeigeSkill));
+    this.skillUp = (__TEAMDATA && __LASTZAT && getValue(__SHOWCOL.zeigeSkillUp, __SHOWALL) && getOptValue(optSet.zeigeSkillUp));
+    this.tSkill = (__LASTZAT && getValue(__SHOWCOL.zeigeTSkill, __SHOWALL) && getOptValue(optSet.zeigeTSkill));
+    this.tNr = (__LASTZAT && getValue(__SHOWCOL.zeigeTNr, __SHOWALL) && getOptValue(optSet.zeigeTNr));
+    this.prio = (__TEAMDATA && __LASTZAT && getValue(__SHOWCOL.zeigePrio, __SHOWALL) && getOptValue(optSet.zeigePrio));
+    this.eins = (__TEAMDATA && __EINSDATA && __LASTZAT && getValue(__SHOWCOL.zeigeEinsatz, __SHOWALL) && getOptValue(optSet.zeigeEinsatz));
+    this.proz = (__LASTZAT && getValue(__SHOWCOL.zeigeProzent, __SHOWALL) && getOptValue(optSet.zeigeProzent));
+    this.prozB = (__LASTZAT && getValue(__SHOWCOL.zeigeProzentBalken, __SHOWALL) && getOptValue(optSet.zeigeProzentBalken));
+    this.erw = (__LASTZAT && getValue(__SHOWCOL.zeigeErwartung, __SHOWALL) && getOptValue(optSet.zeigeErwartung));
+    this.erwB = (__LASTZAT && getValue(__SHOWCOL.zeigeErwartungBalken, __SHOWALL) && getOptValue(optSet.zeigeErwartungBalken));
+    this.erf = (__LASTZAT && getValue(__SHOWCOL.zeigeErfolg, __SHOWALL) && getOptValue(optSet.zeigeErfolg));
 }
 
 Class.define(ColumnManagerZatReport, ColumnManager, {
@@ -3937,76 +4254,78 @@ Class.define(ColumnManagerZatReport, ColumnManager, {
                                    return false;
                                }
                            },
+        'insertTitles'   : function(table, titleColor = "#FFFFFF") {
+                               const __HEADERS = this.insertRow(table, 0);
+
+                               this.addAndFillCell(__HEADERS, "Name des Spielers", titleColor);
+                               this.addAndFillCell(__HEADERS, "Ergebnis", titleColor);
+
+                               return this.addTitles(__HEADERS, titleColor);
+                           },
         'addTitles'      : function(headers, titleColor = "#FFFFFF") {
                                // Spaltentitel zentrieren
                                headers.align = "center";
 
                                // Titel fuer die aktuellen Werte
-                               if (this.fpId) {
-                                   this.addAndFillCell(headers, "Identifikation", titleColor);
+                               if (this.id) {
+                                   this.addAndFillCell(headers, "User-ID", titleColor);
                                }
-                               if (this.bar) {
-                                   this.addAndFillCell(headers, "Qualit\xE4t", titleColor);
-                               }
-                               if (this.tal) {
-                                   this.addAndFillCell(headers, "Talent", titleColor);
-                               }
-                               if (this.quo) {
-                                   this.addAndFillCell(headers, "Quote", titleColor);
-                               }
-                               if (this.aufw) {
-                                   this.addAndFillCell(headers, "Aufwertung", titleColor);
-                               }
-                               if (this.geb) {
-                                   this.addAndFillCell(headers, "Geb.", titleColor);
-                               }
-                               if (this.alter && ! this.substAge) {
+                               if (this.alter) {
                                    this.addAndFillCell(headers, "Alter", titleColor);
                                }
-                               if (this.fix) {
-                                   this.addAndFillCell(headers, "fix", titleColor);
+                               if (this.pos) {
+                                   this.addAndFillCell(headers, "POS", titleColor);
                                }
-                               if (this.tr) {
-                                   this.addAndFillCell(headers, "tr.", titleColor);
+                               if (this.goalie) {
+                                   this.addAndFillCell(headers, "TOR", titleColor);
                                }
-                               if (this.zat) {
-                                   this.addAndFillCell(headers, "ZAT", titleColor);
+                               if (this.opti) {
+                                   this.addAndFillCell(headers, "Opti", titleColor);
                                }
-                               if (this.antHpt) {
-                                   this.addAndFillCell(headers, "%H", titleColor);
+                               if (this.verletzt) {
+                                   this.addAndFillCell(headers, "V", titleColor);
                                }
-                               if (this.antNeb) {
-                                   this.addAndFillCell(headers, "%N", titleColor);
+                               if (this.blessur) {
+                                   this.addAndFillCell(headers, "#", titleColor);
                                }
-                               if (this.pri) {
-                                   this.addAndFillCell(headers, "Prios", titleColor);
-                               }
-                               if (this.skill) {
+                               if (this.skillPos) {
                                    this.addAndFillCell(headers, "Skill", titleColor);
                                }
-                               if (this.pos) {
-                                   this.addAndFillCell(headers, "Pos", titleColor);
+                               if (this.skill) {
+                                   this.addAndFillCell(headers, "von", titleColor);
+                               }
+                               if (this.skillUp) {
+                                   this.addAndFillCell(headers, "auf", titleColor);
+                               }
+                               if (this.tSkill) {
+                                   this.addAndFillCell(headers, "Tr.", titleColor);
+                               }
+                               if (this.tNr) {
+                                   this.addAndFillCell(headers, "#", titleColor);
+                               }
+                               if (this.prio) {
+                                   this.addAndFillCell(headers, "P", titleColor);
+                               }
+                               if (this.eins) {
+                                   this.addAndFillCell(headers, "Eins", titleColor);
+                               }
+                               if (this.prozB) {
+                                   this.addAndFillCell(headers, "Trainings-%", titleColor);
+                               }
+                               if (this.proz) {
+                                   this.addAndFillCell(headers, "%", titleColor);
+                               }
+                               if (this.erw || this.erwB) {
+                                   this.addAndFillCell(headers, (this.erwB ? "EW+" : "EW"), titleColor);
+                               }
+                               if (this.erwB) {
+                                   this.addAndFillCell(headers, "EW-", titleColor);
+                               }
+                               if (this.erf) {
+                                   this.addAndFillCell(headers, "Erfolg", titleColor);
                                }
 
-                               // Titel fuer die Werte mit Ende 18
-                               if (this.trE) {
-                                   this.addAndFillCell(headers, "tr." + this.kennzE, titleColor);
-                               }
-                               if (this.zatE) {
-                                   this.addAndFillCell(headers, "ZAT" + this.kennzE, titleColor);
-                               }
-                               if (this.antHptE) {
-                                   this.addAndFillCell(headers, "%H" + this.kennzE, titleColor);
-                               }
-                               if (this.antNebE) {
-                                   this.addAndFillCell(headers, "%N" + this.kennzE, titleColor);
-                               }
-                               if (this.priE) {
-                                   this.addAndFillCell(headers, "Prios" + this.kennzE, titleColor);
-                               }
-                               if (this.skillE) {
-                                   this.addAndFillCell(headers, "Skill" + this.kennzE, titleColor);
-                               }
+                               return headers;
                            },  // Ende addTitles()
         'addValues'      : function(player, playerRow, color = "#FFFFFF") {
                                //const __IDXPRI = getIdxPriSkills(player.getPos());
@@ -4016,65 +4335,112 @@ Class.define(ColumnManagerZatReport, ColumnManager, {
                                const __NEUCOLOR = color;
                                const __POSCOLOR = (player.isGoalie ? __TORCOLOR : getColor(player.pos));
                                const __COLOR = ((player.erfolg === undefined) ? color : __POSCOLOR);
+
+                               // Balken-Grafik...
+                               const __SCALE = 100;  // (this.barAbs ? 100 : (this.donor / 125));
+                               const __OFFSET = 0;  // (this.barAbs ? 0 : Math.pow(__SCALE / 20, 2));
+                               const __ZOOM = 50 + __SCALE / 2;
+
+                               // Rueckgabewerte...
                                const __RET = [ 0.0, 0.0 ];  // Erwartung, Aufwertung
 
                                // Aktuelle Werte
-                               //player.name = __NAME;
-
+                               if (this.id) {
                                    //this.addAndFillCell(playerRow, player.id, __POSCOLOR);
+                               }
+                               if (this.alter) {
                                    this.addAndFillCell(playerRow, player.age, __POSCOLOR, null, 0);
+                               }
+                               if (this.pos) {
                                    this.addAndFillCell(playerRow, player.pos, __POSCOLOR);
+                               }
+                               if (this.goalie) {
                                    //this.addAndFillCell(playerRow, player.isGoalie, __POSCOLOR);
+                               }
+                               if (this.opti) {
                                    this.addAndFillCell(playerRow, player.opti, __POSCOLOR, null, 2);
+                               }
+                               if (this.verl) {
                                    //this.addAndFillCell(playerRow, player.verl, __POSCOLOR);
-
+                               }
+                               if (this.blessur) {
                                    if (player.blessur !== undefined) {
                                        this.addAndFillCell(playerRow, ((player.blessur < 0) ? (player.blessur + " ZAT") : (player.blessur + " FIT")), __TORCOLOR, null, 0);
                                    } else {
                                        this.addFillCell(playerRow);
                                    }
-
+                               }
+                               if (this.skillPos) {
                                    this.addFillCell(playerRow, player.erfolg) && this.addAndFillCell(playerRow, getSkillName(player.skillID, player.isGoalie), __COLOR);
+                               }
+                               if (this.skill) {
                                    this.addFillCell(playerRow, player.erfolg) && this.addAndFillCell(playerRow, player.pSkill, __COLOR, null, 0);
+                               }
+                               if (this.skillUp) {
                                    if (player.erfolg) {
                                        this.addAndFillCell(playerRow, "-> " + (parseInt(player.pSkill, 0) + 1), __COLOR, null, 0);
                                    } else {
                                        this.addFillCell(playerRow);
                                    }
+                               }
+                               if (this.tSkill) {
                                    this.addFillCell(playerRow, player.erfolg) && this.addAndFillCell(playerRow, player.tSkill, __COLOR, null, 1);
+                               }
+                               if (this.tNr) {
                                    this.addFillCell(playerRow, player.erfolg) && this.addAndFillCell(playerRow, player.tNr, __COLOR, null, 0);
+                               }
+                               if (this.prio) {
                                    this.addFillCell(playerRow, player.erfolg) && this.addAndFillCell(playerRow, player.isPrio ? '*' : "", __NEUCOLOR);
-
+                               }
+                               if (this.eins) {
                                    const __EINS = ((player.einsatz < 1) ? "" : ((player.einsatz === 3) ? player.pos : "EIN"));
 
                                    this.addFillCell(playerRow, player.erfolg) && this.addAndFillCell(playerRow, __EINS, getColor(__EINS), null, 0);
+                               }
 
-                                   const __PROZENT = (player.prozent || 0);
-                                   const __SCALE = 100;  // (this.barAbs ? 100 : (this.donor / 125));
-                                   const __OFFSET = 0;  // (this.barAbs ? 0 : Math.pow(__SCALE / 20, 2));
-                                   const __ZOOM = 50 + __SCALE / 2;
+                               const __PROZENT = (player.prozent || 0);
+
+                               if (this.prozB) {
                                    this.addFillCell(playerRow, player.erfolg) && this.addAndBarCell(playerRow, __PROZENT, __SCALE, __OFFSET, 100, 10, __ZOOM);
-
+                               }
+                               if (this.proz) {
                                    this.addFillCell(playerRow, player.erfolg) && this.addAndFillCell(playerRow, __PROZENT.toFixed(0) + '%', __COLOR, 'right');
+                               }
 
-                                   const __ERWARTUNG = (player.erwartung || 0);
-                                   const __ERWARTPROZ = parseInt(__ERWARTUNG * 20, 10);
+                               const __ERWARTUNG = (player.erwartung || 0);
+                               const __ERWARTPROZ = parseInt(__ERWARTUNG * 20, 10);
 
-                                   __RET[0] = __ERWARTUNG;
+                               __RET[0] = __ERWARTUNG;
 
-                                   if (player.erfolg) {
-                                       const __AUFWERTUNG = (player.isPrio ? 5 : 1);
+                               if (player.erfolg) {
+                                   const __AUFWERTUNG = (player.isPrio ? 5 : 1);
 
-                                       __RET[1] = __AUFWERTUNG;
+                                   __RET[1] = __AUFWERTUNG;
 
+                                   if (this.erwB) {
                                        this.addFillCell(playerRow, player.erfolg) && this.addAndBarCell(playerRow, __ERWARTPROZ, __SCALE, __OFFSET, 100, 10, __ZOOM);
+                                   }
+                                   if (this.erw) {
                                        this.addFillCell(playerRow, player.erfolg) && this.addAndFillCell(playerRow, __ERWARTUNG, __COLOR, null, 2);
+                                   } else if (this.erwB) {
+                                       this.addFillCell(playerRow);
+                                   }
+                                   if (this.erf) {
                                        this.addAndFillCell(playerRow, __AUFWERTUNG, __COLOR, null, 0);
-                                   } else {
+                                   }
+                               } else {
+                                   if (this.erw) {
                                        this.addFillCell(playerRow, player.erfolg) && this.addAndFillCell(playerRow, - __ERWARTUNG, __NEUCOLOR, 'right', 2);
+                                   } else if (this.erwB) {
+                                       this.addFillCell(playerRow);
+                                   }
+                                   if (this.erwB) {
                                        this.addFillCell(playerRow, player.erfolg) && this.addAndBarCell(playerRow, __ERWARTPROZ, __SCALE, __OFFSET, 100, 10, __ZOOM);
+                                   }
+                                   if (this.erf) {
                                        this.addFillCell(playerRow, player.erfolg) && this.addFillCell(playerRow);
                                    }
+                               }
 /***
                                // Aktuelle Werte (alt)
                                if (this.fpId) {
@@ -5604,16 +5970,6 @@ function getZATNrFromCell(cell) {
     return ZATNr;
 }
 
-// Fuehrt eine Map-Function auf ein Object aus
-// obj: Das Object, das gemappt wird
-// fun: Eine Mapping-Funktion
-// return Ein neues Object mit gemappten Werten
-function objectMap(obj, fun) {
-    return Object.fromEntries(
-            Object.entries(obj).map(
-                    ([key, value], index) => [key, fun(value, key, index)]));
-}
-
 // ==================== Ende Abschnitt fuer sonstige Parameter des Spielplans ====================
 
 // ==================== Ende Abschnitt fuer Spielplan und ZATs ====================
@@ -5656,12 +6012,16 @@ function procHaupt() {
                                                     'oldDatenZat' : true
                                                 }).catch(defaultCatch);
 
-                    const __CLASSIFICATION = new Classification();
+                    const __CLASSIFICATION = new Classification("old");
 
                     // Daten in "old"-Daten ueberfuehren...
-                    __CLASSIFICATION.optSelect = objectMap(__LASTZATCLASS.optSelect, value => false);
+                    __CLASSIFICATION.optSelect = Object.map(__LASTZATCLASS.optSelect, value => false);  // false: Kein reload
                     __CLASSIFICATION.optSet = optSet;
                     await __CLASSIFICATION.renameOptions();
+
+                    // Daten in "old" speichern...
+                    __CLASSIFICATION.optSelect = Object.map(__LASTZATCLASS.optSelect, value => true);  // true: Speichern
+                    await __CLASSIFICATION.saveOptions();
 
                     // Neuen Daten-ZAT speichern...
                     setOpt(__OPTSET.datenZat, __CURRZAT, false);
@@ -6107,7 +6467,7 @@ function procTraining() {
 
 // Verarbeitet Ansicht "ZAT-Report"
 function procZatReport() {
-    const __ROWOFFSETUPPER = 0;     // Header-Zeile
+    const __ROWOFFSETUPPER = 1;     // Header-Zeile (nach Einfuegung!)
     const __ROWOFFSETLOWER = 0;     // Fussnote
 
     const __COLUMNINDEX = {
@@ -6123,6 +6483,25 @@ function procZatReport() {
                                 'menuAnchor' : getTable(0, 'div'),
                                 'oldData'    : true,
                                 'showForm'   : {
+                                                   'zeigeId'              : true,
+                                                   'zeigeAlter'           : true,
+                                                   'zeigePosition'        : true,
+                                                   'zeigeTOR'             : true,
+                                                   'zeigeOpti'            : true,
+                                                   'zeigeVerletzung'      : true,
+                                                   'zeigeBlessur'         : true,
+                                                   'zeigeSkillPos'        : true,
+                                                   'zeigeSkill'           : true,
+                                                   'zeigeSkillUp'         : true,
+                                                   'zeigeTSkill'          : true,
+                                                   'zeigeTNr'             : true,
+                                                   'zeigePrio'            : true,
+                                                   'zeigeEinsatz'         : true,
+                                                   'zeigeProzent'         : true,
+                                                   'zeigeProzentBalken'   : true,
+                                                   'zeigeErwartung'       : true,
+                                                   'zeigeErwartungBalken' : true,
+                                                   'zeigeErfolg'          : true,
                                                    'sepStyle'             : true,
                                                    'sepColor'             : true,
                                                    'sepWidth'             : true,
@@ -6152,28 +6531,24 @@ function procZatReport() {
                 const __ERFOLGE = [];  // neu aufbauen! getOptValue(optSet.erfolge, []);
                 const __BLESSUREN = [];  // neu aufbauen! getOptValue(optSet.blessuren, []);
 
-                const __ROWS = getRows(1);
-                const __HEADERS = __ROWS[-1];
+                const __TABLE = getTable(1);
+                const __ROWS = __TABLE.rows;
                 const __TITLECOLOR = getColor('LEI');  // "#FFFFFF"
                 const __DATA = [ 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60 ];
                 const __SAISON = 15;
-                const __CURRZAT = 69;
+                const __CURRZAT = 71;
                 const __LAND = "Ukraine";
 
                 const __PLAYERS = [];  // init(__ROWS, __OPTSET, __COLUMNINDEX, __ROWOFFSETUPPER, __ROWOFFSETLOWER, 1);
                 const __COLMAN = new ColumnManagerZatReport(__OPTSET, __COLUMNINDEX, {
                                                     'Default'            : true,
-                                                    'ersetzeSkills'      : false,
-                                                    'zeigeGeb'           : false,
-                                                    'zeigeSkill'         : false,
-                                                    'zeigeTal'           : false,
-                                                    'zeigeAufw'          : false
+                                                    'zeigeErfahrung'     : false
                                                 });
 
                 let sumErwartung = 0.0;
                 let sumAufwertung = 0.0;
 
-                //__COLMAN.addTitles(__HEADERS, __TITLECOLOR);
+                const __HEADERS = __COLMAN.insertTitles(__TABLE, __TITLECOLOR);
 
                 for (let i = __ROWOFFSETUPPER, j = 0; i < __ROWS.length - __ROWOFFSETLOWER; i++) {
                     const __CURRENTROW = __ROWS[i];
