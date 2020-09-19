@@ -3488,24 +3488,94 @@ function Classification() {
 }
 
 Class.define(Classification, Object, {
-                    'renameOptions' : function() {
-                                          const __PARAM = this.renameParamFun();
+                    'renameOptions'  : function() {
+                                           const __PARAM = this.renameParamFun();
 
-                                          if (__PARAM !== undefined) {
-                                              // Klassifizierte Optionen umbenennen...
-                                              return renameOptions(this.optSet, this.optSelect, __PARAM, this.renameFun);
-                                          } else {
-                                              return Promise.resolve();
-                                          }
-                                      },
-                    'deleteOptions' : function(ignList) {
-                                          const __OPTSELECT = addProps([], this.optSelect, null, ignList);
+                                           if (__PARAM !== undefined) {
+                                               // Klassifizierte Optionen umbenennen...
+                                               return renameOptions(this.optSet, this.optSelect, __PARAM, this.renameFun);
+                                           } else {
+                                               return Promise.resolve();
+                                           }
+                                       },
+                    'deleteOptions'  : function(ignList) {
+                                           const __OPTSELECT = addProps([], this.optSelect, null, ignList);
 
-                                          return deleteOptions(this.optSet, __OPTSELECT, true, true);
-                                      }
+                                           return deleteOptions(this.optSet, __OPTSELECT, true, true);
+                                       },
+                    'renameParamFun' : function() {
+                                           // Parameter fuer 'prefixName': Prefix "old:"
+                                           return "old:";
+                                       }
                 });
 
 // ==================== Ende Abschnitt fuer Klasse Classification ====================
+
+// ==================== Abschnitt fuer Klasse ClassificationPair ====================
+
+// Klasse fuer die Klassifikation der Optionen nach Team (Erst- und Zweitteam oder Fremdteam)
+function ClassificationPair(classA, classB) {
+    'use strict';
+
+    Classification.call(this);
+
+    this.A = classA;
+    this.B = classB;
+
+    // Zugriff auf optSelect synchronisieren...
+    Object.defineProperty(this, 'optSelect', {
+                    get : function() {
+                              const __A = getValue(this.A, { });
+                              const __B = getValue(this.B, { });
+
+                              return (this.A ? __A.optSelect : __B.optSelect);
+                          },
+                    set : function(optSelect) {
+                              const __A = getValue(this.A, { });
+                              const __B = getValue(this.B, { });
+
+                              __A.optSelect = optSelect;
+                              __B.optSelect = optSelect;
+
+                              return optSelect;
+                          }
+                });
+
+    // Zugriff auf optSet synchronisieren...
+    Object.defineProperty(this, 'optSet', {
+                    get : function() {
+                              const __A = getValue(this.A, { });
+                              const __B = getValue(this.B, { });
+
+                              return (this.A ? __A.optSet : __B.optSet);
+                          },
+                    set : function(optSet) {
+                              const __A = getValue(this.A, { });
+                              const __B = getValue(this.B, { });
+
+                              __A.optSet = optSet;
+                              __B.optSet = optSet;
+
+                              return optSet;
+                          }
+                });
+}
+
+Class.define(ClassificationPair, Classification, {
+                    'renameOptions'  : function() {
+                                           return (this.A ? this.A.renameOptions() : Promise.resolve()).then(retValue =>
+                                                   (this.B ? this.B.renameOptions() : Promise.resolve()));
+                                       },
+                    'deleteOptions'  : function(ignList) {
+                                           return (this.A ? this.A.deleteOptions(ignList) : Promise.resolve()).then(retValue =>
+                                                   (this.B ? this.B.deleteOptions(ignList) : Promise.resolve()));
+                                       },
+                    'renameParamFun' : function() {
+                                           return undefined;
+                                       }
+                });
+
+// ==================== Ende Abschnitt fuer Klasse ClassificationPair ====================
 
 // ==================== Abschnitt fuer Klasse TeamClassification ====================
 
@@ -3622,6 +3692,34 @@ __TEAMCLASS.optSelect = {
                             'blessuren'       : true
                         };
 
+// Teamparameter fuer getrennte Speicherung der Optionen fuer Erst- und Zweitteam...
+const __LASTZATCLASS = new Classification();
+
+// Optionen mit Daten, die ZAT-bezogen (fuer jetzigen und vergangenen ZAT) gemerkt werden...
+__LASTZATCLASS.optSelect = {
+                            'trainer'         : true,
+                            'tGehaelter'      : true,
+                            'tVertraege'      : true,
+                            'tReste'          : true,
+                            'tAnzahlen'       : true,
+                            'ids'             : true,
+                            'names'           : true,
+                            'ages'            : true,
+                            'positions'       : true,
+                            'opti27'          : true,
+                            'verletzt'        : true,
+                            'skills'          : true,
+                            'tSkills'         : true,
+                            'trainiert'       : true,
+                            'skillPos'        : true,
+                            'isPrio'          : true,
+                            'einsaetze'       : true,
+                            'prozente'        : true,
+                            'erwartungen'     : true,
+                            'erfolge'         : true,
+                            'blessuren'       : true
+                        };
+
 // Gibt die Teamdaten zurueck und aktualisiert sie ggfs. in der Option
 // optSet: Platz fuer die gesetzten Optionen
 // teamParams: Dynamisch ermittelte Teamdaten ('Team', 'Liga', 'Land', 'LdNr' und 'LgNr')
@@ -3663,10 +3761,14 @@ function getMyTeam(optSet = undefined, teamParams = undefined, myTeam = new Team
 // return Promise auf gefuelltes Objekt mit den gesetzten Optionen
 function buildOptions(optConfig, optSet = undefined, optParams = { 'hideMenu' : false }) {
     // Klassifikation ueber Land und Liga des Teams...
-    __TEAMCLASS.optSet = optSet;  // Classification mit optSet verknuepfen
     __TEAMCLASS.teamParams = optParams.teamParams;  // Ermittelte Parameter
 
-    return startOptions(optConfig, optSet, __TEAMCLASS).then(optSet => {
+    // Beide Classifications kombinieren, als waere es nur eine...
+    const __CLASSIFICATION = ((!! optParams.oldData) ? new ClassificationPair(__TEAMCLASS, __LASTZATCLASS) : __TEAMCLASS);
+
+    __CLASSIFICATION.optSet = optSet;  // Classification mit optSet verknuepfen
+
+    return startOptions(optConfig, optSet, __CLASSIFICATION).then(optSet => {
                     return showOptions(optSet, optParams);
                 }, defaultCatch);
 }
@@ -5502,6 +5604,16 @@ function getZATNrFromCell(cell) {
     return ZATNr;
 }
 
+// Fuehrt eine Map-Function auf ein Object aus
+// obj: Das Object, das gemappt wird
+// fun: Eine Mapping-Funktion
+// return Ein neues Object mit gemappten Werten
+function objectMap(obj, fun) {
+    return Object.fromEntries(
+            Object.entries(obj).map(
+                    ([key, value], index) => [key, fun(value, key, index)]));
+}
+
 // ==================== Ende Abschnitt fuer sonstige Parameter des Spielplans ====================
 
 // ==================== Ende Abschnitt fuer Spielplan und ZATs ====================
@@ -5516,6 +5628,7 @@ function procHaupt() {
                             'teamParams' : __TEAMPARAMS,
 //                            'menuAnchor' : getTable(0, 'div'),
                             'hideMenu'   : true,
+                            'oldData'    : false,
                             'showForm'   : {
                                                'showForm'             : true
                                            }
@@ -5542,6 +5655,13 @@ function procHaupt() {
                                                     'datenZat'    : true,
                                                     'oldDatenZat' : true
                                                 }).catch(defaultCatch);
+
+                    const __CLASSIFICATION = new Classification();
+
+                    // Daten in "old"-Daten ueberfuehren...
+                    __CLASSIFICATION.optSelect = objectMap(__LASTZATCLASS.optSelect, value => false);
+                    __CLASSIFICATION.optSet = optSet;
+                    await __CLASSIFICATION.renameOptions();
 
                     // Neuen Daten-ZAT speichern...
                     setOpt(__OPTSET.datenZat, __CURRZAT, false);
@@ -5575,6 +5695,7 @@ function procAufstellung() {
     } else {
         return buildOptions(__OPTCONFIG, __OPTSET, {
                                 'menuAnchor' : getTable(0, 'div'),
+                                'oldData'    : false,
                                 'showForm'   : {
                                                    'saison'               : true,
                                                    'aktuellerZat'         : true,
@@ -5583,7 +5704,7 @@ function procAufstellung() {
                                                    'names'                : true,
                                                    'einsaetze'            : true,
                                                    'reset'                : true,
-                                                   'showForm'             : true
+                                                   'showForm'             : false
                                                },
                                 'formWidth'  : 1
                             }).then(optSet => {
@@ -5658,6 +5779,7 @@ function procAktionen() {
     } else {
         return buildOptions(__OPTCONFIG, __OPTSET, {
                                 'menuAnchor' : getTable(0, 'div'),
+                                'oldData'    : false,
                                 'showForm'   : {
                                                    'saison'               : true,
                                                    'aktuellerZat'         : true,
@@ -5683,6 +5805,7 @@ function procEinstellungen() {
     } else {
         return buildOptions(__OPTCONFIG, __OPTSET, {
                                 'menuAnchor' : getTable(0, 'div'),
+                                'oldData'    : false,
                                 'showForm'   : {
                                                    'saison'               : true,
                                                    'aktuellerZat'         : true,
@@ -5708,6 +5831,7 @@ function procTrainer() {
     } else {
         return buildOptions(__OPTCONFIG, __OPTSET, {
                                 'menuAnchor' : getTable(0, 'div'),
+                                'oldData'    : false,
                                 'showForm'   : {
                                                    'saison'               : true,
                                                    'aktuellerZat'         : true,
@@ -5766,6 +5890,7 @@ function procTraining() {
     } else {
         return buildOptions(__OPTCONFIG, __OPTSET, {
                                 'menuAnchor' : getTable(0, 'div'),
+                                'oldData'    : false,
                                 'showForm'   : {
                                                    'sepStyle'        : true,
                                                    'sepColor'        : true,
@@ -5996,6 +6121,7 @@ function procZatReport() {
     } else {
         return buildOptions(__OPTCONFIG, __OPTSET, {
                                 'menuAnchor' : getTable(0, 'div'),
+                                'oldData'    : true,
                                 'showForm'   : {
                                                    'sepStyle'             : true,
                                                    'sepColor'             : true,
