@@ -6062,6 +6062,9 @@ function procAufstellung() {
                                                    'team'                 : true,
                                                    'ids'                  : true,
                                                    'names'                : true,
+                                                   'ages'                 : true,
+                                                   'positions'            : true,
+                                                   'opti27'               : true,
                                                    'einsaetze'            : true,
                                                    'reset'                : true,
                                                    'showForm'             : false
@@ -6071,10 +6074,10 @@ function procAufstellung() {
                 // Gespeicherte Daten...
                 //const __TRAINER = getOptValue(optSet.trainer, []);
                 const __IDS = getOptValue(optSet.ids, []);
-                //const __NAMES = getOptValue(optSet.names, []);
-                //const __AGES = getOptValue(optSet.ages, []);
-                //const __POSITIONS = getOptValue(optSet.positions, []);
-                //const __OPTI27 = getOptValue(optSet.opti27, []);
+                const __NAMES = getOptValue(optSet.names, []);
+                const __AGES = getOptValue(optSet.ages, []);
+                const __POSITIONS = getOptValue(optSet.positions, []);
+                const __OPTI27 = getOptValue(optSet.opti27, []);
                 //const __VERLETZT = getOptValue(optSet.verletzt, []);
                 //const __SKILLS = getOptValue(optSet.skills, []);
                 //const __TSKILLS = getOptValue(optSet.tSkills, []);
@@ -6095,32 +6098,57 @@ function procAufstellung() {
                 __EINSAETZE.length = __SLENGTH;
                 __EINSAETZE.fill(__EINSATZ.Trib);
 
+                let newID = false;
+
                 for (let i = 1; i < __ROWS.length - 5; i++) {
                     const __CURRENTROW = __ROWS[i];
                     const __SPIELER = getSpieler(__CURRENTROW, __COLUMNINDEX.Spieler);
                     const __ID = __SPIELER.id;
                     const __NAME = __SPIELER.name;
+
+                    if (! __IDS.includes(__ID)) {
+                        const __ALTER = getAlter(__CURRENTROW, __COLUMNINDEX.Age);
+                        const __POS = getPos(__CURRENTROW, __COLUMNINDEX.Spieler);
+                        const __OPTI = getFloatFromHTML(__CURRENTROW.cells, __COLUMNINDEX.Opti);
+                        const __O27 = parseInt((27 * __OPTI).toFixed(0), 10);
+
+                        __LOG[4]("Adding new player", '#' + __ID, __NAME, __ALTER, __POS, __OPTI.toFixed(2));
+
+                        newID = true;
+                        __IDS.push(__ID);
+                        __NAMES.push(__NAME);
+                        __AGES.push(__ALTER);
+                        __POSITIONS.push(__POS);
+                        __OPTI27.push(__O27);
+                    }
+
                     const __INDEX = __IDS.indexOf(__ID);
                     const __RASTER = getSelection("ra[" + __ID + ']');
 
                     if (~ __INDEX) {
                         __EINSAETZE[__INDEX] = ((__RASTER === '-') ? __EINSATZ.Trib : ((~ "UVWXYZ".indexOf(__RASTER)) ? __EINSATZ.Bank : __EINSATZ.Durch));
+                    } else {
+                        __LOG[1]("User-ID", __ID, "not found!");
                     }
                 }
 
+                if (newID) {
+                    setOpt(optSet.ids, __IDS, false);
+                    setOpt(optSet.names, __NAMES, false);
+                    setOpt(optSet.ages, __AGES, false);
+                    setOpt(optSet.positions, __POSITIONS, false);
+                    setOpt(optSet.opti27, __OPTI27, false);
+                }
+
+                setOpt(optSet.einsaetze, __EINSAETZE, false);
+
                 //setOpt(optSet.trainer, __TRAINER, false);
-                //setOpt(optSet.ids, __IDS, false);
-                //setOpt(optSet.names, __NAMES, false);
-                //setOpt(optSet.ages, __AGES, false);
-                //setOpt(optSet.positions, __POSITIONS, false);
-                //setOpt(optSet.opti27, __OPTI27, false);
                 //setOpt(optSet.verletzt, __VERLETZT, false);
                 //setOpt(optSet.skills, __SKILLS, false);
                 //setOpt(optSet.tSkills, __TSKILLS, false);
                 //setOpt(optSet.trainiert, __TRAINIERT, false);
                 //setOpt(optSet.skillPos, __SKILLPOS, false);
                 //setOpt(optSet.isPrio, __ISPRIO, false);
-                setOpt(optSet.einsaetze, __EINSAETZE, false);
                 //setOpt(optSet.prozente, __PROZENTE, false);
                 //setOpt(optSet.erwartungen, __EW, false);
                 //setOpt(optSet.erfolge, __ERFOLGE, false);
@@ -6304,6 +6332,12 @@ function procTraining() {
                 const __ERFOLGE = getOptValue(optSet.erfolge, []);
                 const __BLESSUREN = getOptValue(optSet.blessuren, []);
 
+                const __EINSMAP = { };
+
+                // Ermittelte Einsaetze (ggfs. von Aufstellung-Seite) den IDs zuordnen (bei Sperren, Verletzungen, Leihen relevant)...
+                __IDs.map((id, index) => (__EINSMAP[id] = __EINSAETZE[index]));
+                __EINSAETZE.length = 0;  // vorerst alle loeschen und spaeter wieder einfuegen!
+
                 const __ROWS = getRows(2);
                 const __HEADERS = __ROWS[0];
 
@@ -6399,7 +6433,7 @@ function procTraining() {
                     __TRAINIERT[__INDEX] = __TNR;
                     __SKILLPOS[__INDEX] = getSkillID((__PRACTICE ? __SKILL : undefined), __GOALIE);
                     __ISPRIO[__INDEX] = (__PRACTICEPS ? 1 : 0);
-                    //__EINSAETZE[__INDEX] = 0;
+                    __EINSAETZE[__INDEX] = __EINSMAP[__ID];  // auf oben ermittelte Daten zurueckgreifen!
                     __PROZENTE[__INDEX] = (__PRACTICE ? Math.min(99, parseInt(__PROBSTR.toFixed(0), 10)) : undefined);
                     __EW[__INDEX] = parseFloat(__VALUESTR, 10);
                     __ERFOLGE[__INDEX] = false;
@@ -6453,7 +6487,7 @@ function procTraining() {
                 setOpt(optSet.trainiert, __TRAINIERT, false);
                 setOpt(optSet.skillPos, __SKILLPOS, false);
                 setOpt(optSet.isPrio, __ISPRIO, false);
-                //setOpt(optSet.einsaetze, __EINSAETZE, false);
+                setOpt(optSet.einsaetze, __EINSAETZE, false);
                 setOpt(optSet.prozente, __PROZENTE, false);
                 setOpt(optSet.erwartungen, __EW, false);
                 //setOpt(optSet.erfolge, __ERFOLGE, false);
