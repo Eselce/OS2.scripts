@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         OS2.training
 // @namespace    http://os.ongapo.com/
-// @version      0.30beta
+// @version      0.30beta2
 // @copyright    2013+
 // @author       Sven Loges (SLC) / Andreas Eckes (Strindheim BK)
 // @description  OS 2.0 - Berechnet die Trainingswahrscheinlichkeiten abhaengig von der Art des Einsatzes
@@ -6054,7 +6054,7 @@ function procAufstellung() {
         __LOG[2]("Diese Seite ist ohne Team nicht verf\xFCgbar!");
     } else {
         return buildOptions(__OPTCONFIG, __OPTSET, {
-                                'menuAnchor' : getTable(0, 'div'),
+//                                'menuAnchor' : getTable(0, 'div'),
                                 'oldData'    : false,
                                 'showForm'   : {
                                                    'saison'               : true,
