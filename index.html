@@ -415,12 +415,26 @@
 // ==UserScript==
 // @name         OS2.training
 // @namespace    http://os.ongapo.com/
-// @version      0.20+WE
+// @version      0.30beta2
 // @copyright    2013+
 // @author       Sven Loges (SLC) / Andreas Eckes (Strindheim BK)
 // @description  OS 2.0 - Berechnet die Trainingswahrscheinlichkeiten abhaengig von der Art des Einsatzes
-// @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/training\.php$/
-// @grant        none
+// @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/haupt\.php(\?changetosecond=\w+(&\S+)*)?$/
+// @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/trainer\.php(\?\S+(&\S+)*)?$/
+// @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/training\.php(\?\S+(&\S+)*)?$/
+// @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/zar\.php(\?\S+(&\S+)*)?$/
+// @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/zugabgabe\.php(\?\S+(&\S+)*)?$/
+// @grant        GM.getValue
+// @grant        GM.setValue
+// @grant        GM.deleteValue
+// @grant        GM.registerMenuCommand
+// @grant        GM.info
+// @require      https://greasemonkey.github.io/gm4-polyfill/gm4-polyfill.js
+// @grant        GM_getValue
+// @grant        GM_setValue
+// @grant        GM_deleteValue
+// @grant        GM_registerMenuCommand
+// @grant        GM_info
 // ==/UserScript==
 					`, 'vereinshistorie' : String.raw`
 // ==UserScript==
