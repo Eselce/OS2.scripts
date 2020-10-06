@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         OS2.training
 // @namespace    http://os.ongapo.com/
-// @version      0.30beta2
+// @version      0.30beta3
 // @copyright    2013+
 // @author       Sven Loges (SLC) / Andreas Eckes (Strindheim BK)
 // @description  OS 2.0 - Berechnet die Trainingswahrscheinlichkeiten abhaengig von der Art des Einsatzes
@@ -4203,8 +4203,12 @@ function ColumnManagerZatReport(optSet, colIdx, showCol) {
     const __AKTZAT = getOptValue(optSet.aktuellerZat);
     const __GEALTERT = ((__AKTZAT >= 72) ? true : false);
     const __CURRZAT = (__GEALTERT ? 0 : __AKTZAT);
-    const __TEAMDATA = true;  // TODO
-    const __EINSDATA = true;  // TODO
+    const __IDS = eval(getOptValue(optSet.ids, []));
+    const __EINSAETZE = eval(getOptValue(optSet.einsaetze, []));
+    const __TSKILLS = eval(getOptValue(optSet.tSkills, []));
+    const __TEAMDATA = __IDS.length;
+    const __EINSDATA = __EINSAETZE.length;
+    const __TRAIDATA = __TSKILLS.length;
     const __LASTZAT = true;  // TODO
 
     this.saison = __SAISON;
@@ -4220,12 +4224,12 @@ function ColumnManagerZatReport(optSet, colIdx, showCol) {
     this.skillPos = (__TEAMDATA && __LASTZAT && getValue(__SHOWCOL.zeigeSkillPos, __SHOWALL) && getOptValue(optSet.zeigeSkillPos));
     this.skill = (__TEAMDATA && __LASTZAT && getValue(__SHOWCOL.zeigeSkill, __SHOWALL) && getOptValue(optSet.zeigeSkill));
     this.skillUp = (__TEAMDATA && __LASTZAT && getValue(__SHOWCOL.zeigeSkillUp, __SHOWALL) && getOptValue(optSet.zeigeSkillUp));
-    this.tSkill = (__LASTZAT && getValue(__SHOWCOL.zeigeTSkill, __SHOWALL) && getOptValue(optSet.zeigeTSkill));
-    this.tNr = (__LASTZAT && getValue(__SHOWCOL.zeigeTNr, __SHOWALL) && getOptValue(optSet.zeigeTNr));
+    this.tSkill = (__TRAIDATA && __LASTZAT && getValue(__SHOWCOL.zeigeTSkill, __SHOWALL) && getOptValue(optSet.zeigeTSkill));
+    this.tNr = (__TRAIDATA && __LASTZAT && getValue(__SHOWCOL.zeigeTNr, __SHOWALL) && getOptValue(optSet.zeigeTNr));
     this.prio = (__TEAMDATA && __LASTZAT && getValue(__SHOWCOL.zeigePrio, __SHOWALL) && getOptValue(optSet.zeigePrio));
     this.eins = (__TEAMDATA && __EINSDATA && __LASTZAT && getValue(__SHOWCOL.zeigeEinsatz, __SHOWALL) && getOptValue(optSet.zeigeEinsatz));
-    this.proz = (__LASTZAT && getValue(__SHOWCOL.zeigeProzent, __SHOWALL) && getOptValue(optSet.zeigeProzent));
-    this.prozB = (__LASTZAT && getValue(__SHOWCOL.zeigeProzentBalken, __SHOWALL) && getOptValue(optSet.zeigeProzentBalken));
+    this.proz = (__TRAIDATA && __LASTZAT && getValue(__SHOWCOL.zeigeProzent, __SHOWALL) && getOptValue(optSet.zeigeProzent));
+    this.prozB = (__TRAIDATA && __LASTZAT && getValue(__SHOWCOL.zeigeProzentBalken, __SHOWALL) && getOptValue(optSet.zeigeProzentBalken));
     this.erw = (__LASTZAT && getValue(__SHOWCOL.zeigeErwartung, __SHOWALL) && getOptValue(optSet.zeigeErwartung));
     this.erwB = (__LASTZAT && getValue(__SHOWCOL.zeigeErwartungBalken, __SHOWALL) && getOptValue(optSet.zeigeErwartungBalken));
     this.erf = (__LASTZAT && getValue(__SHOWCOL.zeigeErfolg, __SHOWALL) && getOptValue(optSet.zeigeErfolg));
@@ -6335,7 +6339,7 @@ function procTraining() {
                 const __EINSMAP = { };
 
                 // Ermittelte Einsaetze (ggfs. von Aufstellung-Seite) den IDs zuordnen (bei Sperren, Verletzungen, Leihen relevant)...
-                __IDs.map((id, index) => (__EINSMAP[id] = __EINSAETZE[index]));
+                __IDS.map((id, index) => (__EINSMAP[id] = __EINSAETZE[index]));
                 __EINSAETZE.length = 0;  // vorerst alle loeschen und spaeter wieder einfuegen!
 
                 const __ROWS = getRows(2);
@@ -6390,6 +6394,8 @@ function procTraining() {
                     const __INDEX = i - 1;
                     const __CURRENTROW = __ROWS[i];
                     const __SPIELER = getSpieler(__CURRENTROW, __COLUMNINDEX.Spieler);
+                    const __ID = __SPIELER.id;
+                    const __NAME = __SPIELER.name;
                     const __SKILL = getSkill(__CURRENTROW, __COLUMNINDEX.Skill);
                     const __POS = getPos(__CURRENTROW, __COLUMNINDEX.Chance);
                     const __COLOR = getColor(__POS);
@@ -6422,8 +6428,8 @@ function procTraining() {
                         __TRAINER[__TNR - 1] = __TSKILL;
                         __TANZAHL[__TNR - 1]++;
                     }
-                    __IDS[__INDEX] = __SPIELER.id;
-                    __NAMES[__INDEX] = __SPIELER.name;
+                    __IDS[__INDEX] = __ID;
+                    __NAMES[__INDEX] = __NAME;
                     __AGES[__INDEX] = __ALTER;
                     __POSITIONS[__INDEX] = __POS;
                     __OPTI27[__INDEX] = parseInt((27 * __OPTI).toFixed(0), 10);
@@ -6569,8 +6575,8 @@ function procZatReport() {
                 const __ROWS = __TABLE.rows;
                 const __TITLECOLOR = getColor('LEI');  // "#FFFFFF"
                 const __DATA = [ 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60 ];
-                const __SAISON = 15;
-                const __CURRZAT = 71;
+                const __SAISON = 16;
+                const __CURRZAT = 1;
                 const __LAND = "Ukraine";
 
                 const __PLAYERS = [];  // init(__ROWS, __OPTSET, __COLUMNINDEX, __ROWOFFSETUPPER, __ROWOFFSETLOWER, 1);
@@ -6591,6 +6597,7 @@ function procZatReport() {
                     if (__CELLS.length > 1) {
                         const __SPIELER = getSpieler(__CURRENTROW, __COLUMNINDEX.Name);
                         const __ID = __SPIELER.id;
+                        const __NAME = __SPIELER.name;
                         const __INDEX = __IDS.indexOf(__ID);
                         const __SUCC = getStringFromHTML(__CELLS, __COLUMNINDEX.Succ);
                         const __SUCCNUM = parseInt(__SUCC.substr(-6, 2), 10);  // 2 Stellen ab Ende - 6, dahinter " ZAT" bzw. " FIT"
@@ -6603,7 +6610,6 @@ function procZatReport() {
                         if (__ERROR) {
                             __LOG[0]("Error: " + __SUCC + " (" + __SUCCNUM + ')');
                         }
-                        const __NAME = __SPIELER.name;
                         const __ALTER = __AGES[__INDEX];
                         const __POS = __POSITIONS[__INDEX];
                         const __ISGOALIE = (__POS === "TOR");
