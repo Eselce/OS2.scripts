@@ -4201,18 +4201,35 @@ function ColumnManagerZatReport(optSet, colIdx, showCol) {
 
     const __SAISON = getOptValue(optSet.saison);
     const __AKTZAT = getOptValue(optSet.aktuellerZat);
+    const __DATZAT = getOptValue(optSet.oldDatenZat);
     const __GEALTERT = ((__AKTZAT >= 72) ? true : false);
     const __CURRZAT = (__GEALTERT ? 0 : __AKTZAT);
+
+    const __REPSAISON = getSelection('saison', 'Number');
+    const __REPZAT = getSelection('zat', 'Number');
+    const __SAISONWECHSEL = ((__CURRZAT === 0) ? true : false);
+    const __OLDSAISON = (__SAISONWECHSEL ? __SAISON - 1 : __SAISON);
+    const __OLDZAT = (__SAISONWECHSEL ? 72 : __DATZAT);
+
+    const __TEAM = getOptValue(optSet.team, { });
+
     const __IDS = eval(getOptValue(optSet.ids, []));
     const __EINSAETZE = eval(getOptValue(optSet.einsaetze, []));
     const __TSKILLS = eval(getOptValue(optSet.tSkills, []));
     const __TEAMDATA = __IDS.length;
     const __EINSDATA = __EINSAETZE.length;
     const __TRAIDATA = __TSKILLS.length;
-    const __LASTZAT = true;  // TODO
+    const __LASTZAT = ((__REPZAT === __OLDZAT) && (__REPSAISON === __OLDSAISON));
 
     this.saison = __SAISON;
     this.currZAT = __CURRZAT;
+    this.oldSaison = __OLDSAISON;
+    this.oldZAT = __OLDZAT;
+    this.team = __TEAM;
+
+    __LOG[4]("Team:", __TEAM);
+    __LOG[4]("Aktuell:", __SAISON, __CURRZAT);
+    __LOG[4]("Altdaten:", __OLDSAISON, __OLDZAT);
 
     this.id = (getValue(__SHOWCOL.zeigeId, __SHOWALL) && getOptValue(optSet.zeigeId));
     this.alter = (__TEAMDATA && getValue(__SHOWCOL.zeigeAlter, __SHOWALL) && getOptValue(optSet.zeigeAlter));
@@ -5998,9 +6015,6 @@ function procHaupt() {
             const __CURRZAT = __NEXTZAT - 1;
             const __DATAZAT = getOptValue(__OPTSET.datenZat);
 
-            // Stand der alten Daten merken...
-            setOpt(__OPTSET.oldDatenZat, __DATAZAT, false);
-
             if (__CURRZAT >= 0) {
                 __LOG[2]("Aktueller ZAT: " + __CURRZAT);
 
@@ -6026,6 +6040,9 @@ function procHaupt() {
                     // Daten in "old" speichern...
                     __CLASSIFICATION.optSelect = Object.map(__LASTZATCLASS.optSelect, value => true);  // true: Speichern
                     await __CLASSIFICATION.saveOptions();
+
+                    // Stand der alten Daten merken...
+                    setOpt(__OPTSET.oldDatenZat, __DATAZAT, false);
 
                     // Neuen Daten-ZAT speichern...
                     setOpt(__OPTSET.datenZat, __CURRZAT, false);
@@ -6132,7 +6149,7 @@ function procAufstellung() {
                     if (~ __INDEX) {
                         __EINSAETZE[__INDEX] = ((__RASTER === '-') ? __EINSATZ.Trib : ((~ "UVWXYZ".indexOf(__RASTER)) ? __EINSATZ.Bank : __EINSATZ.Durch));
                     } else {
-                        __LOG[1]("User-ID", __ID, "not found!");
+                        __LOG[0]("User-ID", __ID, "not found!");
                     }
                 }
 
@@ -6400,10 +6417,11 @@ function procTraining() {
                     const __POS = getPos(__CURRENTROW, __COLUMNINDEX.Chance);
                     const __COLOR = getColor(__POS);
                     const __PROBINDEX = __ORGLENGTH - 1;  // derzeit letzte Spalte enthaelt die Prozente
-                    const __EINSART = getValue(__EINSAETZE[__INDEX], __EINSATZ.Trib);
+                    const __EINSART = getValue(__EINSMAP[__ID], __EINSATZ.Trib);  // Daten oben ermittelt
                     const __PROBSTRING = getProbString(__CURRENTROW, __COLUMNINDEX.Chance);
                     const __PRACTICE = (getProbabilityStr(__PROBSTRING, __EINSATZ.Trib) !== "");
                     const __PRACTICEPS = __PRACTICE && isPrimarySkill(__POS, __SKILL);
+
                     if (__PRACTICE) {
                         value = parseFloat(getProbabilityStr(__PROBSTRING, __EINSART, "", 2, 99)) * (__PRACTICEPS ? 5 : 1) / 100.0;
                         sum += value;
@@ -6439,7 +6457,7 @@ function procTraining() {
                     __TRAINIERT[__INDEX] = __TNR;
                     __SKILLPOS[__INDEX] = getSkillID((__PRACTICE ? __SKILL : undefined), __GOALIE);
                     __ISPRIO[__INDEX] = (__PRACTICEPS ? 1 : 0);
-                    __EINSAETZE[__INDEX] = __EINSMAP[__ID];  // auf oben ermittelte Daten zurueckgreifen!
+                    __EINSAETZE[__INDEX] = __EINSART;  // auf oben ermittelte Daten zurueckgreifen!
                     __PROZENTE[__INDEX] = (__PRACTICE ? Math.min(99, parseInt(__PROBSTR.toFixed(0), 10)) : undefined);
                     __EW[__INDEX] = parseFloat(__VALUESTR, 10);
                     __ERFOLGE[__INDEX] = false;
@@ -6571,19 +6589,20 @@ function procZatReport() {
                 const __ERFOLGE = [];  // neu aufbauen! getOptValue(optSet.erfolge, []);
                 const __BLESSUREN = [];  // neu aufbauen! getOptValue(optSet.blessuren, []);
 
-                const __TABLE = getTable(1);
-                const __ROWS = __TABLE.rows;
-                const __TITLECOLOR = getColor('LEI');  // "#FFFFFF"
-                const __DATA = [ 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60 ];
-                const __SAISON = 16;
-                const __CURRZAT = 1;
-                const __LAND = "Ukraine";
-
                 const __PLAYERS = [];  // init(__ROWS, __OPTSET, __COLUMNINDEX, __ROWOFFSETUPPER, __ROWOFFSETLOWER, 1);
                 const __COLMAN = new ColumnManagerZatReport(__OPTSET, __COLUMNINDEX, {
                                                     'Default'            : true,
                                                     'zeigeErfahrung'     : false
                                                 });
+
+                const __TABLE = getTable(1);
+                const __ROWS = __TABLE.rows;
+                const __TITLECOLOR = getColor('LEI');  // "#FFFFFF"
+                const __DATA = [ 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60 ];
+                const __SAISON = __COLMAN.oldSaison;
+                const __CURRZAT = __COLMAN.oldZAT;
+                const __TEAM = __COLMAN.team;
+                const __LAND = __TEAM.Land;
 
                 let sumErwartung = 0.0;
                 let sumAufwertung = 0.0;
@@ -6661,7 +6680,7 @@ function procZatReport() {
                     }
                 }
 
-                __LOG[0](sumErwartung.toFixed(2), sumAufwertung.toFixed(2));
+                __LOG[0]("Erwartung vs. Aufwertungen", sumErwartung.toFixed(2), sumAufwertung.toFixed(2));
 
                 //setOpt(optSet.trainer, __TRAINER, false);
                 //setOpt(optSet.tAnzahlen, __TANZAHL, false);
