@@ -40,13 +40,14 @@ const __OPTTYPES = {
     'SI' : "simple option"
 };
 
-// Options-Typen
+// Aktions-Typen der Optionen
 const __OPTACTION = {
     'SET' : "set option value",
     'NXT' : "set next option value",
     'RST' : "reset options"
 };
 
+// Speicher-Typen der Optionen
 const __OPTMEM = {
     'normal' : {
                    'Name'      : "Browser",
@@ -760,7 +761,7 @@ const __OPTCONFIG = {
                }
 };
 
-// ==================== Invarianter Abschnitt fuer Optionen ====================
+// ==================== Invarianter Abschnitt fuer Logausgaben ====================
 
 // Ein Satz von Logfunktionen, die je nach Loglevel zur Verfuegung stehen. Aufruf: __LOG[level](text)
 const __LOG = {
@@ -789,6 +790,8 @@ const __LOG = {
               };
 
 __LOG.init(window, __LOGLEVEL);
+
+// ==================== Ergaenzungen und Polyfills zu Standardobjekten ====================
 
 // Kompatibilitaetsfunktion zur Ermittlung des Namens einer Funktion (falle <Function>.name nicht vorhanden ist)
 if (Function.prototype.name === undefined) {
@@ -1535,6 +1538,148 @@ Class.define(ObjRef, Directory, {
                 });
 
 // ==================== Ende Abschnitt fuer Klasse ObjRef ====================
+
+// ==================== Abschnitt fuer Klasse Options ====================
+
+// Basisklasse fuer Optionen
+function Options(optConfig, optSetLabel) {
+    'use strict';
+
+    this.setConst('config', (optConfig || { }), false);
+    this.setConst('setLabel', (optSetLabel || '__OPTSET'), false);
+}
+
+Class.define(Options, Object, {
+                    'checkKey' : function(key) {
+                        // Hier kann man Keys 'unsichtbar' machen...
+                        return true;
+                    },
+                    'toString' : function() {
+                        let retStr = this.setLabel + " = {\n";
+
+                        for (const [ __KEY, __OPT ] of Object.entries(this)) {
+                            if (this.checkKey(__KEY)) {
+                                const __CONFIG = getOptConfig(__OPT);
+                                const __NAME = getOptName(__OPT);
+                                const __VAL = getOptValue(__OPT);
+                                const [ __VALTYPE, __VALSTR ] = getObjInfo(__VAL);
+                                const __OUT = [
+                                                  __VALTYPE,
+                                                  __KEY,
+                                                  __VALSTR,
+                                                  __NAME,
+                                                  getValStr(__CONFIG.FormLabel),
+                                                  getValStr(__CONFIG.Default)
+                                    ];
+
+                                retStr += '\t' + __OUT.join('\t') + '\n';
+                            }
+                        }
+
+                        retStr += "}";
+
+                        return retStr;
+                    }
+                });
+
+//
+// Hilfsfunktionen, die von Options.toString() genutzt werden
+//
+
+function getClass(obj) {
+    if (obj != undefined) {
+        if (typeof obj === 'object') {
+            if (obj.getClass) {
+                return obj.getClass();
+            }
+        }
+    }
+
+    return undefined;
+}
+
+function getClassName(obj) {
+    const __CLASS = getClass(obj);
+
+    return ((__CLASS ? __CLASS.className : undefined));  // __CLASS.getName() problematisch?
+}
+
+function getObjInfo(obj, keyStrings) {
+    const __TYPEOF = typeof obj;
+    const __VALUEOF = Object.valueOf(obj);
+    const __VALUESTR = String(obj);
+    const __STRDELIM1 = (keyStrings ? "'" : '"');
+    const __STRDELIM2 = (keyStrings ? "'" : '"');
+    const __NUMDELIM1 = (keyStrings ? "" : '<');
+    const __NUMDELIM2 = (keyStrings ? "" : '>');
+    const __SPACE = (keyStrings ? "" : ' ');
+    const __ARRDELIM = ',' + __SPACE;
+    const __ARRDELIM1 = '[';
+    const __ARRDELIM2 = ']';
+    const __OBJSETTER = __SPACE + ':' + __SPACE;
+    const __OBJDELIM = ',' + __SPACE;
+    const __OBJDELIM1 = '{';
+    const __OBJDELIM2 = '}';
+    let typeStr = __TYPEOF;
+    let valueStr = __VALUESTR;
+
+    switch (__TYPEOF) {
+    case 'undefined' : break;
+    case 'string'    : typeStr = 'String';
+                       valueStr = __STRDELIM1 + valueStr + __STRDELIM2;
+                       break;
+    case 'boolean'   : typeStr = 'Boolean';
+                       break;
+    case 'number'    : if (Number.isInteger(obj)) {
+                           typeStr = 'Integer';
+                       } else {
+                           typeStr = 'Number';
+                           valueStr = __NUMDELIM1 + valueStr + __NUMDELIM2;
+                       }
+                       break;
+    case 'function'  : break;
+    case 'object'    : if (Array.isArray(obj)) {
+                           typeStr = 'Array';
+                           if (valueStr.length) {
+                               valueStr = obj.map(item => getValStr(item)).join(__ARRDELIM);
+                           }
+                           valueStr = __ARRDELIM1 + (valueStr.length ? __SPACE + valueStr + __SPACE : "") + __ARRDELIM2;
+                       } else {
+                           const __CLASS = getClass(obj);
+                           const __CLASSNAME = (__CLASS ? getClassName(obj) + __SPACE : "");
+
+                           typeStr = (__CLASSNAME ? __CLASSNAME : typeStr);
+                           if (obj && valueStr.length) {
+                               valueStr = Object.values(Object.map(obj, (value, key) => (getValStr(key, true) + __OBJSETTER + getValStr(value)))).join(__OBJDELIM);
+                           }
+                           valueStr = __CLASSNAME + __OBJDELIM1 + (valueStr.length ? __SPACE + valueStr + __SPACE : "") + __OBJDELIM2;
+                       }
+    default :          break;
+    }
+
+    if (obj == undefined) {
+        if (obj === undefined) {
+            valueStr = "";
+        } else {
+            valueStr = __VALUESTR;
+        }
+    }
+
+    return [
+               typeStr,
+               valueStr,
+               __TYPEOF,
+               __VALUEOF
+           ];
+}
+
+function getValStr(obj, keyStrings) {
+    const [ __TYPESTR, __VALUESTR ] = getObjInfo(obj, keyStrings);
+
+    return __VALUESTR;
+}
+
+// ==================== Ende Abschnitt fuer Klasse Options ====================
 
 // ==================== Abschnitt fuer diverse Utilities ====================
 
@@ -2674,7 +2819,7 @@ function initOptions(optConfig, optSet = undefined, preInit = undefined) {
     let value;
 
     if (optSet === undefined) {
-        optSet = { };
+        optSet = new Options();
     }
 
     for (let opt in optConfig) {
@@ -3979,127 +4124,7 @@ Class.define(Verein, Team, {
 // ==================== Spezialisierter Abschnitt fuer Optionen ====================
 
 // Gesetzte Optionen (wird von initOptions() angelegt und von loadOptions() gefuellt):
-const __OPTSET = { };
-
-function getClass(obj) {
-    if (obj != undefined) {
-        if (typeof obj === 'object') {
-            if (obj.getClass) {
-                return obj.getClass();
-            }
-        }
-    }
-
-    return undefined;
-}
-
-function getClassName(obj) {
-    const __CLASS = getClass(obj);
-
-    return ((__CLASS ? __CLASS.className : undefined));  // __CLASS.getName() problematisch?
-}
-
-function getObjInfo(obj, keyStrings) {
-    const __TYPEOF = typeof obj;
-    const __VALUEOF = Object.valueOf(obj);
-    const __VALUESTR = String(obj);
-    const __STRDELIM1 = (keyStrings ? "'" : '"');
-    const __STRDELIM2 = (keyStrings ? "'" : '"');
-    const __NUMDELIM1 = (keyStrings ? "" : '<');
-    const __NUMDELIM2 = (keyStrings ? "" : '>');
-    const __SPACE = (keyStrings ? "" : ' ');
-    const __ARRDELIM = ',' + __SPACE;
-    const __ARRDELIM1 = '[';
-    const __ARRDELIM2 = ']';
-    const __OBJSETTER = __SPACE + ':' + __SPACE;
-    const __OBJDELIM = ',' + __SPACE;
-    const __OBJDELIM1 = '{';
-    const __OBJDELIM2 = '}';
-    let typeStr = __TYPEOF;
-    let valueStr = __VALUESTR;
-
-    switch (__TYPEOF) {
-    case 'undefined' : break;
-    case 'string'    : typeStr = 'String';
-                       valueStr = __STRDELIM1 + valueStr + __STRDELIM2;
-                       break;
-    case 'boolean'   : typeStr = 'Boolean';
-                       break;
-    case 'number'    : if (Number.isInteger(obj)) {
-                           typeStr = 'Integer';
-                       } else {
-                           typeStr = 'Number';
-                           valueStr = __NUMDELIM1 + valueStr + __NUMDELIM2;
-                       }
-                       break;
-    case 'function'  : break;
-    case 'object'    : if (Array.isArray(obj)) {
-                           typeStr = 'Array';
-                           if (valueStr.length) {
-                               valueStr = obj.map(item => getValStr(item)).join(__ARRDELIM);
-                           }
-                           valueStr = __ARRDELIM1 + (valueStr.length ? __SPACE + valueStr + __SPACE : "") + __ARRDELIM2;
-                       } else {
-                           const __CLASS = getClass(obj);
-                           const __CLASSNAME = (__CLASS ? getClassName(obj) + __SPACE : "");
-
-                           typeStr = (__CLASSNAME ? __CLASSNAME : typeStr);
-                           if (obj && valueStr.length) {
-                               valueStr = Object.values(Object.map(obj, (value, key) => (getValStr(key, true) + __OBJSETTER + getValStr(value)))).join(__OBJDELIM);
-                           }
-                           valueStr = __CLASSNAME + __OBJDELIM1 + (valueStr.length ? __SPACE + valueStr + __SPACE : "") + __OBJDELIM2;
-                       }
-    default :          break;
-    }
-
-    if (obj == undefined) {
-        if (obj === undefined) {
-            valueStr = "";
-        } else {
-            valueStr = __VALUESTR;
-        }
-    }
-
-    return [
-               typeStr,
-               valueStr,
-               __TYPEOF,
-               __VALUEOF
-           ];
-}
-
-function getValStr(obj, keyStrings) {
-    const [ __TYPESTR, __VALUESTR ] = getObjInfo(obj, keyStrings);
-
-    return __VALUESTR;
-}
-
-__OPTSET.toString = function() {
-    let retStr = "__OPTSET = {\n";
-
-    for (const [ __KEY, __OPT ] of Object.entries(this)) {
-        if (__KEY !== 'toString') {
-            const __CONFIG = getOptConfig(__OPT);
-            const __NAME = getOptName(__OPT);
-            const __VAL = getOptValue(__OPT);
-            const [ __VALTYPE, __VALSTR ] = getObjInfo(__VAL);
-            const __OUT = [
-                              __VALTYPE,
-                              __KEY,
-                              __VALSTR,
-                              __NAME,
-                              getValStr(__CONFIG.FormLabel),
-                              getValStr(__CONFIG.Default)
-                ];
-
-            retStr += '\t' + __OUT.join('\t') + '\n';
-        }
-    }
-
-    retStr += "}";
-
-    return retStr;
-}
+const __OPTSET = new Options(__OPTCONFIG, '__OPTSET');
 
 // Teamparameter fuer getrennte Speicherung der Optionen fuer Erst- und Zweitteam...
 const __TEAMCLASS = new TeamClassification();
@@ -5718,7 +5743,7 @@ function calcMinPSkill(alter, tSkill = 99.5, mode = 0, prob = 99) {
 // color: Schriftfarbe der neuen Zelle (z.B. "#FFFFFF" fuer weiss)
 // Bei Aufruf ohne Farbe wird die Standardfarbe benutzt
 function appendCell(row, content, color) {
-    const __CELLS = (row || {}).cells;
+    const __CELLS = (row || { }).cells;
 
     row.insertCell(-1);
 
