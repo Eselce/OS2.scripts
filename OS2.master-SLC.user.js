@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         OS2.master
 // @namespace    http://os.ongapo.com/
-// @version      0.30+WE
+// @version      0.31beta1
 // @copyright    2013+
 // @author       Sven Loges (SLC) / Andreas Eckes (Strindheim BK)
 // @description  Master-Script fuer Online Soccer 2.0
@@ -172,6 +172,12 @@ osBlau = "#111166";
 borderString = "solid white 1px";
 playerProfileWindowOffsetY = 80;
 
+// Tabellen fuer Spielertalent...
+const trainierb = new Array(0,1,2,3,4,5,8,9,10,11,15); // Indizes der trainierbaren Skills
+const dauer = new Array(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,58,59,60,62,63,65,66,68,70,71,73,75,77,79,82,84,87,89,92,95,98,101,104,108,112,116,120,125,130,136,142,148,155,163,171,181,192,205,220,238,261,292,340);
+const tage = new Array(-1505,-1426,-1346,-1267,-1188,-1109,-1030,-950,-871,-792,-713,-634,-554,-475,-396,-317,-238,-158,-79,0,72,138,198,254,304,350,392,431,465,497,526,551,575,596,615,632,648,662,674,685);
+const faktor = new Array(110,110,110,110,110,110,110,110,110,110,110,110,110,110,110,110,110,110,110,100,92,84,77,70,64,58,53,48,44,40,36,33,29,26,24,21,19,17,15,14);
+
 var prec = 1;
 prec0 = 0;
 prec1 = 1;
@@ -235,11 +241,11 @@ function procPlayerData() {
     var tdTags = document.getElementsByTagName("td");// Liste aller "td"-Tags
     var tdIndexPos = 14;// Index des td-Tags der Position
     var pos = tdTags[tdIndexPos].textContent;// Position des Spielers
-    var skills = getArrayPositionOfSkillsOnDetailsPage(pos);// Liste der Indizes der Primaerskills
+    var priSkills = getArrayPositionOfSkillsOnDetailsPage(pos);// Liste der Indizes der Primaerskills
 
-    for (var i = 0; i < skills.length; i++) {
-        tdTags[skills[i]].style.color = getColor(pos);
-        tdTags[skills[i]].style.fontWeight = 'bold';
+    for (var i = 0; i < priSkills.length; i++) {
+        tdTags[priSkills[i]].style.color = getColor(pos);
+        tdTags[priSkills[i]].style.fontWeight = 'bold';
     }
 }
 
@@ -434,6 +440,7 @@ function procSingleValues() {
     var rowOffsetUpper = 1;
     var rowOffsetLower = 1;
     var colWidth = 40;
+    var colIdxSkills = 4;
     var colIdxWID = 16;
     var colIdxSEL = colIdxWID + 1;
     var colIdxDIS = colIdxSEL + 1;
@@ -449,10 +456,14 @@ function procSingleValues() {
     appendCell(titleRow, "Prios");
     appendCell(titleRow, "Skill");
     appendCell(titleRow, "Opti");
+    appendCell(titleRow, "tr.");
+    appendCell(titleRow, "Talent");
     appendCell(title2Row, "FixVals");
     appendCell(title2Row, "Prios");
     appendCell(title2Row, "Skill");
     appendCell(title2Row, "Opti");
+    appendCell(title2Row, "tr.");
+    appendCell(title2Row, "Talent");
 
     // Breite und Sortierung der neuen Spalten festlegen
     for (var i = orgLength + 1; i < titleRow.cells.length; i++) {
@@ -462,41 +473,45 @@ function procSingleValues() {
             title2Row.cells[i] = titleRow.cells[i];
     }
 
-    for (var i = rowOffsetUpper; i < playerTable.rows.length - rowOffsetLower; i++) {
+    for (i = rowOffsetUpper; i < playerTable.rows.length - rowOffsetLower; i++) {
         var currentRow = playerTable.rows[i];
         var pos = currentRow.cells[0].className;// Position des Spielers ermitteln
-        var skills = (pos == "LEI") ? getArrayPositionOfLEISkillsOnGlobalPage(currentRow)
+        var priSkills = (pos == "LEI") ? getArrayPositionOfLEISkillsOnGlobalPage(currentRow)
                 : getArrayPositionOfSkillsOnGlobalPage(pos);// Liste der Indizes der Primaerskills
+        var skills = [];
         var color = getColor(pos);
         var sumSkill = 0;
         var sumFixVal = 0;
         var sumPrio = 0;
 
-        for (var idx = 4; idx < 21; idx++) {
-            sumSkill += getEinzelSkill(currentRow, idx);
+        for (var idx = colIdxSkills; idx < colIdxSkills + 17; idx++) {
+            skills[idx - colIdxSkills] = getEinzelSkill(currentRow, idx);
         }
 
-        for (var j = 0; j < fixSkills.length; j++) {
-            sumFixVal += getEinzelSkill(currentRow, fixSkills[j]);
-        }
+        sumSkill = skills.reduce((sum, skill) => sum + skill);
 
-        for (var j = 0; j < skills.length; j++) {
-            currentRow.cells[skills[j]].style.color = osBlau;
-            currentRow.cells[skills[j]].style.backgroundColor = color;
-            currentRow.cells[skills[j]].style.fontWeight = 'bold';
+        sumFixVal = fixSkills.reduce((sum, idx) => sum + skills[idx - colIdxSkills], 0);
 
-            sumPrio += getEinzelSkill(currentRow, skills[j]);
-        }
+        sumPrio = priSkills.reduce(
+            function (sum, idx) {
+                currentRow.cells[idx].style.color = osBlau;
+                currentRow.cells[idx].style.backgroundColor = color;
+                currentRow.cells[idx].style.fontWeight = 'bold';
+                return sum + skills[idx - colIdxSkills];
+            }, 0);
 
         var avgSkill = sumSkill / 17;
         var avgOpti = (sumSkill + 4 * sumPrio) / 27;
         var avgFixVal = sumFixVal / fixSkills.length;
-        var avgPrio = sumPrio / skills.length;
+        var avgPrio = sumPrio / priSkills.length;
+        var [trainiert, EQ19] = getTrainiertUndTalent(25, skills);
 
         appendCell(currentRow, avgFixVal.toFixed(prec), color);
         appendCell(currentRow, avgPrio.toFixed(prec), color);
         appendCell(currentRow, avgSkill.toFixed(prec2), color);
         appendCell(currentRow, avgOpti.toFixed(prec2), color);
+        appendCell(currentRow, trainiert.toFixed(prec0), color);
+        appendCell(currentRow, EQ19.toFixed(prec0), color);
     }
 }
 
@@ -635,6 +650,22 @@ function getArrayPositionOfLEISkillsOnGlobalPage(row) {
     return skills;
 }
 
+// Gibt Anzahl trainierter Skillpunkte und Michael Bertrams "Talent" zurueck
+function getTrainiertUndTalent(age, skills) {
+    const [__SETRAINIERB, __SEEQ19] = trainierb.reduce(
+        function (res, skillIdx) {
+            const __SKILL = skills[skillIdx];
+            res[0] += __SKILL;
+            res[1] += dauer[__SKILL];
+            return res;
+        }, [0, 0]);
+    const __ALTER = Math.floor(age);
+    const __RESTZAT = Math.round(72 * (age - __ALTER));
+    const __TRAINIERT = tage[__ALTER] + Math.round(__RESTZAT * faktor[__ALTER] / 100);
+    const __EQ19 = __SEEQ19 - __TRAINIERT;
+    return [__SETRAINIERB, __EQ19];
+}
+
 // Gibt die Positionsstaerken dieser Zeile zurueck
 function getArrayPosSkills(row) {
     var ret = new Array(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
@@ -644,8 +675,8 @@ function getArrayPosSkills(row) {
     var opti = getOpti(row);
     var prio = getPrio(row);
     var alter = getAlter(row);
-    var MOR = getMOR(row);
     var FIT = getFIT(row);
+    var MOR = getMOR(row);
     var AF = (alter < 25) ? alter : 25;
     var value = 25.0 * (opti + skill) / (150.0 - prio);
     if (FIT < 10) {
