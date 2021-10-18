@@ -1,10 +1,10 @@
 // ==UserScript==
 // @name         OS2.spielbericht.XXL
 // @namespace    http://os.ongapo.com/
-// @version      0.70+WE
+// @version      0.71beta3
 // @copyright    2013+
 // @author       Andreas Eckes (Strindheim BK) / Michael Bertram / Sven Loges (SLC)
-// @description  OS 2.0 - Ergänzt Summen- und Durchschnittswerte bei den Spielerstatistiken im Spielbericht / Zaehlt Textbausteine / Quoten mit Nachkomma / Leere Zeilen nicht genullt / Fenstergroesse
+// @description  OS 2.0 - Ergaenzt Summen- und Durchschnittswerte bei den Spielerstatistiken im Spielbericht / Zaehlt Textbausteine / Quoten mit Nachkomma / Leere Zeilen nicht genullt / Fenstergroesse
 // @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/rep/saison/\d+/\d+/\d+-\d+.html$/
 // @grant        GM.getResourceUrl
 // @require      https://greasemonkey.github.io/gm4-polyfill/gm4-polyfill.js
@@ -19,25 +19,11 @@
 /* jshint esnext: true */
 /* jshint moz: true */
 
-// **************************************************************************************
-// Hilfsfunktionen
-// **************************************************************************************
-
-// Erzeugt die uebergebene Anzahl von Zellen in der uebergebenen Zeile.
-// row: Zeile, die aufgepumpt werden soll
-// length: Anzahl der zu erzeugenden Zellen
-function inflateRow(row, length) {
-    for (var i = 0; i < length; i++) {
-        row.insertCell(-1);
-    }
-}
-
-
 // ==================== Funktionen neu fuer Textbausteine ====================
 
 var gruppen = [ "Pass", "ZWK_ov","SCH", "Erfolg_l_TB"];
 gruppen.Pass = [/spielt/i, /pass /i, / passt/i, /flankt/i, /zieht den Ball/i];
-gruppen.ZWK_ov = [/versucht/i, /erk\u00E4mpft/i, /nicht vorbei/i, /nicht umspielen/i, /nicht \u00FCberspielen/i, /nicht mit einem/i];
+gruppen.ZWK_ov = [/versucht/i, /erk\u00E4mpft/i, /nicht vorbei/i, /nicht umspielen/i, /nicht \u00FCberspielen/i, /nicht mit einem/i, /hat aufgepasst/i];
 gruppen.SCH = [/e eck/i, / link/i, / recht/i, /richtung/i, /aufs Tor/i, /kopfball/i, /volley/i, /zieht ab/i];
 // gruppen.Ecken = [/zieht den Ball/i];
 gruppen.Erfolg_l_TB = [/Keeper/i, /ABSEITS/i, /gefahrenzone/i, /der Ball/i, /kann den Ball/i, /Bein in/i, /streckt/i]; // TB ueberpruefen
@@ -50,6 +36,7 @@ function regexsuche (begriff) {
     var x = 0;
     var y = 0;
     var temp = "";
+    var suche = "";
     for (x = 0; x < gruppen.length - 1; x++) {
         temp = gruppen[x];
         for (y = 0; y < gruppen[temp].length; y++) {
@@ -65,12 +52,12 @@ function regexsuche (begriff) {
 }
 
 function tabelleneu () {
-    node = document.getElementsByTagName("table")[4];
+    var node = document.getElementsByTagName("table")[4];
     node.parentNode.insertBefore(document.createElement("div"), node.nextSibling );
-    node1 = document.getElementsByTagName("div")[6];
+    var node1 = document.getElementsByTagName("div")[6];
     node1.innerHTML = "<br><br><b>Es folgen die Berichtsstatistiken</b><br><br>";
     node1.parentNode.insertBefore(document.createElement("table"), node1.nextSibling );
-    node2 = document.getElementsByTagName("table")[5];
+    var node2 = document.getElementsByTagName("table")[5];
     node2.innerHTML = node.innerHTML;
     node2.setAttribute("cellspacing", 2);
     node2.setAttribute("cellpadding", 2);
@@ -88,9 +75,11 @@ function tabelleneu () {
 
 function textbausteine(){
     var spielernamen = ["A", "B"];
+    var l;     // Heimteam/Gastteam
 
     for (var j = 0; j < spielbericht.rows.length; j++) {     //Zeilen des Spielberichts
         var ergebnis = regexsuche(spielbericht.rows[j].cells[1]);
+        var folgezeile = ((j + 1) < spielbericht.rows.length);     // Kann der Inhalt der Folgezeile analysiert werden?
         spielerakt[j] = ["", "a"];
         ereignis[j] = ["", 0];
         if (ergebnis !== "") {  //SCH, PASS, ZWK_ov registriert
@@ -120,7 +109,7 @@ function textbausteine(){
                     spielerakt[j][0+i] = spielernamen[i].textContent;
                 }
             }
-            if (spielerakt[j][0] == "Freistoss") {
+            if (spielerakt[j][0] === "Freistoss") {
                 spielerakt[j][0] = spielerakt[j][1];
                 spielerakt[j][1] = "a";
             }
@@ -128,7 +117,7 @@ function textbausteine(){
             //spielbericht.rows[j].cells[4].textContent = ergebnis;          //.........................................................Aktion neben Bericht einfuegen
             ereignis[j][0] = ergebnis;
 
-            if (ereignis[j][0] == "ZWK_ov") {
+            if (ereignis[j][0] === "ZWK_ov") {
                 //spielbericht.rows[j].cells[5].textContent = "0";          //.........................................................Erfolg neben Bericht einfuegen
                 ereignis[j][1] = 0;
             }
@@ -144,15 +133,16 @@ function textbausteine(){
                     //spielbericht.rows[j].cells[5].textContent = "0";          //.........................................................Erfolg neben Bericht einfuegen
                     ereignis[j][1] = 0;
                 }
-                else if ((/ABSEITS/).test(spielbericht.rows[j+1].cells[1].textContent) === true) { //Abseits Folgesatz
+                else if (folgezeile && ((/ABSEITS/).test(spielbericht.rows[j+1].cells[1].textContent) === true)) { //Abseits Folgesatz
                     //spielbericht.rows[j].cells[5].textContent = "0";          //.........................................................Erfolg neben Bericht einfuegen
                     ereignis[j][1] = 0;
                 }
-                else if ((/ - /).test(spielbericht.rows[j+1].cells[1].textContent) === false) { //Erfolgsmeldung Folgesatz
+                else if (folgezeile && ((/ - /).test(spielbericht.rows[j+1].cells[1].textContent) === false)) { //Erfolgsmeldung Folgesatz
                     ergebnis = false;
                     var x = 0;
                     var y = 0;
                     var temp = "Erfolg_l_TB";
+                    var suche = "";
                     for (y = 0; y < gruppen[temp].length; y++) {
                         suche = gruppen[temp][y];
                         ergebnis = suche.test(spielbericht.rows[j+1].cells[1].textContent);
@@ -167,8 +157,8 @@ function textbausteine(){
                 // hier weiter mit Erfolg (wovon? SCH?)--------------------------------------------------------------------------------------------------------------------------------
             }
 
-            for (k = 1; k < tabberstat.rows.length; k++) {  // Spieler
-                if (tabberstat.rows[k].cells[0].textContent == spielerakt[j][0]) {
+            for (var k = 1; k < tabberstat.rows.length; k++) {  // Spieler
+                if (tabberstat.rows[k].cells[0].textContent === spielerakt[j][0]) {
                     l = 0; //Heimteam
                     break;
                 }
@@ -183,19 +173,19 @@ function textbausteine(){
                 //__CELL.textContent = ereignis[j][0];  // Ereignis in Spielbericht eintragen
                 switch (ereignis[j][0]) {
                     case 'SCH':
-                        addIcon(__CELL, 'SCH', "schuss", 15, 15);
+                        addIcon(__CELL, 'SCH', "schuss", 10);
                         break;
                     case 'Pass':
-                        addIcon(__CELL, 'PAS', "pass", 15, 15);
+                        addIcon(__CELL, 'PAS', "pass", 15);
                         break;
                     case 'ZWK_ov':
-                        addIcon(__CELL, 'ZWK', "zwk", 25, 25);
+                        addIcon(__CELL, 'ZWK', "zwk", 25);
                         break;
                 }
             }
-            else if (ereignis[j][0] == 'SCH') { // Tor weil Erfolg = 1 (else)
+            else if (ereignis[j][0] === 'SCH') { // Tor weil Erfolg = 1 (else)
                 //__CELL.textContent = "TOR";  // Ereignis in Spielbericht eintragen
-                addIcon(__CELL, 'TOR', "<TOR>", 25, 25); // TOR
+                addIcon(__CELL, 'TOR', "<TOR>", 30); // TOR
             }
 
             if (spielbericht.rows[j].cells[0].textContent !== "y") {
@@ -214,22 +204,24 @@ function textbausteine(){
 }
 
 function berstatistik () {
-    for (i = 0; i < spielbericht.rows.length; i++) {  // Berichtszeilen
+    var j;
+
+    for (var i = 0; i < spielbericht.rows.length; i++) {  // Berichtszeilen
         switch (ereignis[i][0]) {
             case "Pass":
                 for (j = 1; j < tabberstat.rows.length; j++) {  // Spieler
-                    if (tabberstat.rows[j].cells[0].textContent == spielerakt[i][0]) {
+                    if (tabberstat.rows[j].cells[0].textContent === spielerakt[i][0]) {
                         tabberstat.rows[j].cells[5].textContent ++;
                         tabberstat.rows[j].cells[6].textContent = tabberstat.rows[j].cells[6].textContent * 1 + ereignis[i][1];
                     }
-                    if (tabberstat.rows[j].cells[16].textContent == spielerakt[i][0]) {
+                    if (tabberstat.rows[j].cells[16].textContent === spielerakt[i][0]) {
                         tabberstat.rows[j].cells[13].textContent ++;
                         tabberstat.rows[j].cells[14].textContent = tabberstat.rows[j].cells[14].textContent * 1 + ereignis[i][1];
                     }
-                    if (tabberstat.rows[j].cells[0].textContent == spielerakt[i][1]) {
+                    if (tabberstat.rows[j].cells[0].textContent === spielerakt[i][1]) {
                         tabberstat.rows[j].cells[7].textContent ++;
                     }
-                    if (tabberstat.rows[j].cells[16].textContent == spielerakt[i][1]) {
+                    if (tabberstat.rows[j].cells[16].textContent === spielerakt[i][1]) {
                         tabberstat.rows[j].cells[15].textContent ++;
                     }
                 }
@@ -237,16 +229,16 @@ function berstatistik () {
 
             case "ZWK_ov":
                 for (j = 1; j < tabberstat.rows.length; j++) {  // Spieler
-                    if (tabberstat.rows[j].cells[0].textContent == spielerakt[i][0]) {
+                    if (tabberstat.rows[j].cells[0].textContent === spielerakt[i][0]) {
                         tabberstat.rows[j].cells[2].textContent ++;
                     }
-                    if (tabberstat.rows[j].cells[16].textContent == spielerakt[i][0]) {
+                    if (tabberstat.rows[j].cells[16].textContent === spielerakt[i][0]) {
                         tabberstat.rows[j].cells[10].textContent ++;
                     }
-                    if (tabberstat.rows[j].cells[0].textContent == spielerakt[i][1]) {
+                    if (tabberstat.rows[j].cells[0].textContent === spielerakt[i][1]) {
                         tabberstat.rows[j].cells[4].textContent ++;
                     }
-                    if (tabberstat.rows[j].cells[16].textContent == spielerakt[i][1]) {
+                    if (tabberstat.rows[j].cells[16].textContent === spielerakt[i][1]) {
                         tabberstat.rows[j].cells[12].textContent ++;
                     }
                 }
@@ -299,30 +291,23 @@ function berstatistik () {
 
 // ==================== Code neu fuer Textbausteine ====================
 
-spielbericht = document.getElementsByTagName("table")[2];
-spielerakt = Array(spielbericht.rows.length); // Beteiligte je Zeile
-ereignis = Array(spielbericht.rows.length); // Ereignis, Erfolg je Zeile
+var spielbericht = document.getElementsByTagName("table")[2];
+var spielerakt = Array(spielbericht.rows.length); // Beteiligte je Zeile
+var ereignis = Array(spielbericht.rows.length); // Ereignis, Erfolg je Zeile
 
 tabelleneu();
 
-tabspielstat = document.getElementsByTagName("table")[4];
-tabberstat = document.getElementsByTagName("table")[5];
+var tabspielstat = document.getElementsByTagName("table")[4];
+var tabberstat = document.getElementsByTagName("table")[5];
 
 textbausteine();
 berstatistik();
 
-window.resizeTo(1100,1000);
+window.resizeTo(1100,800);
 
 console.log("End of script");
 
 // ==================== Ende Code fuer Textbausteine ====================
-
-
-
-
-
-
-
 
 var borderString = "solid white 1px";
 var playerStatistics = document.getElementsByTagName("table")[4];
@@ -366,7 +351,8 @@ var colIdx = 0;
 var nonEmptyCellCount = 0;
 var sumValue = 0;
 var avgValue = 0.00;
-for (var i = 0; i < simpleCols.length; i++) {
+var i;
+for (i = 0; i < simpleCols.length; i++) {
     colIdx = simpleCols[i];
     nonEmptyCellCount = getNonEmptyCellCount(playerStatistics, colIdx, offsetsVertical);
     // Summe
@@ -380,7 +366,7 @@ var colIdx2 = 0;
 var nonEmptyCellCount2 = 0;
 var sumValue2 = 0;
 var avgValue2 = 0.00;
-for (var i = 0; i < simpleCols2.length; i++) {
+for (i = 0; i < simpleCols2.length; i++) {
     colIdx2 = simpleCols2[i];
     nonEmptyCellCount2 = getNonEmptyCellCount(playerStatistics2, colIdx2, offsetsVertical);
     // Summe
@@ -451,7 +437,7 @@ function inflateRow(row, length) {
 function getNonEmptyCellCount(table, col, offsets) {
     var returnValue = 0;
     for (var i = offsets[0]; i < table.rows.length - offsets[1]; i++) {
-        if (table.rows[i].cells[col].textContent != "") { returnValue += 1; }
+        if (table.rows[i].cells[col].textContent !== "") { returnValue += 1; }
     }
     return returnValue;
 }
@@ -497,12 +483,12 @@ function getColAvg(table, col, offsets) {
     var cellContent = "";
     for (var i = offsets[0]; i < table.rows.length - offsets[1]; i++) {
         cellContent = table.rows[i].cells[col].textContent;
-        if (cellContent != "") {
+        if (cellContent !== "") {
             returnValue += stringToNumber(cellContent);
             countValues += 1;
         }
     }
-    if (countValues != 0) { return returnValue / countValues; }
+    if (countValues !== 0) { return returnValue / countValues; }
     else { return ""; }
 }
 
@@ -529,7 +515,7 @@ function stringToNumber(string) {
     // Buchstaben und Whitespaces entfernen
     string = string.replace(/[\sa-zA-Z]/g, "");
     // Auf % pruefen und % entfernen
-    if (string.lastIndexOf("%") != -1) {
+    if (string.lastIndexOf("%") !== -1) {
         percent = true;
         string = string.replace(/%/g, "");
     }
@@ -560,7 +546,7 @@ function stringToNumber(string) {
 // height: Hoehe des Icons in Pixel
 // width: Breite des Icons in Pixel
 // return Die IMG-Resource, die asynchron gefuellt wird
-function addIcon(node, iconName, altText = `${iconName}`, height = 32, width = 32) {
+function addIcon(node, iconName, altText = iconName, height = 32, width = height) {
     const __IMG = document.createElement('img');
 
     GM.getResourceUrl(iconName).then(src => {
