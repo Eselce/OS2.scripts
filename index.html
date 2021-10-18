@@ -215,7 +215,7 @@
 // ==UserScript==
 // @name         OS2.jugend
 // @namespace    http://os.ongapo.com/
-// @version      0.73
+// @version      0.74beta1
 // @copyright    2013+
 // @author       Sven Loges (SLC) / Andreas Eckes (Strindheim BK)
 // @description  Jugendteam-Script fuer Online Soccer 2.0
@@ -237,7 +237,7 @@
 // ==UserScript==
 // @name         OS2.master
 // @namespace    http://os.ongapo.com/
-// @version      0.30+WE
+// @version      0.31beta1
 // @copyright    2013+
 // @author       Sven Loges (SLC) / Andreas Eckes (Strindheim BK)
 // @description  Master-Script fuer Online Soccer 2.0
@@ -303,10 +303,10 @@
 // ==UserScript==
 // @name         OS2.spielbericht.XXL
 // @namespace    http://os.ongapo.com/
-// @version      0.70+WE
+// @version      0.71beta3
 // @copyright    2013+
 // @author       Andreas Eckes (Strindheim BK) / Michael Bertram / Sven Loges (SLC)
-// @description  OS 2.0 - Ergänzt Summen- und Durchschnittswerte bei den Spielerstatistiken im Spielbericht / Zaehlt Textbausteine / Quoten mit Nachkomma / Leere Zeilen nicht genullt / Fenstergroesse
+// @description  OS 2.0 - Ergaenzt Summen- und Durchschnittswerte bei den Spielerstatistiken im Spielbericht / Zaehlt Textbausteine / Quoten mit Nachkomma / Leere Zeilen nicht genullt / Fenstergroesse
 // @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/rep/saison/\d+/\d+/\d+-\d+.html$/
 // @grant        GM.getResourceUrl
 // @require      https://greasemonkey.github.io/gm4-polyfill/gm4-polyfill.js
@@ -331,7 +331,7 @@
 // ==UserScript==
 // @name         OS2.spielerprofil
 // @namespace    http://os.ongapo.com/
-// @version      0.3-SLC-WE
+// @version      0.40beta1
 // @copyright    2016+
 // @author       Michael Bertram / Andreas Eckes (Strindheim BK) / Sven Loges (SLC)
 // @description  Alter exakt / Summe der trainierbaren Skills / Talent (trainierbare Skills mit Alter 19.00 bei unterstelltem 17er-Trainer seitdem)
@@ -339,9 +339,15 @@
 // @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/sp\.php\?s=\d+$/
 // @grant        GM.getValue
 // @grant        GM.setValue
+// @grant        GM.deleteValue
+// @grant        GM.registerMenuCommand
+// @grant        GM.info
 // @require      https://greasemonkey.github.io/gm4-polyfill/gm4-polyfill.js
 // @grant        GM_getValue
 // @grant        GM_setValue
+// @grant        GM_deleteValue
+// @grant        GM_registerMenuCommand
+// @grant        GM_info
 // ==/UserScript==
 					`, 'spielerstatistik' : String.raw`
 // ==UserScript==
@@ -393,7 +399,7 @@
 // ==UserScript==
 // @name         OS2.tabelle
 // @namespace    http://os.ongapo.com/
-// @version      0.11+WE+
+// @version      0.12beta1
 // @copyright    2016+
 // @author       Sven Loges (SLC)
 // @description  Tabellen-Script fuer Online Soccer 2.0
