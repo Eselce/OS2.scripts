@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         OS2.jugend
 // @namespace    http://os.ongapo.com/
-// @version      0.73
+// @version      0.74beta1
 // @copyright    2013+
 // @author       Sven Loges (SLC) / Andreas Eckes (Strindheim BK)
 // @description  Jugendteam-Script fuer Online Soccer 2.0
@@ -150,9 +150,9 @@ const __OPTCONFIG = {
                    'Default'   : true,
                    'Action'    : __OPTACTION.NXT,
                    'Label'     : "Ziehwarnung Aufstieg ein",
-                   'Hotkey'    : 'ä',
+                   'Hotkey'    : 'A',
                    'AltLabel'  : "Ziehwarnung Aufstieg aus",
-                   'AltHotkey' : 'ä',
+                   'AltHotkey' : 'A',
                    'FormLabel' : "Ziehwarnung Aufstieg"
                },
     'zeigeWarnungLegende' : {  // Auswahl, ob eine extra Meldung in Teamuebersicht erscheint, die dort als Legende dient
@@ -539,7 +539,7 @@ const __OPTCONFIG = {
                    'FreeValue' : true,
                    'SelValue'  : false,
                    'Choice'    : [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25 ],
-                   'Default'   : 16,
+                   'Default'   : 17,
                    'Action'    : __OPTACTION.NXT,
                    'Label'     : "Saison: $",
                    'Hotkey'    : 'a',
@@ -4124,7 +4124,7 @@ function selectPlayerIndex(player, index, catIds) {
     return idx;
 }
 
-// Speichtert die abgeleiteten Werte in den Spieler-Objekten
+// Speichert die abgeleiteten Werte in den Spieler-Objekten
 // players: Array von PlayerRecord mit den Spielerdaten
 // optSet: Gesetzte Optionen (und Config)
 function setPlayerData(players, optSet) {
@@ -6611,7 +6611,7 @@ function procOptSkill() {
             // Verzweige in unterschiedliche Verarbeitungen je nach Wert von page:
             switch (getPageIdFromURL(window.location.href, {
                                                                'haupt.php' : 0,  // Ansicht "Haupt" (Managerbuero)
-                                                               'ju.php'    : 1   // Ansicht "Jugendteam"
+                                                               'ju.php'    : 1   // Ansicht "Jugendteam" (page = 1, 2, 3, 4)
                                                            }, 'page')) {
                 case 0  : await procHaupt().catch(defaultCatch); break;
                 case 1  : await procTeamuebersicht().catch(defaultCatch); break;
