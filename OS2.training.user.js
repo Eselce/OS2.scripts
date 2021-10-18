@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         OS2.training
 // @namespace    http://os.ongapo.com/
-// @version      0.30beta2
+// @version      0.30beta4
 // @copyright    2013+
 // @author       Sven Loges (SLC) / Andreas Eckes (Strindheim BK)
 // @description  OS 2.0 - Berechnet die Trainingswahrscheinlichkeiten abhaengig von der Art des Einsatzes
@@ -31,6 +31,8 @@
 
 const __LOGLEVEL = 7;
 
+const __GMWRITE = true;
+
 // Options-Typen
 const __OPTTYPES = {
     'MC' : "multiple choice",
@@ -40,13 +42,14 @@ const __OPTTYPES = {
     'SI' : "simple option"
 };
 
-// Options-Typen
+// Aktions-Typen der Optionen
 const __OPTACTION = {
     'SET' : "set option value",
     'NXT' : "set next option value",
     'RST' : "reset options"
 };
 
+// Speicher-Typen der Optionen
 const __OPTMEM = {
     'normal' : {
                    'Name'      : "Browser",
@@ -760,7 +763,7 @@ const __OPTCONFIG = {
                }
 };
 
-// ==================== Invarianter Abschnitt fuer Optionen ====================
+// ==================== Invarianter Abschnitt fuer Logausgaben ====================
 
 // Ein Satz von Logfunktionen, die je nach Loglevel zur Verfuegung stehen. Aufruf: __LOG[level](text)
 const __LOG = {
@@ -780,17 +783,48 @@ const __LOG = {
                                     }
                                 },
                   'stringify' : safeStringify,      // JSON.stringify
-                  'changed'   : function(oldVal, newVal) {
+                  'changed'   : function(oldVal, newVal, keyString, showType, showLen, stepIn, delim = " => ") {
                                     const __OLDVAL = this.stringify(oldVal);
                                     const __NEWVAL = this.stringify(newVal);
 
-                                    return ((__OLDVAL !== __NEWVAL) ? __OLDVAL + " => " : "") + __NEWVAL;
+                                    return ((__OLDVAL !== __NEWVAL) ? getValStr(oldVal, keyString, showType, showLen, stepIn) + delim : "") +
+                                                                      getValStr(newVal, keyString, showType, showLen, stepIn);
                                 }
               };
 
 __LOG.init(window, __LOGLEVEL);
 
-// Kompatibilitaetsfunktion zur Ermittlung des Namens einer Funktion (falle <Function>.name nicht vorhanden ist)
+// ==================== Invarianter Abschnitt zur Speicherung (GM.setValue, GM.deleteValue) ====================
+
+// Generator-Funktion: Liefert eine ausgewählte GM-Funktion
+// action: Name der Funktion im GM-Objekt
+// label: Ausgabe-Titel
+// condition: Bedingung fuer die Auswahl
+// altAction: Alternative zu Parameter 'action' im Falle "condition === false"
+// level: Ausgabe-Loglevel
+// return Ausgewaehlte GM-Funktion
+function GM_function(action, label, condition = true, altAction = undefined, level = 6) {
+    return function(...args) {
+        __LOG[level]((condition ? '+' : '-') + ' ' + label + ' ' + args[0]);
+        return GM[condition ? action : altAction](...args);
+    }
+}
+
+// Umlenkung von Speicherung und Loeschung auf nicht-inversible 'getValue'-Funktion.
+// Falls __GMWRITE false ist, wird nicht geschrieben, bei true werden Optionen gespeichert.
+const __GETVALUE = GM_function('getValue', 'GET');
+const __SETVALUE = GM_function('setValue', 'SET', __GMWRITE, 'getValue');
+const __DELETEVALUE = GM_function('deleteValue', 'DELETE', __GMWRITE, 'getValue');
+
+if (__GMWRITE) {
+    __LOG[0]("Schreiben von Optionen wird AKTIVIERT!");
+} else {
+    __LOG[0]("Schreiben von Optionen wird DEAKTIVIERT!");
+}
+
+// ==================== Ergaenzungen und Polyfills zu Standardobjekten ====================
+
+// Kompatibilitaetsfunktion zur Ermittlung des Namens einer Funktion (falls <Function>.name nicht vorhanden ist)
 if (Function.prototype.name === undefined) {
     Object.defineProperty(Function.prototype, 'name', {
             get : function() {
@@ -799,14 +833,60 @@ if (Function.prototype.name === undefined) {
         });
 }
 
-// Fuehrt eine Map-Function auf ein Object aus
+// Fuehrt eine Map-Function auf ein Object aus und liefert ein neues Objekt zurueck.
+// Zusaetzlich kann die Auswahl der Elemente per Filter eingeschraenkt werden sowie
+// das Ergebnis sortiert (Default nach Wert, aber auch nach Schluessel).
 // obj: Das Object, das gemappt wird
-// fun: Eine Mapping-Funktion
+// mapFun: Eine Mapping-Funktion (value [, key [, index [, array]]])
+// - value: Wert
+// - key: Schluessel
+// - index: lfd. Nummer des Eintrags
+// - array: entries() des Objekts obj
+// | Alternativ Ein zu setzender Wert (keine Funktion)
+// thisArg: Wert, der als this verwendet wird, wenn mapFun, filterFun und sortFun ausgeführt werden (Default: obj)
+// filterFun: Eine Filter-Funktion auf (value [, key [, index [, array]]]) (Default: alle Elemente)
+// - value: Wert
+// - key: Schluessel
+// - index: lfd. Nummer des Eintrags
+// - array: entries() des Objekts obj
+// | Alternativ undefined, null: alle Elemente
+// | Alternativ Ein (schwach "==") zu vergleichender Wert (keine Funktion)
+// sortFun: Eine Sortier-Funktion auf (value1, value2 [, key1, key2])
+// - value1: Erster Wert
+// - value2: Zweiter Wert
+// - key1: Erster Schluessel
+// - key2: Zweiter Schluessel
+// | Alternativ undefined, false: unsortiert
+// | Alternativ true: Normale Sortierung anhand der UTF-16 Codepoints
 // return Ein neues Object mit gemappten Werten
-Object.map = function(obj, fun) {
-    return Object.fromEntries(
-            Object.entries(obj).map(
-                    ([key, value], index) => [key, fun(value, key, index)]));
+Object.map = function(obj, mapFun, thisArg, filterFun, sortFun) {
+    if (! obj) {
+        __LOG[4]("Object.map():", "Keine Aktion bei leerem Objekt", obj);
+
+        return obj;
+    } else if ((typeof obj) === 'object') {
+        const __THIS = (thisArg || obj);
+        const __MAPFUN = (((typeof mapFun) === 'function')
+                          ? (([key, value], index) => [key, mapFun.call(__THIS, value, key, index, __FILTERARR)])
+                          : (([key, value]) => [key, mapFun]));
+        const __FILTERFUN = ((filterFun == undefined)
+                             ? (element => true)
+                             : (((typeof filterFun) === 'function')
+                                ? (([key, value], index) => [key, filterFun.call(__THIS, value, key, index, __ARR)])
+                                : (([key, value]) => (value == filterFun))));
+        const __SORTFUN = ((sortFun === true)
+                           ? undefined
+                           : (([key1, value1], [key2, value2]) => sortFun.call(__THIS, value1, value2, key1, key2)));
+        const __ARR = Object.entries(obj);
+        const __FILTERARR = __ARR.filter(__FILTERFUN);  // [, __THIS] wird bereits erledigt
+        const __MAPPEDARR = __FILTERARR.map(__MAPFUN);  // [, __THIS] wird bereits erledigt
+
+        return Object.fromEntries(((sortFun) ? __MAPPEDARR.sort(__SORTFUN) : __MAPPEDARR));
+    } else {
+        __LOG[1]("Object.map():", "Illegales Objekt erhalten", obj);
+
+        return obj;
+    }
 }
 
 // Ergaenzung fuer Strings: Links oder rechts auffuellen nach Vorlage
@@ -1490,6 +1570,147 @@ Class.define(ObjRef, Directory, {
 
 // ==================== Ende Abschnitt fuer Klasse ObjRef ====================
 
+// ==================== Abschnitt fuer Klasse Options ====================
+
+// Basisklasse fuer Optionen
+function Options(optConfig, optSetLabel) {
+    'use strict';
+
+    this.setConst('config', (optConfig || { }), false);
+    this.setConst('setLabel', (optSetLabel || '__OPTSET'), false);
+}
+
+Class.define(Options, Object, {
+                    'checkKey' : function(key) {
+                        // Hier kann man Keys 'unsichtbar' machen...
+                        return true;
+                    },
+                    'toString' : function() {
+                        let retStr = this.setLabel + " = {\n";
+
+                        for (const [ __KEY, __OPT ] of Object.entries(this)) {
+                            if (this.checkKey(__KEY)) {
+                                const __CONFIG = getOptConfig(__OPT);
+                                const __NAME = getOptName(__OPT);
+                                const __VAL = getOptValue(__OPT);
+                                const __OUT = [
+                                                  getValStr(__VAL, false, true, true),
+                                                  getValStr(__KEY, true),
+                                                  getValStr(__NAME, true),
+                                                  getValStr(__CONFIG.FormLabel),
+                                                  getValStr(__CONFIG.Default, false, true, true)
+                                    ];
+
+                                retStr += '\t' + __OUT.join('\t') + '\n';
+                            }
+                        }
+
+                        retStr += "}";
+
+                        return retStr;
+                    }
+                });
+
+//
+// Hilfsfunktionen, die von Options.toString() genutzt werden
+//
+
+function getClass(obj) {
+    if (obj != undefined) {
+        if (typeof obj === 'object') {
+            if (obj.getClass) {
+                return obj.getClass();
+            }
+        }
+    }
+
+    return undefined;
+}
+
+function getClassName(obj) {
+    const __CLASS = getClass(obj);
+
+    return ((__CLASS ? __CLASS.className : undefined));  // __CLASS.getName() problematisch?
+}
+
+function getObjInfo(obj, keyStrings, longForm, stepIn) {
+    const __TYPEOF = typeof obj;
+    const __VALUEOF = Object.valueOf(obj);
+    const __LENGTH = ((obj != undefined) ? ((__TYPEOF === 'object') ? Object.entries(obj) : obj).length : obj);
+    const __STRDELIM1 = (keyStrings ? "'" : '"');
+    const __STRDELIM2 = (keyStrings ? "'" : '"');
+    const __NUMDELIM1 = (keyStrings ? "" : '<');
+    const __NUMDELIM2 = (keyStrings ? "" : '>');
+    const __SPACE = (keyStrings ? "" : ' ');
+    const __ARRDELIM = ',' + __SPACE;
+    const __ARRDELIM1 = '[';
+    const __ARRDELIM2 = ']';
+    const __OBJSETTER = __SPACE + ':' + __SPACE;
+    const __OBJDELIM = ',' + __SPACE;
+    const __OBJDELIM1 = '{';
+    const __OBJDELIM2 = '}';
+    const __LENSTR = ((__LENGTH !== undefined) ? __ARRDELIM1 + __LENGTH + __ARRDELIM2 : "")
+    const __VALUESTR = String(obj);
+    let typeStr = __TYPEOF;
+    let valueStr = __VALUESTR;
+
+    switch (__TYPEOF) {
+    case 'undefined' : break;
+    case 'string'    : typeStr = 'String';
+                       valueStr = __STRDELIM1 + valueStr + __STRDELIM2;
+                       break;
+    case 'boolean'   : typeStr = 'Boolean';
+                       break;
+    case 'number'    : if (Number.isInteger(obj)) {
+                           typeStr = 'Integer';
+                       } else {
+                           typeStr = 'Number';
+                           valueStr = __NUMDELIM1 + valueStr + __NUMDELIM2;
+                       }
+                       break;
+    case 'function'  : break;
+    case 'object'    : if (Array.isArray(obj)) {
+                           const __VALSTR = (__LENGTH ? obj.map(item => getValStr(item, false, stepIn, longForm, stepIn)).join(__ARRDELIM) : "");
+
+                           typeStr = 'Array';
+                           valueStr = __ARRDELIM1 + (__LENGTH ? __SPACE + __VALSTR + __SPACE : "") + __ARRDELIM2;
+                       } else {
+                           const __CLASS = getClass(obj);
+                           const __CLASSNAME = (__CLASS ? getClassName(obj) : "");
+                           const __VALSTR = (__LENGTH ? Object.values(Object.map(obj, (value, key) => (getValStr(key, true) + __OBJSETTER
+                                            + getValStr(value, false, stepIn, longForm, stepIn)))).join(__OBJDELIM) : "");
+
+                           typeStr = (__CLASSNAME ? __CLASSNAME : typeStr);
+                           valueStr = (__CLASSNAME ? __CLASSNAME + __SPACE : "") + __OBJDELIM1 + (__LENGTH ? __SPACE + __VALSTR + __SPACE : "") + __OBJDELIM2;
+                       }
+    default :          break;
+    }
+
+    if (obj == undefined) {
+        if (obj === undefined) {  // sic!
+            valueStr = "";
+        } else {  // null o.ä.
+            valueStr = __VALUESTR;
+        }
+    }
+
+    return [
+               typeStr + (longForm ? __LENSTR : ""),
+               valueStr,
+               __TYPEOF,
+               __VALUEOF,
+               __LENGTH
+           ];
+}
+
+function getValStr(obj, keyStrings, showType, showLen, stepIn) {
+    const [ __TYPESTR, __VALUESTR ] = getObjInfo(obj, keyStrings, showLen, stepIn);
+
+    return (showType ? __TYPESTR + ' ' : "") + __VALUESTR;
+}
+
+// ==================== Ende Abschnitt fuer Klasse Options ====================
+
 // ==================== Abschnitt fuer diverse Utilities ====================
 
 // Gibt einen Wert zurueck. Ist dieser nicht definiert oder null, wird ein Alternativwert geliefert
@@ -1576,7 +1797,8 @@ function instanceOf(obj, base) {
             return true;
         }
         if ((typeof obj) === 'xml') {  // Sonderfall mit Selbstbezug
-            return (base.prototype === XML.prototype);
+            //return (base.prototype === XML.prototype);
+            return (base.prototype === XMLDocument.prototype);  // Notloesung!
         }
         obj = Object.getPrototypeOf(obj);
     }
@@ -1845,8 +2067,8 @@ function reverseString(string) {
 function storeValue(name, value) {
     __LOG[4](name + " >> " + value);
 
-    return GM.setValue(name, value).then(voidValue => {
-            __LOG[5]("OK " + name + " >> " + value);
+    return __SETVALUE(name, value).then(voidValue => {
+            __LOG[5]("OK " + getValStr(name, true) + " >> " + getValStr(value, false, true, true));
 
             return Promise.resolve({
                     'name'  : name,
@@ -1860,8 +2082,8 @@ function storeValue(name, value) {
 // defValue: Default-Wert fuer den Fall, dass nichts gespeichert ist
 // return Promise fuer den String/Integer/Boolean-Wert, der unter dem Namen gespeichert war
 function summonValue(name, defValue = undefined) {
-    return GM.getValue(name, defValue).then(value => {
-            __LOG[4](name + " << " + value);
+    return __GETVALUE(name, defValue).then(value => {
+            __LOG[5]("OK " + getValStr(name, true) + " << " + getValStr(value, false, true, true));
 
             return Promise.resolve(value);
         }, ex => {
@@ -2071,7 +2293,7 @@ function setOptName(opt, name) {
     const __NAME = getOptName(opt);
 
     if (__NAME !== name) {
-        __LOG[4]("RENAME " + __NAME + " => " + name);
+        __LOG[4]("RENAME " + __LOG.changed(__NAME, name, true));
 
         __CONFIG.Name = name;
     }
@@ -2108,7 +2330,7 @@ function getOptName(opt) {
 function setOptValue(opt, value) {
     if (opt !== undefined) {
         if (! opt.ReadOnly) {
-            __LOG[6](getOptName(opt) + ": " + __LOG.changed(opt.Value, value));
+            __LOG[6](getOptName(opt) + ": " + __LOG.changed(opt.Value, value, false, true, true));
 
             opt.Value = value;
         }
@@ -2628,7 +2850,7 @@ function initOptions(optConfig, optSet = undefined, preInit = undefined) {
     let value;
 
     if (optSet === undefined) {
-        optSet = { };
+        optSet = new Options();
     }
 
     for (let opt in optConfig) {
@@ -2933,9 +3155,9 @@ async function buildMenu(optSet) {
 // opt: Zu invalidierende Option
 // force: Invalidiert auch Optionen mit 'AutoReset'-Attribut
 // return Promise auf resultierenden Wert
-function invalidateOpt(opt, force = false) {
+function invalidateOpt(opt, force = false, reload = true) {
     return Promise.resolve(opt.Promise).then(value => {
-            if (opt.Loaded && ! opt.ReadOnly) {
+            if (opt.Loaded && reload && ! opt.ReadOnly) {
                 const __CONFIG = getOptConfig(opt);
 
                 // Wert "ungeladen"...
@@ -2955,11 +3177,11 @@ function invalidateOpt(opt, force = false) {
 // optSet: Object mit den Optionen
 // force: Invalidiert auch Optionen mit 'AutoReset'-Attribut
 // return Promise auf Object mit den geladenen Optionen
-async function invalidateOpts(optSet, force = false) {
+async function invalidateOpts(optSet, force = false, reload = true) {
     for (let opt in optSet) {
         const __OPT = optSet[opt];
 
-        await invalidateOpt(__OPT, force);
+        await invalidateOpt(__OPT, force, reload);
     }
 
     return optSet;
@@ -2992,7 +3214,7 @@ function loadOption(opt, force = false) {
         } else {
             value = (__CONFIG.Serial ?
                             deserialize(__NAME, __DEFAULT) :
-                            GM.getValue(__NAME, __DEFAULT));
+                            summonValue(__NAME, __DEFAULT));
         }
 
         opt.Promise = Promise.resolve(value).then(value => {
@@ -3000,7 +3222,7 @@ function loadOption(opt, force = false) {
                 if (opt.Loaded || ! opt.Promise) {
                     showAlert("Error", "Unerwarteter Widerspruch zwischen opt.Loaded und opt.Promise", safeStringify(opt));
                 }
-                __LOG[5]("LOAD " + __NAME + ": " + __LOG.changed(__DEFAULT, value));
+                __LOG[5]("LOAD " + __NAME + ": " + __LOG.changed(__DEFAULT, value, false, true, true));
 
                 // Wert intern setzen...
                 const __VAL = setOptValue(opt, value);
@@ -3028,7 +3250,7 @@ function loadOptions(optSet, force = false) {
 
         if (! __OPT.Loaded) {
             const __PROMISE = loadOption(__OPT, force).then(value => {
-                    __LOG[5]("LOADED " + opt + " << " + value);
+                    __LOG[5]("LOADED " + getValStr(opt, true) + " << " + getValStr(value, false, true, true));
 
                     return Promise.resolve({
                             'name'  : opt,
@@ -3053,13 +3275,16 @@ function deleteOption(opt, force = false, reset = true) {
 
     if (force || ! __CONFIG.Permanent) {
         const __NAME = getOptName(opt);
+        const __VALUE = getOptValue(opt, undefined, false);
+        let newValue;
 
         __LOG[4]("DELETE " + __NAME);
 
-        return GM.deleteValue(__NAME).then(voidValue => {
+        return __DELETEVALUE(__NAME).then(voidValue => {
                 if (reset || __CONFIG.AutoReset) {
-                    setOptValue(opt, initOptValue(__CONFIG));
+                    newValue = setOptValue(opt, initOptValue(__CONFIG));
                 }
+                __LOG[5]("OK DELETE " + __LOG.changed(__VALUE, newValue, false, true, true));
             }, defaultCatch);
     }
 
@@ -3130,11 +3355,11 @@ async function renameOption(opt, name, reload = false, force = false) {
     const __NAME = getOptName(opt);
 
     if (__NAME !== name) {
-        await deleteOption(opt, true, ! reload);
+        await deleteOption(opt, true, false);
 
         setOptName(opt, name);
 
-        await invalidateOpt(opt, opt.Loaded);
+        await invalidateOpt(opt, opt.Loaded, reload);
 
         if (reload) {
             opt.Loaded = false;
@@ -3739,7 +3964,7 @@ function Classification(prefix) {
     'use strict';
 
     this.renameFun = prefixName;
-    this.prefix = (prefix || "old");
+    this.prefix = (prefix || 'old');
     this.optSet = undefined;
     this.optSelect = { };
 }
@@ -3756,12 +3981,12 @@ Class.define(Classification, Object, {
                                            }
                                        },
                     'saveOptions'    : function(ignList) {
-                                           const __OPTSELECT = addProps([], this.optSelect, null, ignList);
+                                           const __OPTSELECT = optSelect(this.optSelect, ignList);
 
                                            return saveOptions(this.optSet, __OPTSELECT);
                                        },
                     'deleteOptions'  : function(ignList) {
-                                           const __OPTSELECT = addProps([], this.optSelect, null, ignList);
+                                           const __OPTSELECT = optSelect(this.optSelectl, ignList);
 
                                            return deleteOptions(this.optSet, __OPTSELECT, true, true);
                                        },
@@ -3774,6 +3999,29 @@ Class.define(Classification, Object, {
                                            return this.prefixParamFun();
                                        }
                 });
+
+// Wandelt ein Array von Options-Schluesseln (props) in das optSelect-Format { 'key1' : true, 'key2' : true, ... }
+// props: Array von Keys
+// return Mapping mit Eintraegen, in denen die Keys auf true gesetzt sind: { 'key1' : true, 'key2' : true, ... }
+function optSelectFromProps(props) {
+    const __RET = { };
+
+    if (props) {
+        props.map(item => (__RET[item] = true));
+    }
+
+    return __RET;
+}
+
+// Errechnet aus einer Ausswahlliste und einer Ignore-Liste eine resultierende Liste im optSelect-Format
+// selList: Mapping von auf true gesetzten Eintraegen (optSelect), die eine Grundmenge darstellen
+// ignList: Mapping von auf true gesetzten Eintraegen (optSelect), die aus obiger Liste ausgetragen werden sollen
+// return Resultierendes Mapping mit Eintraegen (optSelect), in denen die Keys auf true gesetzt sind: { 'key1' : true, 'key2' : true, ... }
+function optSelect(selList, ignList) {
+    const __PROPS = addProps([], selList, null, ignList);
+
+    return optSelectFromProps(__PROPS);
+}
 
 // ==================== Ende Abschnitt fuer Klasse Classification ====================
 
@@ -3933,65 +4181,65 @@ Class.define(Verein, Team, {
 // ==================== Spezialisierter Abschnitt fuer Optionen ====================
 
 // Gesetzte Optionen (wird von initOptions() angelegt und von loadOptions() gefuellt):
-const __OPTSET = { };
+const __OPTSET = new Options(__OPTCONFIG, '__OPTSET');
 
 // Teamparameter fuer getrennte Speicherung der Optionen fuer Erst- und Zweitteam...
 const __TEAMCLASS = new TeamClassification();
 
 // Optionen mit Daten, die ZAT- und Team-bezogen gemerkt werden...
 __TEAMCLASS.optSelect = {
-                            'datenZat'        : true,
-                            'oldDatenZat'     : true,
-                            'trainer'         : true,
-                            'tGehaelter'      : true,
-                            'tVertraege'      : true,
-                            'tReste'          : true,
-                            'tAnzahlen'       : true,
-                            'ids'             : true,
-                            'names'           : true,
-                            'ages'            : true,
-                            'positions'       : true,
-                            'opti27'          : true,
-                            'verletzt'        : true,
-                            'skills'          : true,
-                            'tSkills'         : true,
-                            'trainiert'       : true,
-                            'skillPos'        : true,
-                            'isPrio'          : true,
-                            'einsaetze'       : true,
-                            'prozente'        : true,
-                            'erwartungen'     : true,
-                            'erfolge'         : true,
-                            'blessuren'       : true
-                        };
+        'datenZat'        : true,
+        'oldDatenZat'     : true,
+        'trainer'         : true,
+        'tGehaelter'      : true,
+        'tVertraege'      : true,
+        'tReste'          : true,
+        'tAnzahlen'       : true,
+        'ids'             : true,
+        'names'           : true,
+        'ages'            : true,
+        'positions'       : true,
+        'opti27'          : true,
+        'verletzt'        : true,
+        'skills'          : true,
+        'tSkills'         : true,
+        'trainiert'       : true,
+        'skillPos'        : true,
+        'isPrio'          : true,
+        'einsaetze'       : true,
+        'prozente'        : true,
+        'erwartungen'     : true,
+        'erfolge'         : true,
+        'blessuren'       : true
+    };
 
 // Teamparameter fuer getrennte Speicherung der Optionen fuer Erst- und Zweitteam...
-const __LASTZATCLASS = new Classification("old");
+const __LASTZATCLASS = new Classification('old');
 
 // Optionen mit Daten, die ZAT-bezogen (fuer jetzigen und vergangenen ZAT) gemerkt werden...
 __LASTZATCLASS.optSelect = {
-                            'trainer'         : true,
-                            'tGehaelter'      : true,
-                            'tVertraege'      : true,
-                            'tReste'          : true,
-                            'tAnzahlen'       : true,
-                            'ids'             : true,
-                            'names'           : true,
-                            'ages'            : true,
-                            'positions'       : true,
-                            'opti27'          : true,
-                            'verletzt'        : true,
-                            'skills'          : true,
-                            'tSkills'         : true,
-                            'trainiert'       : true,
-                            'skillPos'        : true,
-                            'isPrio'          : true,
-                            'einsaetze'       : true,
-                            'prozente'        : true,
-                            'erwartungen'     : true,
-                            'erfolge'         : true,
-                            'blessuren'       : true
-                        };
+        'trainer'         : true,
+        'tGehaelter'      : true,
+        'tVertraege'      : true,
+        'tReste'          : true,
+        'tAnzahlen'       : true,
+        'ids'             : true,
+        'names'           : true,
+        'ages'            : true,
+        'positions'       : true,
+        'opti27'          : true,
+        'verletzt'        : true,
+        'skills'          : true,
+        'tSkills'         : true,
+        'trainiert'       : true,
+        'skillPos'        : true,
+        'isPrio'          : true,
+        'einsaetze'       : true,
+        'prozente'        : true,
+        'erwartungen'     : true,
+        'erfolge'         : true,
+        'blessuren'       : true
+    };
 
 // Gibt die Teamdaten zurueck und aktualisiert sie ggfs. in der Option
 // optSet: Platz fuer die gesetzten Optionen
@@ -4182,9 +4430,9 @@ Class.define(ColumnManager, Object, {
                                // HTML-Code fuer Anteilsbalken...
                                return '<img src="images/balken/' + __IMAGE + '.GIF" width="' + __WIDTH + '" height=' + __HEIGHT + '>';
                            },
-        'insertTitles'   : function(table, titleColor = "#FFFFFF") { },  // Ende insertTitles()
-        'addTitles'      : function(headers, titleColor = "#FFFFFF") { },  // Ende addTitles()
-        'addValues'      : function(player, playerRow, color = "#FFFFFF") { }  // Ende addValues(player, playerRow)
+        'insertTitles'   : function(table, titleColor = '#FFFFFF') { },  // Ende insertTitles()
+        'addTitles'      : function(headers, titleColor = '#FFFFFF') { },  // Ende addTitles()
+        'addValues'      : function(player, playerRow, color = '#FFFFFF') { }  // Ende addValues(player, playerRow)
     });
 
 // Klasse ColumnManagerZatReport *****************************************************************
@@ -4201,14 +4449,35 @@ function ColumnManagerZatReport(optSet, colIdx, showCol) {
 
     const __SAISON = getOptValue(optSet.saison);
     const __AKTZAT = getOptValue(optSet.aktuellerZat);
+    const __DATZAT = getOptValue(optSet.datenZat);
     const __GEALTERT = ((__AKTZAT >= 72) ? true : false);
     const __CURRZAT = (__GEALTERT ? 0 : __AKTZAT);
-    const __TEAMDATA = true;  // TODO
-    const __EINSDATA = true;  // TODO
-    const __LASTZAT = true;  // TODO
+
+    const __REPSAISON = getSelection('saison', 'Number');
+    const __REPZAT = getSelection('zat', 'Number');
+    const __SAISONWECHSEL = ((__DATZAT === 0) ? true : false);
+    const __OLDSAISON = (__SAISONWECHSEL ? __SAISON - 1 : __SAISON);
+    const __OLDZAT = (__SAISONWECHSEL ? 72 : __DATZAT);
+
+    const __TEAM = getOptValue(optSet.team, { });
+
+    const __IDS = eval(getOptValue(optSet.ids, []));
+    const __EINSAETZE = eval(getOptValue(optSet.einsaetze, []));
+    const __TSKILLS = eval(getOptValue(optSet.tSkills, []));
+    const __TEAMDATA = __IDS.length;
+    const __EINSDATA = __EINSAETZE.length;
+    const __TRAIDATA = __TSKILLS.length;
+    const __LASTZAT = ((__REPZAT === __OLDZAT) && (__REPSAISON === __OLDSAISON));
 
     this.saison = __SAISON;
     this.currZAT = __CURRZAT;
+    this.oldSaison = __OLDSAISON;
+    this.oldZAT = __OLDZAT;
+    this.team = __TEAM;
+
+    __LOG[4]("Team:", __TEAM);
+    __LOG[4]("Aktuell:", __SAISON, __CURRZAT);
+    __LOG[4]("Altdaten:", __OLDSAISON, __OLDZAT);
 
     this.id = (getValue(__SHOWCOL.zeigeId, __SHOWALL) && getOptValue(optSet.zeigeId));
     this.alter = (__TEAMDATA && getValue(__SHOWCOL.zeigeAlter, __SHOWALL) && getOptValue(optSet.zeigeAlter));
@@ -4220,12 +4489,12 @@ function ColumnManagerZatReport(optSet, colIdx, showCol) {
     this.skillPos = (__TEAMDATA && __LASTZAT && getValue(__SHOWCOL.zeigeSkillPos, __SHOWALL) && getOptValue(optSet.zeigeSkillPos));
     this.skill = (__TEAMDATA && __LASTZAT && getValue(__SHOWCOL.zeigeSkill, __SHOWALL) && getOptValue(optSet.zeigeSkill));
     this.skillUp = (__TEAMDATA && __LASTZAT && getValue(__SHOWCOL.zeigeSkillUp, __SHOWALL) && getOptValue(optSet.zeigeSkillUp));
-    this.tSkill = (__LASTZAT && getValue(__SHOWCOL.zeigeTSkill, __SHOWALL) && getOptValue(optSet.zeigeTSkill));
-    this.tNr = (__LASTZAT && getValue(__SHOWCOL.zeigeTNr, __SHOWALL) && getOptValue(optSet.zeigeTNr));
+    this.tSkill = (__TRAIDATA && __LASTZAT && getValue(__SHOWCOL.zeigeTSkill, __SHOWALL) && getOptValue(optSet.zeigeTSkill));
+    this.tNr = (__TRAIDATA && __LASTZAT && getValue(__SHOWCOL.zeigeTNr, __SHOWALL) && getOptValue(optSet.zeigeTNr));
     this.prio = (__TEAMDATA && __LASTZAT && getValue(__SHOWCOL.zeigePrio, __SHOWALL) && getOptValue(optSet.zeigePrio));
     this.eins = (__TEAMDATA && __EINSDATA && __LASTZAT && getValue(__SHOWCOL.zeigeEinsatz, __SHOWALL) && getOptValue(optSet.zeigeEinsatz));
-    this.proz = (__LASTZAT && getValue(__SHOWCOL.zeigeProzent, __SHOWALL) && getOptValue(optSet.zeigeProzent));
-    this.prozB = (__LASTZAT && getValue(__SHOWCOL.zeigeProzentBalken, __SHOWALL) && getOptValue(optSet.zeigeProzentBalken));
+    this.proz = (__TRAIDATA && __LASTZAT && getValue(__SHOWCOL.zeigeProzent, __SHOWALL) && getOptValue(optSet.zeigeProzent));
+    this.prozB = (__TRAIDATA && __LASTZAT && getValue(__SHOWCOL.zeigeProzentBalken, __SHOWALL) && getOptValue(optSet.zeigeProzentBalken));
     this.erw = (__LASTZAT && getValue(__SHOWCOL.zeigeErwartung, __SHOWALL) && getOptValue(optSet.zeigeErwartung));
     this.erwB = (__LASTZAT && getValue(__SHOWCOL.zeigeErwartungBalken, __SHOWALL) && getOptValue(optSet.zeigeErwartungBalken));
     this.erf = (__LASTZAT && getValue(__SHOWCOL.zeigeErfolg, __SHOWALL) && getOptValue(optSet.zeigeErfolg));
@@ -4254,7 +4523,7 @@ Class.define(ColumnManagerZatReport, ColumnManager, {
                                    return false;
                                }
                            },
-        'insertTitles'   : function(table, titleColor = "#FFFFFF") {
+        'insertTitles'   : function(table, titleColor = '#FFFFFF') {
                                const __HEADERS = this.insertRow(table, 0);
 
                                this.addAndFillCell(__HEADERS, "Name des Spielers", titleColor);
@@ -4262,7 +4531,7 @@ Class.define(ColumnManagerZatReport, ColumnManager, {
 
                                return this.addTitles(__HEADERS, titleColor);
                            },
-        'addTitles'      : function(headers, titleColor = "#FFFFFF") {
+        'addTitles'      : function(headers, titleColor = '#FFFFFF') {
                                // Spaltentitel zentrieren
                                headers.align = "center";
 
@@ -4327,7 +4596,7 @@ Class.define(ColumnManagerZatReport, ColumnManager, {
 
                                return headers;
                            },  // Ende addTitles()
-        'addValues'      : function(player, playerRow, color = "#FFFFFF") {
+        'addValues'      : function(player, playerRow, color = '#FFFFFF') {
                                //const __IDXPRI = getIdxPriSkills(player.getPos());
                                const __LEICOLOR = getColor('LEI');
                                const __TORCOLOR = getColor('TOR');
@@ -5355,14 +5624,14 @@ function isPrimarySkill(pos, skill) {
 // Gibt die zur Position gehoerige Farbe zurueck
 function getColor(pos) {
     switch (pos) {
-        case 'TOR' : return "#FFFF00";
-        case 'ABW' : return "#00FF00";
-        case 'DMI' : return "#3366FF";
-        case 'MIT' : return "#66FFFF";
-        case 'OMI' : return "#FF66FF";
-        case 'STU' : return "#FF0000";
-        case 'LEI' : return "#FFFFFF";
-        case "" :    return "#111166";  // osBlau
+        case 'TOR' : return '#FFFF00';
+        case 'ABW' : return '#00FF00';
+        case 'DMI' : return '#3366FF';
+        case 'MIT' : return '#66FFFF';
+        case 'OMI' : return '#FF66FF';
+        case 'STU' : return '#FF0000';
+        case 'LEI' : return '#FFFFFF';
+        case "" :    return '#111166';  // osBlau
         default :    return "";
     }
 }
@@ -5528,10 +5797,10 @@ function calcMinPSkill(alter, tSkill = 99.5, mode = 0, prob = 99) {
 // Fuegt eine Zelle ans Ende der uebergebenen Zeile hinzu und fuellt sie
 // row: Zeile, die verlaengert wird
 // content: Textinhalt der neuen Zelle
-// color: Schriftfarbe der neuen Zelle (z.B. "#FFFFFF" fuer weiss)
+// color: Schriftfarbe der neuen Zelle (z.B. '#FFFFFF' fuer weiss)
 // Bei Aufruf ohne Farbe wird die Standardfarbe benutzt
 function appendCell(row, content, color) {
-    const __CELLS = (row || {}).cells;
+    const __CELLS = (row || { }).cells;
 
     row.insertCell(-1);
 
@@ -5994,9 +6263,6 @@ function procHaupt() {
             const __CURRZAT = __NEXTZAT - 1;
             const __DATAZAT = getOptValue(__OPTSET.datenZat);
 
-            // Stand der alten Daten merken...
-            setOpt(__OPTSET.oldDatenZat, __DATAZAT, false);
-
             if (__CURRZAT >= 0) {
                 __LOG[2]("Aktueller ZAT: " + __CURRZAT);
 
@@ -6006,22 +6272,33 @@ function procHaupt() {
                 if (__CURRZAT !== __DATAZAT) {
                     __LOG[2](__LOG.changed(__DATAZAT, __CURRZAT));
 
-                    // ... und ZAT-bezogene Daten als veraltet markieren
-                    await __TEAMCLASS.deleteOptions({
-                                                    'datenZat'    : true,
-                                                    'oldDatenZat' : true
-                                                }).catch(defaultCatch);
+                    __LOG[1]("vor DELETE:" + __OPTSET);
 
-                    const __CLASSIFICATION = new Classification("old");
+                    // ... und ZAT-bezogene Daten als veraltet markieren (NIE die Optionen, die nach 'old' gehen!)
+                    const __IGNLIST = Object.assign({
+                                                        'datenZat'    : true,
+                                                        'oldDatenZat' : true
+                                                    }, __LASTZATCLASS.optSelect);
 
-                    // Daten in "old"-Daten ueberfuehren...
+                    await __TEAMCLASS.deleteOptions(__IGNLIST).catch(defaultCatch);
+
+                    const __CLASSIFICATION = new Classification('old');
+
+                    __LOG[1]("vor RENAME:" + __OPTSET);
+
+                    // Daten in 'old'-Daten ueberfuehren...
                     __CLASSIFICATION.optSelect = Object.map(__LASTZATCLASS.optSelect, value => false);  // false: Kein reload
                     __CLASSIFICATION.optSet = optSet;
                     await __CLASSIFICATION.renameOptions();
 
-                    // Daten in "old" speichern...
+                    __LOG[1]("vor SAVE:" + __OPTSET);
+
+                    // Daten in 'old' speichern...
                     __CLASSIFICATION.optSelect = Object.map(__LASTZATCLASS.optSelect, value => true);  // true: Speichern
                     await __CLASSIFICATION.saveOptions();
+
+                    // Stand der alten Daten merken...
+                    setOpt(__OPTSET.oldDatenZat, __DATAZAT, false);
 
                     // Neuen Daten-ZAT speichern...
                     setOpt(__OPTSET.datenZat, __CURRZAT, false);
@@ -6128,7 +6405,7 @@ function procAufstellung() {
                     if (~ __INDEX) {
                         __EINSAETZE[__INDEX] = ((__RASTER === '-') ? __EINSATZ.Trib : ((~ "UVWXYZ".indexOf(__RASTER)) ? __EINSATZ.Bank : __EINSATZ.Durch));
                     } else {
-                        __LOG[1]("User-ID", __ID, "not found!");
+                        __LOG[0]("User-ID", __ID, "not found!");
                     }
                 }
 
@@ -6335,7 +6612,7 @@ function procTraining() {
                 const __EINSMAP = { };
 
                 // Ermittelte Einsaetze (ggfs. von Aufstellung-Seite) den IDs zuordnen (bei Sperren, Verletzungen, Leihen relevant)...
-                __IDs.map((id, index) => (__EINSMAP[id] = __EINSAETZE[index]));
+                __IDS.map((id, index) => (__EINSMAP[id] = __EINSAETZE[index]));
                 __EINSAETZE.length = 0;  // vorerst alle loeschen und spaeter wieder einfuegen!
 
                 const __ROWS = getRows(2);
@@ -6358,7 +6635,7 @@ function procTraining() {
 
                 // Breite der neuen Spalten festlegen
                 for (let i = __ORGLENGTH + 1; i < __HEADERS.cells.length; i++) {
-                    __HEADERS.cells[i].setAttribute("width", (i < __COL2LENGTH) ? __COLWIDTH : __COLWIDTH2, false);
+                    __HEADERS.cells[i].setAttribute('width', (i < __COL2LENGTH) ? __COLWIDTH : __COLWIDTH2, false);
                 }
 
                 const __SLENGTH = __ROWS.length - 1;
@@ -6390,14 +6667,17 @@ function procTraining() {
                     const __INDEX = i - 1;
                     const __CURRENTROW = __ROWS[i];
                     const __SPIELER = getSpieler(__CURRENTROW, __COLUMNINDEX.Spieler);
+                    const __ID = __SPIELER.id;
+                    const __NAME = __SPIELER.name;
                     const __SKILL = getSkill(__CURRENTROW, __COLUMNINDEX.Skill);
                     const __POS = getPos(__CURRENTROW, __COLUMNINDEX.Chance);
                     const __COLOR = getColor(__POS);
                     const __PROBINDEX = __ORGLENGTH - 1;  // derzeit letzte Spalte enthaelt die Prozente
-                    const __EINSART = getValue(__EINSAETZE[__INDEX], __EINSATZ.Trib);
+                    const __EINSART = getValue(__EINSMAP[__ID], __EINSATZ.Trib);  // Daten oben ermittelt
                     const __PROBSTRING = getProbString(__CURRENTROW, __COLUMNINDEX.Chance);
                     const __PRACTICE = (getProbabilityStr(__PROBSTRING, __EINSATZ.Trib) !== "");
                     const __PRACTICEPS = __PRACTICE && isPrimarySkill(__POS, __SKILL);
+
                     if (__PRACTICE) {
                         value = parseFloat(getProbabilityStr(__PROBSTRING, __EINSART, "", 2, 99)) * (__PRACTICEPS ? 5 : 1) / 100.0;
                         sum += value;
@@ -6422,8 +6702,8 @@ function procTraining() {
                         __TRAINER[__TNR - 1] = __TSKILL;
                         __TANZAHL[__TNR - 1]++;
                     }
-                    __IDS[__INDEX] = __SPIELER.id;
-                    __NAMES[__INDEX] = __SPIELER.name;
+                    __IDS[__INDEX] = __ID;
+                    __NAMES[__INDEX] = __NAME;
                     __AGES[__INDEX] = __ALTER;
                     __POSITIONS[__INDEX] = __POS;
                     __OPTI27[__INDEX] = parseInt((27 * __OPTI).toFixed(0), 10);
@@ -6433,7 +6713,7 @@ function procTraining() {
                     __TRAINIERT[__INDEX] = __TNR;
                     __SKILLPOS[__INDEX] = getSkillID((__PRACTICE ? __SKILL : undefined), __GOALIE);
                     __ISPRIO[__INDEX] = (__PRACTICEPS ? 1 : 0);
-                    __EINSAETZE[__INDEX] = __EINSMAP[__ID];  // auf oben ermittelte Daten zurueckgreifen!
+                    __EINSAETZE[__INDEX] = __EINSART;  // auf oben ermittelte Daten zurueckgreifen!
                     __PROZENTE[__INDEX] = (__PRACTICE ? Math.min(99, parseInt(__PROBSTR.toFixed(0), 10)) : undefined);
                     __EW[__INDEX] = parseFloat(__VALUESTR, 10);
                     __ERFOLGE[__INDEX] = false;
@@ -6454,8 +6734,8 @@ function procTraining() {
 /*
                     if (__PRACTICEPS) {
                         for (let j = 0; j < __CURRENTROW.length; j++) {
-                            __CURRENTROW.cells[j].style.color = "#FFFFFF";
-                            __CURRENTROW.cells[j].style.fontWeight = "bold";
+                            __CURRENTROW.cells[j].style.color = '#FFFFFF';
+                            __CURRENTROW.cells[j].style.fontWeight = 'bold';
                         }
                     }*/
                 }
@@ -6467,11 +6747,11 @@ function procTraining() {
 
                 const __TABLE = getTable(1);
                 const __NEWCELL1 = __TABLE.insertRow(-1).insertCell(-1);
-                __NEWCELL1.setAttribute("colspan", 4, false);
+                __NEWCELL1.setAttribute('colspan', 4, false);
                 __NEWCELL1.textContent = __WARN1;
-                //__NEWCELL1.style.color = "#FFFF00";
+                //__NEWCELL1.style.color = '#FFFF00';
                 const __NEWCELL12 = __TABLE.insertRow(-1).insertCell(-1);
-                __NEWCELL12.setAttribute("colspan", 3, false);
+                __NEWCELL12.setAttribute('colspan', 3, false);
                 __NEWCELL12.textContent = __WARN2;
 
                 setOpt(optSet.trainer, __TRAINER, false);
@@ -6565,19 +6845,20 @@ function procZatReport() {
                 const __ERFOLGE = [];  // neu aufbauen! getOptValue(optSet.erfolge, []);
                 const __BLESSUREN = [];  // neu aufbauen! getOptValue(optSet.blessuren, []);
 
-                const __TABLE = getTable(1);
-                const __ROWS = __TABLE.rows;
-                const __TITLECOLOR = getColor('LEI');  // "#FFFFFF"
-                const __DATA = [ 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60 ];
-                const __SAISON = 15;
-                const __CURRZAT = 71;
-                const __LAND = "Ukraine";
-
                 const __PLAYERS = [];  // init(__ROWS, __OPTSET, __COLUMNINDEX, __ROWOFFSETUPPER, __ROWOFFSETLOWER, 1);
                 const __COLMAN = new ColumnManagerZatReport(__OPTSET, __COLUMNINDEX, {
                                                     'Default'            : true,
                                                     'zeigeErfahrung'     : false
                                                 });
+
+                const __TABLE = getTable(1);
+                const __ROWS = __TABLE.rows;
+                const __TITLECOLOR = getColor('LEI');  // '#FFFFFF'
+                const __DATA = [ 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60 ];
+                const __SAISON = __COLMAN.oldSaison;
+                const __CURRZAT = __COLMAN.oldZAT;
+                const __TEAM = __COLMAN.team;
+                const __LAND = __TEAM.Land;
 
                 let sumErwartung = 0.0;
                 let sumAufwertung = 0.0;
@@ -6591,6 +6872,7 @@ function procZatReport() {
                     if (__CELLS.length > 1) {
                         const __SPIELER = getSpieler(__CURRENTROW, __COLUMNINDEX.Name);
                         const __ID = __SPIELER.id;
+                        const __NAME = __SPIELER.name;
                         const __INDEX = __IDS.indexOf(__ID);
                         const __SUCC = getStringFromHTML(__CELLS, __COLUMNINDEX.Succ);
                         const __SUCCNUM = parseInt(__SUCC.substr(-6, 2), 10);  // 2 Stellen ab Ende - 6, dahinter " ZAT" bzw. " FIT"
@@ -6603,7 +6885,6 @@ function procZatReport() {
                         if (__ERROR) {
                             __LOG[0]("Error: " + __SUCC + " (" + __SUCCNUM + ')');
                         }
-                        const __NAME = __SPIELER.name;
                         const __ALTER = __AGES[__INDEX];
                         const __POS = __POSITIONS[__INDEX];
                         const __ISGOALIE = (__POS === "TOR");
@@ -6655,7 +6936,7 @@ function procZatReport() {
                     }
                 }
 
-                __LOG[0](sumErwartung.toFixed(2), sumAufwertung.toFixed(2));
+                __LOG[0]("Erwartung vs. Aufwertungen", sumErwartung.toFixed(2), sumAufwertung.toFixed(2));
 
                 //setOpt(optSet.trainer, __TRAINER, false);
                 //setOpt(optSet.tAnzahlen, __TANZAHL, false);
@@ -6718,6 +6999,7 @@ function procZatReport() {
         }
     })().then(rc => {
             __LOG[1]('SCRIPT END', __DBMOD.Name, '(' + rc + ')');
+            __LOG[3](String(__OPTSET));
         })
 })();
 
