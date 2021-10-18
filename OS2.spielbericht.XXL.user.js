@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         OS2.spielbericht.XXL
 // @namespace    http://os.ongapo.com/
-// @version      0.71beta2
+// @version      0.71beta3
 // @copyright    2013+
 // @author       Andreas Eckes (Strindheim BK) / Michael Bertram / Sven Loges (SLC)
 // @description  OS 2.0 - Ergaenzt Summen- und Durchschnittswerte bei den Spielerstatistiken im Spielbericht / Zaehlt Textbausteine / Quoten mit Nachkomma / Leere Zeilen nicht genullt / Fenstergroesse
@@ -19,25 +19,11 @@
 /* jshint esnext: true */
 /* jshint moz: true */
 
-// **************************************************************************************
-// Hilfsfunktionen
-// **************************************************************************************
-
-// Erzeugt die uebergebene Anzahl von Zellen in der uebergebenen Zeile.
-// row: Zeile, die aufgepumpt werden soll
-// length: Anzahl der zu erzeugenden Zellen
-function inflateRow(row, length) {
-    for (var i = 0; i < length; i++) {
-        row.insertCell(-1);
-    }
-}
-
-
 // ==================== Funktionen neu fuer Textbausteine ====================
 
 var gruppen = [ "Pass", "ZWK_ov","SCH", "Erfolg_l_TB"];
 gruppen.Pass = [/spielt/i, /pass /i, / passt/i, /flankt/i, /zieht den Ball/i];
-gruppen.ZWK_ov = [/versucht/i, /erk\u00E4mpft/i, /nicht vorbei/i, /nicht umspielen/i, /nicht \u00FCberspielen/i, /nicht mit einem/i];
+gruppen.ZWK_ov = [/versucht/i, /erk\u00E4mpft/i, /nicht vorbei/i, /nicht umspielen/i, /nicht \u00FCberspielen/i, /nicht mit einem/i, /hat aufgepasst/i];
 gruppen.SCH = [/e eck/i, / link/i, / recht/i, /richtung/i, /aufs Tor/i, /kopfball/i, /volley/i, /zieht ab/i];
 // gruppen.Ecken = [/zieht den Ball/i];
 gruppen.Erfolg_l_TB = [/Keeper/i, /ABSEITS/i, /gefahrenzone/i, /der Ball/i, /kann den Ball/i, /Bein in/i, /streckt/i]; // TB ueberpruefen
@@ -50,6 +36,7 @@ function regexsuche (begriff) {
     var x = 0;
     var y = 0;
     var temp = "";
+    var suche = "";
     for (x = 0; x < gruppen.length - 1; x++) {
         temp = gruppen[x];
         for (y = 0; y < gruppen[temp].length; y++) {
@@ -65,12 +52,12 @@ function regexsuche (begriff) {
 }
 
 function tabelleneu () {
-    node = document.getElementsByTagName("table")[4];
+    var node = document.getElementsByTagName("table")[4];
     node.parentNode.insertBefore(document.createElement("div"), node.nextSibling );
-    node1 = document.getElementsByTagName("div")[6];
+    var node1 = document.getElementsByTagName("div")[6];
     node1.innerHTML = "<br><br><b>Es folgen die Berichtsstatistiken</b><br><br>";
     node1.parentNode.insertBefore(document.createElement("table"), node1.nextSibling );
-    node2 = document.getElementsByTagName("table")[5];
+    var node2 = document.getElementsByTagName("table")[5];
     node2.innerHTML = node.innerHTML;
     node2.setAttribute("cellspacing", 2);
     node2.setAttribute("cellpadding", 2);
@@ -88,9 +75,11 @@ function tabelleneu () {
 
 function textbausteine(){
     var spielernamen = ["A", "B"];
+    var l;     // Heimteam/Gastteam
 
     for (var j = 0; j < spielbericht.rows.length; j++) {     //Zeilen des Spielberichts
         var ergebnis = regexsuche(spielbericht.rows[j].cells[1]);
+        var folgezeile = ((j + 1) < spielbericht.rows.length);     // Kann der Inhalt der Folgezeile analysiert werden?
         spielerakt[j] = ["", "a"];
         ereignis[j] = ["", 0];
         if (ergebnis !== "") {  //SCH, PASS, ZWK_ov registriert
@@ -144,15 +133,16 @@ function textbausteine(){
                     //spielbericht.rows[j].cells[5].textContent = "0";          //.........................................................Erfolg neben Bericht einfuegen
                     ereignis[j][1] = 0;
                 }
-                else if ((/ABSEITS/).test(spielbericht.rows[j+1].cells[1].textContent) === true) { //Abseits Folgesatz
+                else if (folgezeile && ((/ABSEITS/).test(spielbericht.rows[j+1].cells[1].textContent) === true)) { //Abseits Folgesatz
                     //spielbericht.rows[j].cells[5].textContent = "0";          //.........................................................Erfolg neben Bericht einfuegen
                     ereignis[j][1] = 0;
                 }
-                else if ((/ - /).test(spielbericht.rows[j+1].cells[1].textContent) === false) { //Erfolgsmeldung Folgesatz
+                else if (folgezeile && ((/ - /).test(spielbericht.rows[j+1].cells[1].textContent) === false)) { //Erfolgsmeldung Folgesatz
                     ergebnis = false;
                     var x = 0;
                     var y = 0;
                     var temp = "Erfolg_l_TB";
+                    var suche = "";
                     for (y = 0; y < gruppen[temp].length; y++) {
                         suche = gruppen[temp][y];
                         ergebnis = suche.test(spielbericht.rows[j+1].cells[1].textContent);
@@ -167,7 +157,7 @@ function textbausteine(){
                 // hier weiter mit Erfolg (wovon? SCH?)--------------------------------------------------------------------------------------------------------------------------------
             }
 
-            for (k = 1; k < tabberstat.rows.length; k++) {  // Spieler
+            for (var k = 1; k < tabberstat.rows.length; k++) {  // Spieler
                 if (tabberstat.rows[k].cells[0].textContent === spielerakt[j][0]) {
                     l = 0; //Heimteam
                     break;
@@ -214,7 +204,9 @@ function textbausteine(){
 }
 
 function berstatistik () {
-    for (i = 0; i < spielbericht.rows.length; i++) {  // Berichtszeilen
+    var j;
+
+    for (var i = 0; i < spielbericht.rows.length; i++) {  // Berichtszeilen
         switch (ereignis[i][0]) {
             case "Pass":
                 for (j = 1; j < tabberstat.rows.length; j++) {  // Spieler
@@ -299,30 +291,23 @@ function berstatistik () {
 
 // ==================== Code neu fuer Textbausteine ====================
 
-spielbericht = document.getElementsByTagName("table")[2];
-spielerakt = Array(spielbericht.rows.length); // Beteiligte je Zeile
-ereignis = Array(spielbericht.rows.length); // Ereignis, Erfolg je Zeile
+var spielbericht = document.getElementsByTagName("table")[2];
+var spielerakt = Array(spielbericht.rows.length); // Beteiligte je Zeile
+var ereignis = Array(spielbericht.rows.length); // Ereignis, Erfolg je Zeile
 
 tabelleneu();
 
-tabspielstat = document.getElementsByTagName("table")[4];
-tabberstat = document.getElementsByTagName("table")[5];
+var tabspielstat = document.getElementsByTagName("table")[4];
+var tabberstat = document.getElementsByTagName("table")[5];
 
 textbausteine();
 berstatistik();
 
-window.resizeTo(1100,1000);
+window.resizeTo(1100,800);
 
 console.log("End of script");
 
 // ==================== Ende Code fuer Textbausteine ====================
-
-
-
-
-
-
-
 
 var borderString = "solid white 1px";
 var playerStatistics = document.getElementsByTagName("table")[4];
@@ -366,7 +351,8 @@ var colIdx = 0;
 var nonEmptyCellCount = 0;
 var sumValue = 0;
 var avgValue = 0.00;
-for (var i = 0; i < simpleCols.length; i++) {
+var i;
+for (i = 0; i < simpleCols.length; i++) {
     colIdx = simpleCols[i];
     nonEmptyCellCount = getNonEmptyCellCount(playerStatistics, colIdx, offsetsVertical);
     // Summe
@@ -380,7 +366,7 @@ var colIdx2 = 0;
 var nonEmptyCellCount2 = 0;
 var sumValue2 = 0;
 var avgValue2 = 0.00;
-for (var i = 0; i < simpleCols2.length; i++) {
+for (i = 0; i < simpleCols2.length; i++) {
     colIdx2 = simpleCols2[i];
     nonEmptyCellCount2 = getNonEmptyCellCount(playerStatistics2, colIdx2, offsetsVertical);
     // Summe
