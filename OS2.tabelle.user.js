@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         OS2.tabelle
 // @namespace    http://os.ongapo.com/
-// @version      0.11+WE+
+// @version      0.12beta1
 // @copyright    2016+
 // @author       Sven Loges (SLC)
 // @description  Tabellen-Script fuer Online Soccer 2.0
@@ -4535,7 +4535,12 @@ function initFairplayData(data, laender) {
                           8 : [  896, 1415,  610 ],
                           9 : [  145,  840,  442 ],
                          10 : [ 1715,   99,  534 ],
-                         11 : [  927, 1646,  888 ]
+                         11 : [  927, 1646,  888 ],
+                         12 : [  534,  297,  346 ],
+                         13 : [  919, 1270,  442 ],
+                         14 : [  191,  466, 1352 ],
+                         15 : [  346, 1756,  754 ],
+                         16 : [  927, 1608, 1466 ]
                      };
 
     for (let saison in __FPDATA) {
