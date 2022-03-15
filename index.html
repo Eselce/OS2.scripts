@@ -1,142 +1,173 @@
 <!DOCTYPE html>
 <html>
-	<head>
-		<meta charset="utf-8">
-		<title>Online-Soccer 2.0 - Greasemonkey Benutzerscripts</title>
-		<link rel="stylesheet" type="text/css" href="css/os_styles.css" />
-		<link rel="stylesheet" type="text/css" href="css/print.css" media="print" />
-		<link rel="shortcut icon" type="image/ico" href="img/favicon.ico" />
-		<style>
-			.script {
-				border:2px solid grey;
-				border-collapse:collapse;
-			}
-			.script td {
-				border:2px solid grey;
-				border-collapse:collapse;
-			}
-		</style>
-	</head>
-	<body>
-		<div>
-			<script type="text/javascript">
-				var popen = new Array();
-				function openclose(id) {
-					var inopen = false;
-					var newopen = new Array();
-					for (var i = 0; i < popen.length; ++i) {
-						if (popen[i] === id) {
-							inopen = true;
-						} else {
-							newopen.push(popen[i]);
-						}
-					}
-					popen = newopen;
-					if (inopen === true) {
-						document.getElementById('script_' + id).style.display = 'none';
-						document.getElementById('openclose_' + id).src = 'img/geschlossen.gif';
-					} else {
-						document.getElementById('script_' + id).style.display = "";
-						document.getElementById('openclose_' + id).src = 'img/offen.gif';
-						popen.push(id);
-					}
-				}
-				function opencloseFun(id){
-					return (() => openclose(id));
-				}
-				function getMeta(meta) {
-					var data = {
-								'include'  : [],
-								'exclude'  : [],
-								'match'    : [],
-								'require'  : [],
-								'resource' : [],
-								'grant'    : []
-							};
-					var match = (meta || "").match(/^\/\/ ==UserScript==\n+([^]*)\n+\/\/ ==\/UserScript==$/m);
-					data.meta = (match || [])[1];
-					var lines = (data.meta || "").split('\n');
-					for (var i = 0; i < lines.length; ++i) {
-						match = lines[i].match(/^\/\/ @(\w+)\s+(.*)\s*$/);
-						if (match) {
-							var item = match[1];
-							var value = match[2];
-							if (typeof data[item] == 'object') {
-								data[item].push(value);
-							} else {
-								data[item] = value;
-							}
-						}
-					}console.error(data);
-					return data;
-				}
-				function addRow(table, colText) {
-					var tr = document.createElement('tr');
-					var td;
-					for (var i = 0; i < colText.length; ++i) {
-						td = document.createElement('td');
-						td.innerHTML = colText[i];
-						tr.appendChild(td);
-					}
-					table.appendChild(tr);
-					return tr;
-				}
-				function purify(text) {
-					return (text || "").replace(/\s+\/\s+/g, "<br />");
-				}
-				function addEntry(table, id, meta) {
-					var colText1 = [];
-					var data = getMeta(meta);
-					var name = purify(data.name);
-					var version = purify(data.version);
-					var desc = purify(data.description);
-					var author = purify(data.author);
-					var filename = (id ? 'OS2.' + id + '.user.js' : undefined);
-					var openclose = '"openclose(' + "'" + id + "'" + ')"';
-					var install = '<form method="get" action="./' + filename + '" target="_blank" rel="noopener noreferrer">' +
-								//	'<input type="hidden" name="scriptid" value="' + id + '" />' +
-									'<input type="submit" value="Installieren" /></form></td>';
-					colText1.push('<img src="img/geschlossen.gif" style="cursor: help;" onclick=' + openclose + ' id="openclose_' + id + '" />\n' +
-									'<a href="https://github.com/Eselce/OS2.scripts/blob/master/' + filename + '">' + name + '</a>');
-					colText1.push(version);
-					colText1.push(desc);
-					colText1.push(author);
-					colText1.push(install);
-					var tr = addRow(table, colText1);
-					[ '20%', '10%', null, '15%', '1%' ].forEach((minWidth, col) => {
-							var cell = tr.children[col];
+    <head>
+        <meta charset="utf-8">
+        <title>Online-Soccer 2.0 - Greasemonkey Benutzerscripts</title>
+        <link rel="stylesheet" type="text/css" href="css/os_styles.css" />
+        <link rel="stylesheet" type="text/css" href="css/print.css" media="print" />
+        <link rel="shortcut icon" type="image/ico" href="img/favicon.ico" />
+        <style>
+            .script {
+                border:2px solid grey;
+                border-collapse:collapse;
+            }
+            .script td {
+                border:2px solid grey;
+                border-collapse:collapse;
+            }
+        </style>
+    </head>
+    <body>
+        <div>
+            <script type="text/javascript">
+                var popen = new Array();
+                function openclose(id) {
+                    var inopen = false;
+                    var newopen = new Array();
+                    for (var i = 0; i < popen.length; ++i) {
+                        if (popen[i] === id) {
+                            inopen = true;
+                        } else {
+                            newopen.push(popen[i]);
+                        }
+                    }
+                    popen = newopen;
+                    if (inopen === true) {
+                        document.getElementById('script_' + id).style.display = 'none';
+                        document.getElementById('openclose_' + id).src = 'img/geschlossen.gif';
+                    } else {
+                        document.getElementById('script_' + id).style.display = "";
+                        document.getElementById('openclose_' + id).src = 'img/offen.gif';
+                        popen.push(id);
+                    }
+                }
+                function opencloseFun(id){
+                    return (() => openclose(id));
+                }
+                function getMeta(meta) {
+                    var data = {
+                                'include'  : [],
+                                'exclude'  : [],
+                                'match'    : [],
+                                'require'  : [],
+                                'resource' : [],
+                                'grant'    : []
+                            };
+                    var match = (meta || "").match(/^\/\/ ==UserScript==\n+([^]*)\n+\/\/ ==\/UserScript==$/m);
+                    data.meta = (match || [])[1];
+                    var lines = (data.meta || "").split('\n');
+                    for (var i = 0; i < lines.length; ++i) {
+                        match = lines[i].match(/^\/\/ @(\w+)\s+(.*)\s*$/);
+                        if (match) {
+                            var item = match[1];
+                            var value = match[2];
+                            if ((typeof data[item]) == 'object') {
+                                data[item].push(value);
+                            } else {
+                                data[item] = value;
+                            }
+                        }
+                    }console.error(data);
+                    return data;
+                }
+                function addRow(table, colText) {
+                    var tr = document.createElement('tr');
+                    var td;
+                    for (var i = 0; i < colText.length; ++i) {
+                        td = document.createElement('td');
+                        td.innerHTML = colText[i];
+                        tr.appendChild(td);
+                    }
+                    table.appendChild(tr);
+                    return tr;
+                }
+                function purify(text) {
+                    return (text || "").replace(/\s+\/\s+/g, "<br />");
+                }
+                function addEntry(table, id, meta) {
+                    var colText1 = [];
+                    var data = getMeta(meta);
+                    if (! data.name) { return; }
+                    var name = purify(data.name);
+                    var version = purify(data.version);
+                    var desc = purify(data.description);
+                    var author = purify(data.author);
+                    var filename = (id ? 'OS2.' + id + '.user.js' : undefined);
+                    var openclose = '"openclose(' + "'" + id + "'" + ')"';
+                    var install = '<form method="get" action="./' + filename + '" target="_blank" rel="noopener noreferrer">' +
+                                //  '<input type="hidden" name="scriptid" value="' + id + '" />' +
+                                    '<input type="submit" value="Installieren" /></form></td>';
+                    colText1.push('<img src="img/geschlossen.gif" style="cursor: help;" onclick=' + openclose + ' id="openclose_' + id + '" />\n' +
+                                    '<a href="https://github.com/Eselce/OS2.scripts/blob/master/' + filename + '">' + name + '</a>');
+                    colText1.push(version);
+                    colText1.push(desc);
+                    colText1.push(author);
+                    colText1.push(install);
+                    var tr = addRow(table, colText1);
+                    [ '20%', '10%', null, '15%', '1%' ].forEach((minWidth, col) => {
+                            var cell = tr.children[col];
 
-							cell.style.minWidth = minWidth;
-							if (col > 0) {
-								cell.addEventListener('click', opencloseFun(id));
-							}
-						});
-					var colText2 = [];
-					colText2.push('<pre>' + data.meta + '</pre>' + install);
-					tr = addRow(table, colText2);
-					tr.id = 'script_' + id;
-					tr.style.display = 'none';
-					tr.firstChild.setAttribute('colspan', 5);
-				}
-				function fillScriptTable(id, scriptMetaInfos, filter = Object.keys(scriptMeta), sortFun = undefined) {
-					var table = document.getElementById(id);
-					if (table && ! table.children.length) {
-						var scriptIds = ((typeof filter == 'function') ? Object.keys(scriptMeta).filter(filter) : filter).sort(sortFun);
-						addRow(table, [
-										"Name des Scripts",
-										"Aktuelle Version",
-										"Beschreibung der Funktion",
-										"Autor(en)",
-										"Aktion"
-									]).style.fontWeight = 'bold';
-						for (var i = 0; i < scriptIds.length; ++i) {
-							script = scriptIds[i];
-							addEntry(table, script, scriptMetaInfos[script]);
-						}
-					}
-				}
-				var scriptMeta = {
-					'ergebnisse' : String.raw`
+                            cell.style.minWidth = minWidth;
+                            if (col > 0) {
+                                cell.addEventListener('click', opencloseFun(id));
+                            }
+                        });
+                    var colText2 = [];
+                    colText2.push('<pre>' + data.meta + '</pre>' + install);
+                    tr = addRow(table, colText2);
+                    tr.id = 'script_' + id;
+                    tr.style.display = 'none';
+                    tr.firstChild.setAttribute('colspan', 5);
+                }
+                function fillScriptTable(id, scriptMetaInfos, filter = Object.keys(scriptMeta), sortFun = undefined) {
+                    var table = document.getElementById(id);
+                    if (table && ! table.children.length) {
+                        var scriptIds = ((typeof filter == 'function') ? Object.keys(scriptMeta).filter(filter) : filter).sort(sortFun);
+                        addRow(table, [
+                                        "Name des Scripts",
+                                        "Aktuelle Version",
+                                        "Beschreibung der Funktion",
+                                        "Autor(en)",
+                                        "Aktion"
+                                    ]).style.fontWeight = 'bold';
+                        for (var i = 0; i < scriptIds.length; ++i) {
+                            script = scriptIds[i];
+                            addEntry(table, script, scriptMetaInfos[script]);
+                        }
+                    }
+                }
+
+/****** Benutzerscript-Uebersicht 'index.html' ["ALL"] ******/
+
+// Inhaltsverzeichnis:
+// https://eselce.github.io/OS2.scripts/<ALL>: 
+//  OS2.ergebnisse.user.js
+//  OS2.faces.user.js
+//  OS2.fssturnier.user.js
+//  OS2.haupt.user.js
+//  OS2.jugend.user.js
+//  OS2.master-SLC.user.js
+//  OS2.master.user.js
+//  OS2.osec.user.js
+//  OS2.report.user.js
+//  OS2.scripts.user.js
+//  OS2.spielbericht.user.js
+//  OS2.spielbericht.XXL.user.js
+//  OS2.spielerhistorie.user.js
+//  OS2.spielerprofil.user.js
+//  OS2.spielerstatistik.user.js
+//  OS2.spielersuche.user.js
+//  OS2.spielplan.user.js
+//  OS2.tabelle.user.js
+//  OS2.training.user.js
+//  OS2.unittest.user.js
+//  OS2.vereinshistorie.user.js
+//  OS2.vereinshistorieMitKruecke.user.js
+//  OS2.zugabgabe.user.js
+
+                var scriptMeta = {
+
+                    'ergebnisse' : String.raw`
 // ==UserScript==
 // @name         OS2.ergebnisse
 // @namespace    http://os.ongapo.com/
@@ -157,7 +188,9 @@
 // @grant        GM_registerMenuCommand
 // @grant        GM_info
 // ==/UserScript==
-					`, 'faces' : String.raw`
+                    `,
+
+                    'faces' : String.raw`
 // ==UserScript==
 // @name         OS2.faces
 // @namespace    http://os.ongapo.com/
@@ -168,7 +201,9 @@
 // @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/osbetafaces\.php$/
 // @grant        none
 // ==/UserScript==
-					`, 'fssturnier' : String.raw`
+                    `,
+
+                    'fssturnier' : String.raw`
 // ==UserScript==
 // @name         OS2.fssturnier
 // @namespace    http://os.ongapo.com/
@@ -190,15 +225,17 @@
 // @grant        GM_registerMenuCommand
 // @grant        GM_info
 // ==/UserScript==
-					`, 'haupt' : String.raw`
+                    `,
+
+                    'haupt' : String.raw`
 // ==UserScript==
 // @name         OS2.haupt
 // @namespace    http://os.ongapo.com/
-// @version      0.41+WE+
+// @version      0.42
 // @copyright    2016+
 // @author       Sven Loges (SLC)
 // @description  Managerbuero-Abschnitt aus dem Master-Script fuer Online Soccer 2.0
-// @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/haupt\.php(\?changetosecond=\w+(&\S+)*)?$/
+// @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/haupt\.php(\?changetosecond=\w+(&\w+=?[+\w]+)*)?(#\w+)?$/
 // @grant        GM.getValue
 // @grant        GM.setValue
 // @grant        GM.deleteValue
@@ -211,7 +248,9 @@
 // @grant        GM_registerMenuCommand
 // @grant        GM_info
 // ==/UserScript==
-					`, 'jugend' : String.raw`
+                    `,
+
+                    'jugend' : String.raw`
 // ==UserScript==
 // @name         OS2.jugend
 // @namespace    http://os.ongapo.com/
@@ -233,7 +272,9 @@
 // @grant        GM_registerMenuCommand
 // @grant        GM_info
 // ==/UserScript==
-					`, 'master-SLC' : String.raw`
+                    `,
+
+                    'master-SLC' : String.raw`
 // ==UserScript==
 // @name         OS2.master
 // @namespace    http://os.ongapo.com/
@@ -251,7 +292,9 @@
 // @grant        GM_getValue
 // @grant        GM_setValue
 // ==/UserScript==
-					`, 'master' : String.raw`
+                    `,
+
+                    'master' : String.raw`
 // ==UserScript==
 // @name         OS2.master
 // @namespace    http://os.ongapo.com/
@@ -266,7 +309,9 @@
 // @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/ka\.php$/
 // @grant        none
 // ==/UserScript==
-					`, 'osec' : String.raw`
+                    `,
+
+                    'osec' : String.raw`
 // ==UserScript==
 // @name         OS2.osec
 // @namespace    http://os.ongapo.com/
@@ -277,7 +322,9 @@
 // @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/(os(eq?|c(q|[hzf]r))|supercup)\.php(\?\S+(&\S+)*)?$/
 // @grant        none
 // ==/UserScript==
-					`, 'report' : String.raw`
+                    `,
+
+                    'report' : String.raw`
 // ==UserScript==
 // @name         OS2.report
 // @namespace    http://os.ongapo.com/
@@ -288,7 +335,14 @@
 // @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/rep/saison/\d+/\d+/\d+-\d+.html$/
 // @grant        none
 // ==/UserScript==
-					`, 'spielbericht' : String.raw`
+                    `,
+
+                    'scripts' : String.raw`
+// ==UserScript==
+// ==/UserScript==
+                    `,
+
+                    'spielbericht' : String.raw`
 // ==UserScript==
 // @name         OS2.spielbericht
 // @namespace    http://os.ongapo.com/
@@ -299,7 +353,9 @@
 // @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/rep/saison/\d+/\d+/\d+-\d+.html$/
 // @grant        none
 // ==/UserScript==
-					`, 'spielbericht.XXL' : String.raw`
+                    `,
+
+                    'spielbericht.XXL' : String.raw`
 // ==UserScript==
 // @name         OS2.spielbericht.XXL
 // @namespace    http://os.ongapo.com/
@@ -316,7 +372,9 @@
 // @resource TOR https://eselce.github.io/GitTest/img/tor.png
 // @resource ZWK https://eselce.github.io/GitTest/img/zwk.png
 // ==/UserScript==
-					`, 'spielerhistorie' : String.raw`
+                    `,
+
+                    'spielerhistorie' : String.raw`
 // ==UserScript==
 // @name         OS2.spielerhistorie
 // @namespace    http://os.ongapo.com/
@@ -327,7 +385,9 @@
 // @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/sp\.php\?s=\d+$/
 // @grant        none
 // ==/UserScript==
-					`, 'spielerprofil' : String.raw`
+                    `,
+
+                    'spielerprofil' : String.raw`
 // ==UserScript==
 // @name         OS2.spielerprofil
 // @namespace    http://os.ongapo.com/
@@ -349,7 +409,9 @@
 // @grant        GM_registerMenuCommand
 // @grant        GM_info
 // ==/UserScript==
-					`, 'spielerstatistik' : String.raw`
+                    `,
+
+                    'spielerstatistik' : String.raw`
 // ==UserScript==
 // @name         OS2.spielerstatistik
 // @namespace    http://os.ongapo.com/
@@ -363,7 +425,9 @@
 // @require      https://greasemonkey.github.io/gm4-polyfill/gm4-polyfill.js
 // @grant        GM_addStyle
 // ==/UserScript==
-					`, 'spielersuche' : String.raw`
+                    `,
+
+                    'spielersuche' : String.raw`
 // ==UserScript==
 // @name         OS2.spielersuche
 // @namespace    http://os.ongapo.com/
@@ -374,15 +438,17 @@
 // @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/suchspieler\.php$/
 // @grant        none
 // ==/UserScript==
-					`, 'spielplan' : String.raw`
+                    `,
+
+                    'spielplan' : String.raw`
 // ==UserScript==
 // @name         OS2.spielplan
 // @namespace    http://os.ongapo.com/
-// @version      0.72+WE+
+// @version      0.73
 // @copyright    2013+
 // @author       Sven Loges (SLC)
 // @description  Spielplan-Abschnitt aus dem Master-Script fuer Online Soccer 2.0
-// @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/(st|showteam)\.php\?s=6(&\S+)*$/
+// @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/(st|showteam)\.php\?s=6(&\w+=?[+\w]+)*(#\w+)?$/
 // @grant        GM.getValue
 // @grant        GM.setValue
 // @grant        GM.deleteValue
@@ -395,7 +461,9 @@
 // @grant        GM_registerMenuCommand
 // @grant        GM_info
 // ==/UserScript==
-					`, 'tabelle' : String.raw`
+                    `,
+
+                    'tabelle' : String.raw`
 // ==UserScript==
 // @name         OS2.tabelle
 // @namespace    http://os.ongapo.com/
@@ -417,7 +485,9 @@
 // @grant        GM_registerMenuCommand
 // @grant        GM_info
 // ==/UserScript==
-					`, 'training' : String.raw`
+                    `,
+
+                    'training' : String.raw`
 // ==UserScript==
 // @name         OS2.training
 // @namespace    http://os.ongapo.com/
@@ -442,7 +512,14 @@
 // @grant        GM_registerMenuCommand
 // @grant        GM_info
 // ==/UserScript==
-					`, 'vereinshistorie' : String.raw`
+                    `,
+
+                    'unittest' : String.raw`
+// ==UserScript==
+// ==/UserScript==
+                    `,
+
+                    'vereinshistorie' : String.raw`
 // ==UserScript==
 // @name         OS2.vereinshistorie
 // @namespace    http://os.ongapo.com/
@@ -453,7 +530,9 @@
 // @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/(st|showteam)\.php\?s=7(&\S+)*$/
 // @grant        none
 // ==/UserScript==
-					`, 'vereinshistorieMitKruecke' : String.raw`
+                    `,
+
+                    'vereinshistorieMitKruecke' : String.raw`
 // ==UserScript==
 // @name         OS2.vereinshistorieMitKruecke
 // @namespace    http://os.ongapo.com/
@@ -464,7 +543,9 @@
 // @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/(st|showteam)\.php\?s=7(&\S+)*$/
 // @grant        none
 // ==/UserScript==
-					`, 'zugabgabe' : String.raw`
+                    `,
+
+                    'zugabgabe' : String.raw`
 // ==UserScript==
 // @name         OS2.zugabgabe
 // @namespace    http://os.ongapo.com/
@@ -486,42 +567,48 @@
 // @grant        GM_registerMenuCommand
 // @grant        GM_info
 // ==/UserScript==
-					`};
-				var scripts = [
-						'ergebnisse',
-						'faces',
-					//	'fssturnier',
-						'haupt',
-						'jugend',
-					//	'master-SLC',
-						'master',
-					//	'osec',
-					//	'report',
-						'spielbericht',
-						'spielbericht.XXL',
-						'spielerhistorie',
-						'spielerprofil',
-						'spielerstatistik',
-						'spielersuche',
-						'spielplan',
-					//	'tabelle',
-						'training',
-						'vereinshistorie',
-						'vereinshistorieMitKruecke',
-					//	'zugabgabe'
-					];
-				document.addEventListener("DOMContentLoaded", createScriptTables);
-				function createScriptTables(event) {
-					fillScriptTable('scripts', scriptMeta, scripts);
-					fillScriptTable('scriptsBeta', scriptMeta, name => ! scripts.includes(name));
-				}
-			</script>
+                    `,
 
-			<h3>Standard-Benutzerscripts f&uuml;r Online-Soccer 2.0 unter dem Greasemonkey AddOn</h3>
-			<table id="scripts" class="script"></table>
+                    };
 
-			<h3>Experimentelle Scripts (Benutzung auf eigenes Risiko)</h3>
-			<table id="scriptsBeta" class="script"></table>
-		</div>
-	</body>
+                var scripts = [
+                        'ergebnisse',
+                        'faces',
+                    //  'fssturnier',
+                        'haupt',
+                        'jugend',
+                    //  'master-SLC',
+                        'master',
+                    //  'osec',
+                    //  'report',
+                    //  'scripts',
+                        'spielbericht',
+                        'spielbericht.XXL',
+                        'spielerhistorie',
+                        'spielerprofil',
+                        'spielerstatistik',
+                        'spielersuche',
+                        'spielplan',
+                    //  'tabelle',
+                        'training',
+                    //  'unittest',
+                        'vereinshistorie',
+                        'vereinshistorieMitKruecke',
+                    //  'zugabgabe'
+                    ];
+
+                document.addEventListener("DOMContentLoaded", createScriptTables);
+                function createScriptTables(event) {
+                    fillScriptTable('scripts', scriptMeta, scripts);
+                    fillScriptTable('scriptsBeta', scriptMeta, name => ! scripts.includes(name));
+                }
+            </script>
+
+            <h3>Standard-Benutzerscripts f&uuml;r Online-Soccer 2.0 unter dem Greasemonkey AddOn</h3>
+            <table id="scripts" class="script"></table>
+
+            <h3>Experimentelle Scripts (Benutzung auf eigenes Risiko)</h3>
+            <table id="scriptsBeta" class="script"></table>
+        </div>
+    </body>
 </html>
