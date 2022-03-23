@@ -4083,20 +4083,22 @@ const __TEAMSEARCHTEAM = {  // Parameter zum Team "<b>TEAM - LIGA <a href=...>LA
         'end'       : "</a></b>"
     };
 
-const __TEAMIDSEARCHHAUPT = {  // Parameter zur Team-ID "<b>Deine Spiele in</b>...<a href="livegame/index.php?spiele=TEAMID,0">LIVEGAME</a>"
+const __TEAMIDSEARCHHAUPT = {  // Parameter zur Team-ID "<b>Deine Spiele in</b>...<a href="livegame/index.php?spiele=TEAMID,ZAT">LIVEGAME</a>"
         'Tabelle'   : 0,
         'Zeile'     : 6,
         'Spalte'    : 0,
         'start'     : '<a href="livegame/index.php?spiele=',
-        'end'       : ',0">LIVEGAME</a>'
+        'end'       : '">LIVEGAME</a>',
+        'delim'     : ','
     };
 
-const __TEAMIDSEARCHTEAM = {  // Parameter zur Team-ID "<b>Deine Spiele in</b>...<a href="livegame/index.php?spiele=TEAMID,0">LIVEGAME</a>"
+const __TEAMIDSEARCHTEAM = {  // Parameter zur Team-ID "<a hspace="20" href="javascript:tabellenplatz(TEAMID)">Tabellenpl\u00E4tze</a>"
         'Tabelle'   : 0,
         'Zeile'     : 1,
         'Spalte'    : 1,
         'start'     : '<a hspace="20" href="javascript:tabellenplatz(',
-        'end'       : ')">Tabellenpl\xE4tze</a>'
+        'end'       : ')">Tabellenpl\u00E4tze</a>',
+        'delim'     : null
     };
 
 // Ermittelt, wie das eigene Team heisst und aus welchem Land bzw. Liga es kommt (zur Unterscheidung von Erst- und Zweitteam)
@@ -4151,9 +4153,11 @@ function getTeamParamsFromTable(teamSearch, teamIdSearch, doc = document) {
     const __TEAMIDCELLSTR  = (__TEAMIDTABLE === undefined) ? "" : __TEAMIDTABLE.rows[__TEAMIDCELLROW].cells[__TEAMIDCELLCOL].innerHTML;
     const __SEARCHIDSTART  = __TEAMIDSEARCH.start;
     const __SEARCHIDEND    = __TEAMIDSEARCH.end;
+    const __SEARCHIDDELIM  = __TEAMIDSEARCH.delim;
     const __INDEXIDSTART   = __TEAMIDCELLSTR.indexOf(__SEARCHIDSTART);
     const __INDEXIDEND     = __TEAMIDCELLSTR.indexOf(__SEARCHIDEND);
-    const __TEAMIDSTR      = __TEAMIDCELLSTR.substring(__INDEXIDSTART + __SEARCHIDSTART.length, __INDEXIDEND);
+    const __INDEXIDDELIM   = (__SEARCHIDDELIM ? __TEAMIDCELLSTR.lastIndexOf(__SEARCHIDDELIM, __INDEXIDEND) : __INDEXIDEND);
+    const __TEAMIDSTR      = __TEAMIDCELLSTR.substring(__INDEXIDSTART + __SEARCHIDSTART.length, __INDEXIDDELIM);
     const __TEAMID         = Number.parseInt(__TEAMIDSTR, 10);
 
     const __TEAM = new Team(__TEAMNAME, land, liga, __TEAMID);
