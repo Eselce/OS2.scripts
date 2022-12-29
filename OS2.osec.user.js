@@ -213,7 +213,11 @@ function procContent(beforeNode, teams) {
 	appendTeam(tableTeams, teams[teamInd + 1], 0);
 
 	appendResult(tableResults, teams[teamInd], teams[teamInd + 1], 0);
+
+    rowResults.style.border = beforeTable.rows[teamInd/2].style.border;
     }
+
+    tableResults.style.borderCollapse = 'collapse';
 }
 
 // Fuegt eine Zelle ans Ende der uebergebenen Zeile hinzu und fuellt sie
