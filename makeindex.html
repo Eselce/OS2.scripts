@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html>
-    <head>
-        <meta charset="utf-8">
-        <title>Online-Soccer 2.0 - Greasemonkey Benutzerscripts</title>
-        <link rel="stylesheet" type="text/css" href="../css/os_styles.css" />
-        <link rel="stylesheet" type="text/css" href="../css/print.css" media="print" />
-        <link rel="shortcut icon" type="image/ico" href="../img/favicon.ico" />
-        <style>
+<HTML>
+    <HEAD>
+        <META charset="utf-8">
+        <TITLE>Online-Soccer 2.0 - Generator Greasemonkey Benutzerscripts</TITLE>
+        <LINK rel="stylesheet" type="text/css" href="css/os_styles.css" />
+        <LINK rel="stylesheet" type="text/css" href="css/print.css" media="print" />
+        <LINK rel="shortcut icon" type="image/ico" href="img/favicon.ico" />
+        <STYLE>
             .script {
                 border:2px solid grey;
                 border-collapse:collapse;
@@ -15,8 +15,8 @@
                 border:2px solid grey;
                 border-collapse:collapse;
             }
-        </style>
-        <script type="text/javascript">
+        </STYLE>
+        <SCRIPT type="text/javascript">
 //<![CDATA[
 
 const GM_info = {  // Mock GM_info data
@@ -24,76 +24,92 @@ const GM_info = {  // Mock GM_info data
                 'name'        : "makeindex.html",
                 'version'     : "0.10",
                 'namespace'   : "http://os.ongapo.com/",
-                'description' : "Online-Soccer 2.0 - Benutzerscripts unter dem Greasemonkey AddOn"
+                'description' : "Online-Soccer 2.0 - Generator Benutzerscripts unter dem Greasemonkey AddOn"
             }
     };
 
 //]]>
-        </script>
+        </SCRIPT>
 
         <!-- ====================== Script-Includes: GM4-Polyfill, Module und Unit-Tests ====================== -->
 
 
-        <script type="text/javascript" defer src="https://greasemonkey.github.io/gm4-polyfill/gm4-polyfill.js"></script>
+        <SCRIPT type="text/javascript" defer src="https://greasemonkey.github.io/gm4-polyfill/gm4-polyfill.js"></SCRIPT>
 
-        <script type="text/javascript" defer src="https://eselce.github.io/GitTest/misc/OS2/lib/lib.all.js"></script>
+        <SCRIPT type="text/javascript" defer src="https://eselce.github.io/GitTest/misc/OS2/lib/lib.all.js"></SCRIPT>
 
 <!--
-        <script type="text/javascript" defer src="https://eselce.github.io/GitTest/misc/OS2/lib/util.log.js"></script>
-        <script type="text/javascript" defer src="https://eselce.github.io/GitTest/misc/OS2/lib/util.value.js"></script>
-        <script type="text/javascript" defer src="https://eselce.github.io/GitTest/misc/OS2/lib/util.class.js"></script>
-        <script type="text/javascript" defer src="https://eselce.github.io/GitTest/misc/OS2/lib/util.class.delim.js"></script>
-        <script type="text/javascript" defer src="https://eselce.github.io/GitTest/misc/OS2/lib/util.class.path.js"></script>
-        <script type="text/javascript" defer src="https://eselce.github.io/GitTest/misc/OS2/lib/util.class.uri.js"></script>
-        <script type="text/javascript" defer src="https://eselce.github.io/GitTest/misc/OS2/lib/util.class.report.js"></script>
-        <script type="text/javascript" defer src="https://eselce.github.io/GitTest/misc/OS2/lib/OS2.page.js"></script>
+        <SCRIPT type="text/javascript" defer src="https://eselce.github.io/GitTest/misc/OS2/lib/util.log.js"></SCRIPT>
+        <SCRIPT type="text/javascript" defer src="https://eselce.github.io/GitTest/misc/OS2/lib/util.value.js"></SCRIPT>
+        <SCRIPT type="text/javascript" defer src="https://eselce.github.io/GitTest/misc/OS2/lib/util.class.js"></SCRIPT>
+        <SCRIPT type="text/javascript" defer src="https://eselce.github.io/GitTest/misc/OS2/lib/util.class.delim.js"></SCRIPT>
+        <SCRIPT type="text/javascript" defer src="https://eselce.github.io/GitTest/misc/OS2/lib/util.class.path.js"></SCRIPT>
+        <SCRIPT type="text/javascript" defer src="https://eselce.github.io/GitTest/misc/OS2/lib/util.class.uri.js"></SCRIPT>
+        <SCRIPT type="text/javascript" defer src="https://eselce.github.io/GitTest/misc/OS2/lib/util.class.report.js"></SCRIPT>
+        <SCRIPT type="text/javascript" defer src="https://eselce.github.io/GitTest/misc/OS2/lib/OS2.page.js"></SCRIPT>
 -->
 
-        <script type="text/javascript" defer src="https://eselce.github.io/GitTest/misc/OS2/lib/test.mock.gm.js"></script>
-    </head>
-    <body>
-        <div>
-            <h3>OS2-Benutzerscripts unter dem Greasemonkey AddOn</h3>
+        <SCRIPT type="text/javascript" defer src="https://eselce.github.io/GitTest/misc/OS2/lib/test.mock.gm.js"></SCRIPT>
+    </HEAD>
+    <BODY>
+        <DIV id="index-generator">
+            <H3>Generator OS2-Benutzerscripts unter dem Greasemonkey AddOn</H3>
 
-            || <a onClick="__MAIN();return false;" href="index.html">index.html generieren</a>
-            || <a onClick="__BUILDLIB('all');return false;" href="index.html">index.all.html</a>
-            || <a onClick="__BUILDLIB('main');return false;" href="index.html">index.main.html</a>
-            || <a onClick="__BUILDLIB('beta');return false;" href="index.html">index.beta.html</a>
-            || <a onClick="__BUILDLIB('test');return false;" href="index.html">index.test.html</a>
-            || <a onClick="__BUILDLIB('testmain');return false;" href="index.html">index.testmain.html</a>
-            || <a onClick="__BUILDLIB('testbeta');return false;" href="index.html">index.testbeta.html</a>
-            ||
-        </div>
-        <br />
+            || <A onClick="__MAIN();return false;">index.html generieren</A> ||
+        </DIV>
+        <BR />
 
-        <script type="text/javascript">
+        <SCRIPT type="text/javascript">
 //<![CDATA[
+
+// ==================== Abschnitt fuer das Generator-Menue ====================
+
+const __GENERATEMENU = (((libList, anchor) => {
+    const __ANCHOR = document.querySelector(anchor);
+    const __LIBS = (libList || []);
+
+    __LIBS.forEach(lib => {
+            const __TEXT = document.createTextNode(' || ');
+            const __A = document.createElement('A');
+
+            __A.addEventListener('click', (() => {
+                                                __BUILDLIB(lib);
+                                                return false;
+                                            }));
+            __A.textContent = ('index.' + lib + '.html');
+
+            __ANCHOR.append(__A);
+            __ANCHOR.append(__TEXT);
+        });
+
+    return true;
+})([ 'all', 'main', 'beta', 'test', 'testmain', 'testbeta' ], '#index-generator'));
 
 // ==================== Fixe Seitenbestandteile der Zieldatei ====================
 
 function getHeader() {
     return String.raw`&lt;!DOCTYPE html&gt;
-&lt;html&gt;
-	&lt;head&gt;
-		&lt;meta charset="utf-8"&gt;
-		&lt;title&gt;Online-Soccer 2.0 - Greasemonkey Benutzerscripts&lt;/title&gt;
-		&lt;link rel="stylesheet" type="text/css" href="css/os_styles.css" /&gt;
-		&lt;link rel="stylesheet" type="text/css" href="css/print.css" media="print" /&gt;
-		&lt;link rel="shortcut icon" type="image/ico" href="img/favicon.ico" /&gt;
-		&lt;style&gt;
+&lt;HTML&gt;
+	&lt;HEAD&gt;
+		&lt;META charset="utf-8"&gt;
+		&lt;TITLE&gt;Online-Soccer 2.0 - Greasemonkey Benutzerscripts&lt;/TITLE&gt;
+		&lt;LINK rel="stylesheet" type="text/css" href="css/os_styles.css" /&gt;
+		&lt;LINK rel="stylesheet" type="text/css" href="css/print.css" media="print" /&gt;
+		&lt;LINK rel="shortcut icon" type="image/ico" href="img/favicon.ico" /&gt;
+		&lt;STYLE&gt;
 			.script {
 				border:2px solid grey;
 				border-collapse:collapse;
 			}
-			.script td {
+			.script TD {
 				border:2px solid grey;
 				border-collapse:collapse;
 			}
-		&lt;/style&gt;
-	&lt;/head&gt;
-	&lt;body&gt;
-		&lt;div&gt;
-			&lt;script type="text/javascript"&gt;
+		&lt;/STYLE&gt;
+	&lt;/HEAD&gt;
+	&lt;BODY&gt;
+		&lt;DIV&gt;
+			&lt;SCRIPT type="text/javascript"&gt;
 				var popen = new Array();
 				function openclose(id) {
 					var inopen = false;
@@ -145,10 +161,10 @@ function getHeader() {
 					return data;
 				}
 				function addRow(table, colText) {
-					var tr = document.createElement('tr');
+					var tr = document.createElement('TR');
 					var td;
 					for (var i = 0; i &lt; colText.length; ++i) {
-						td = document.createElement('td');
+						td = document.createElement('TD');
 						td.innerHTML = colText[i];
 						tr.appendChild(td);
 					}
@@ -156,7 +172,7 @@ function getHeader() {
 					return tr;
 				}
 				function purify(text) {
-					return (text || "").replace(/\s+\/\s+/g, "&lt;br /&gt;");
+					return (text || "").replace(/\s+\/\s+/g, "&lt;BR /&gt;");
 				}
 				function addEntry(table, id, meta) {
 					var colText1 = [];
@@ -168,11 +184,11 @@ function getHeader() {
 					var author = purify(data.author);
 					var filename = (id ? 'OS2.' + id + '.user.js' : undefined);
 					var openclose = '"openclose(' + "'" + id + "'" + ')"';
-					var install = '&lt;form method="get" action="./' + filename + '" target="_blank" rel="noopener noreferrer"&gt;' +
-								//	'&lt;input type="hidden" name="scriptid" value="' + id + '" /&gt;' +
-									'&lt;input type="submit" value="Installieren" /&gt;&lt;/form&gt;&lt;/td&gt;';
-					colText1.push('&lt;img src="img/geschlossen.gif" style="cursor: help;" onclick=' + openclose + ' id="openclose_' + id + '" /&gt;\n' +
-									'&lt;a href="https://github.com/Eselce/OS2.scripts/blob/master/' + filename + '"&gt;' + name + '&lt;/a&gt;');
+					var install = '&lt;FORM method="get" action="./' + filename + '" target="_blank" rel="noopener noreferrer"&gt;' +
+								//	'&lt;INPUT type="hidden" name="scriptid" value="' + id + '" /&gt;' +
+									'&lt;INPUT type="submit" value="Installieren" /&gt;&lt;/FORM&gt;&lt;/TD&gt;';
+					colText1.push('&lt;IMG src="img/geschlossen.gif" style="cursor: help;" onclick=' + openclose + ' id="openclose_' + id + '" /&gt;\n' +
+									'&lt;A href="https://github.com/Eselce/GitTest/blob/master/misc/OS2/' + filename + '"&gt;' + name + '&lt;/A&gt;');
 					colText1.push(version);
 					colText1.push(desc);
 					colText1.push(author);
@@ -187,7 +203,7 @@ function getHeader() {
 							}
 						});
 					var colText2 = [];
-					colText2.push('&lt;pre&gt;' + data.meta + '&lt;/pre&gt;' + install);
+					colText2.push('&lt;PRE&gt;' + data.meta + '&lt;/PRE&gt;' + install);
 					tr = addRow(table, colText2);
 					tr.id = 'script_' + id;
 					tr.style.display = 'none';
@@ -220,16 +236,16 @@ function getFooter() {
 					fillScriptTable('scripts', scriptMeta, scripts);
 					fillScriptTable('scriptsBeta', scriptMeta, name =&gt; ! scripts.includes(name));
 				}
-			&lt;/script&gt;
+			&lt;/SCRIPT&gt;
 
-			&lt;h3&gt;Standard-Benutzerscripts f&amp;uuml;r Online-Soccer 2.0 unter dem Greasemonkey AddOn&lt;/h3&gt;
-			&lt;table id="scripts" class="script"&gt;&lt;/table&gt;
+			&lt;H3&gt;Standard-Benutzerscripts f&amp;uuml;r Online-Soccer 2.0 unter dem Greasemonkey AddOn&lt;/H3&gt;
+			&lt;TABLE id="scripts" class="script"&gt;&lt;/TABLE&gt;
 
-			&lt;h3&gt;Experimentelle Scripts (Benutzung auf eigenes Risiko)&lt;/h3&gt;
-			&lt;table id="scriptsBeta" class="script"&gt;&lt;/table&gt;
-		&lt;/div&gt;
-	&lt;/body&gt;
-&lt;/html&gt;
+			&lt;H3&gt;Experimentelle Scripts (Benutzung auf eigenes Risiko)&lt;/H3&gt;
+			&lt;TABLE id="scriptsBeta" class="script"&gt;&lt;/TABLE&gt;
+		&lt;/DIV&gt;
+	&lt;/BODY&gt;
+&lt;/HTML&gt;
 `;
 }
 
@@ -271,7 +287,7 @@ function Requirements(path, pre, ext, scripts) {
 
                                      //console.log("Received:", __DOC);
 
-                                     const __PRE = __DOCUMENT.createElement('pre');
+                                     const __PRE = __DOCUMENT.createElement('PRE');
 
                                      __PRE.textContent = __INDENT + "'" + this.scripts[i] + "' : String.raw`\n" + __HEADER.replaceAll('\r\n', '\n') + '\n' + __INDENT + "`,";
 
@@ -311,7 +327,9 @@ const __BUILDLIB = (async (libNumber) => {
             'master-SLC',
             'master',
             'osec',
+            'osec.starter',
             'report',
+            'saisonhistorie',
             'scripts',
             'spielbericht',
             'spielbericht.XXL',
@@ -333,6 +351,8 @@ const __BUILDLIB = (async (libNumber) => {
             'haupt',
             'jugend',
             'master',
+            'osec.starter',
+            'saisonhistorie',
             'spielbericht',
             'spielbericht.XXL',
             'spielerhistorie',
@@ -359,6 +379,8 @@ const __BUILDLIB = (async (libNumber) => {
             'fssturnier',
             'haupt',
             'jugend',
+            'osec.starter',
+            'saisonhistorie',
             'scripts',
             'spielbericht.XXL',
             'spielerprofil',
@@ -372,6 +394,8 @@ const __BUILDLIB = (async (libNumber) => {
             'ergebnisse',
             'haupt',
             'jugend',
+            'osec.starter',
+            'saisonhistorie',
             'spielbericht.XXL',
             'spielerprofil',
             'spielplan',
@@ -416,17 +440,17 @@ const __BUILDLIB = (async (libNumber) => {
     const __INDENT = "\t\t\t\t\t";
 
     // Header...
-    document.body.innerHTML = "<pre>" + getHeader() + "\n/****** Benutzerscript-Uebersicht " + __LOG.info(__LIBNAME, false) + ' ' + __LOG.info(__PKGLIBS, false) + " ******/\n\n"
+    document.body.innerHTML = "<PRE>" + getHeader() + "\n/****** Benutzerscript-Uebersicht " + __LOG.info(__LIBNAME, false) + ' ' + __LOG.info(__PKGLIBS, false) + " ******/\n\n"
                             + __PKGLIBS.reduce((pre, libsKey) => pre + __LIBSDEF[libsKey].libs.map(libName => (__LIBSDEF[libsKey].reqs.srcPre + libName + __LIBSDEF[libsKey].reqs.srcExt)
-                                    ).reduce((pre, lib) => pre + "\n//\t" + lib, "\n// " + __LIBSDEF[libsKey].reqs.srcPath + '&lt;' + libsKey + "&gt;: "),
-                                "// Inhaltsverzeichnis:") + "\n\n" + __INDENT.substr(1) + "var scriptMeta = {</pre>";
+                                    ).reduce((pre, lib) => pre + "\n//\t" + lib, "\n// " + __LIBSDEF[libsKey].reqs.srcPath + '&lt;' + libsKey + "&gt;:"),
+                                "// Inhaltsverzeichnis:") + "\n\n" + __INDENT.substr(1) + "var scriptMeta = {</PRE>";
 
     // Promise-Chain abarbeiten...
     const __LIBREQS = await __PKGFUNS.reduce((prom, fun) => prom.then(fun, defaultCatch), Promise.resolve()).then(reqs => {
             // Footer...
-            document.body.innerHTML = document.body.innerHTML + "<pre>" + __INDENT + "};\n\n" + __INDENT.substr(1) + "var scripts = [\n" + __INDENT
+            document.body.innerHTML = document.body.innerHTML + "<PRE>" + __INDENT + "};\n\n" + __INDENT.substr(1) + "var scripts = [\n" + __INDENT
                                                                 + __ALLLIBS.join(",\n" + __INDENT)
-                                                                + '\n' + __INDENT + "];\n" + getFooter() + "</pre>";
+                                                                + '\n' + __INDENT + "];\n" + getFooter() + "</PRE>";
             return reqs;
         });
 
@@ -442,7 +466,7 @@ const __MAIN = (async () => {
 
     // Verzweige in unterschiedliche Verarbeitungen je nach Wert von lib:
     const __LIBNUMBER = getPageIdFromURL(window.location.href, {
-                'index.html' : 1   // Ansicht "Bibliothek generieren" (lib = 0, 1, 2, 3 bzw. lib = all, main, beta, ...)
+                'index.html' : 0   // Ansicht "Bibliothek generieren" (lib = 0, 1, 2, 3 bzw. lib = all, main, beta, ...)
             }, 'lib');
     const __REQS = __BUILDLIB(__LIBNUMBER);
 
@@ -450,7 +474,7 @@ const __MAIN = (async () => {
 });
 
 //]]>
-        </script>
-        <noscript>Your browser does not support JavaScript!</noscript>
-    </body>
-</html>
+        </SCRIPT>
+        <NOSCRIPT>Your browser does not support JavaScript!</NOSCRIPT>
+    </BODY>
+</HTML>

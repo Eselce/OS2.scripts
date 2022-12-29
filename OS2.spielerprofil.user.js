@@ -231,7 +231,7 @@ const __OPTCONFIG = {
                    'Action'    : __OPTACTION.NXT,
                    'Label'     : "Optionen anzeigen",
                    'Hotkey'    : 'O',
-                   'AltTitle'  : "$V schlie\xDFen",
+                   'AltTitle'  : "$V schlie\u00DFen",
                    'AltLabel'  : "Optionen verbergen",
                    'AltHotkey' : 'O',
                    'FormLabel' : ""
@@ -2318,7 +2318,7 @@ function promptNextOpt(opt, value = undefined, reload = false, freeValue = false
 
                 const __LABEL = substParam(__CONFIG.Label, __VALUE);
 
-                showAlert(__LABEL, "Ung\xFCltige Eingabe: " + __ANSWER);
+                showAlert(__LABEL, "Ung\u00FCltige Eingabe: " + __ANSWER);
             }
         }
     } catch (ex) {
@@ -2817,7 +2817,7 @@ function getFormAction(opt, isAlt = false, value = undefined, serial = undefined
                           };
         const __CONFIG = getOptConfig(opt);
         const __SERIAL = getValue(serial, getValue(__CONFIG.Serial, false));
-        const __THISVAL = ((__CONFIG.ValType === 'String') ? "'\\x22' + this.value + '\\x22'" : "this.value");
+        const __THISVAL = ((__CONFIG.ValType === 'String') ? "'\\u0022' + this.value + '\\u0022'" : "this.value");
         const __TVALUE = getValue(__CONFIG.ValType, __THISVAL, "new " + __CONFIG.ValType + '(' + __THISVAL + ')');
         const __VALSTR = ((value !== undefined) ? safeStringify(value) : __SERIAL ? "JSON.stringify(" + __TVALUE + ')' : __TVALUE);
         const __ACTION = (isAlt ? getValue(__CONFIG.AltAction, __CONFIG.Action) : __CONFIG.Action);
@@ -3396,11 +3396,11 @@ const __LANDNRN = {
         'Belgien'                :  12,
         'Bosnien-Herzegowina'    :  66,
         'Bulgarien'              :  42,
-        'D\xE4nemark'            :   8,
+        'D\u00E4nemark'          :   8,
         'Deutschland'            :   6,
         'England'                :   1,
         'Estland'                :  57,
-        'Far\xF6er'              :  68,
+        'Far\u00F6er'            :  68,
         'Finnland'               :  40,
         'Frankreich'             :  32,
         'Georgien'               :  49,
@@ -3421,10 +3421,10 @@ const __LANDNRN = {
         'Niederlande'            :  11,
         'Nordirland'             :   4,
         'Norwegen'               :   9,
-        '\xD6sterreich'          :  14,
+        '\u00D6sterreich'        :  14,
         'Polen'                  :  25,
         'Portugal'               :  17,
-        'Rum\xE4nien'            :  28,
+        'Rum\u00E4nien'          :  28,
         'Russland'               :  19,
         'San Marino'             :  98,
         'Schottland'             :   2,
@@ -3435,7 +3435,7 @@ const __LANDNRN = {
         'Slowenien'              :  21,
         'Spanien'                :  13,
         'Tschechien'             :  18,
-        'T\xFCrkei'              :  39,
+        'T\u00FCrkei'            :  39,
         'Ukraine'                :  20,
         'Ungarn'                 :  26,
         'Wales'                  :   3,
@@ -3453,11 +3453,11 @@ const __TLALAND = {
         'BEL'     : 'Belgien',
         'BIH'     : 'Bosnien-Herzegowina',
         'BUL'     : 'Bulgarien',
-        'DEN'     : 'D\xE4nemark',
+        'DEN'     : 'D\u00E4nemark',
         'GER'     : 'Deutschland',
         'ENG'     : 'England',
         'EST'     : 'Estland',
-        'FRO'     : 'Far\xF6er',
+        'FRO'     : 'Far\u00F6er',
         'FIN'     : 'Finnland',
         'FRA'     : 'Frankreich',
         'GEO'     : 'Georgien',
@@ -3478,10 +3478,10 @@ const __TLALAND = {
         'NED'     : 'Niederlande',
         'NIR'     : 'Nordirland',
         'NOR'     : 'Norwegen',
-        'AUT'     : '\xD6sterreich',
+        'AUT'     : '\u00D6sterreich',
         'POL'     : 'Polen',
         'POR'     : 'Portugal',
-        'ROM'     : 'Rum\xE4nien',
+        'ROM'     : 'Rum\u00E4nien',
         'RUS'     : 'Russland',
         'SMR'     : 'San Marino',
         'SCO'     : 'Schottland',
@@ -3492,7 +3492,7 @@ const __TLALAND = {
         'SVN'     : 'Slowenien',
         'ESP'     : 'Spanien',
         'CZE'     : 'Tschechien',
-        'TUR'     : 'T\xFCrkei',
+        'TUR'     : 'T\u00FCrkei',
         'UKR'     : 'Ukraine',
         'HUN'     : 'Ungarn',
         'WAL'     : 'Wales',
@@ -3969,7 +3969,7 @@ function procHaupt() {
 
 function procSpieler() {
     if (getRows(0) === undefined) {
-        __LOG[2]("Diese Seite ist ohne Team nicht verf\xFCgbar!");
+        __LOG[2]("Diese Seite ist ohne Team nicht verf\u00FCgbar!");
     } else {
         return buildOptions(__OPTCONFIG, __OPTSET, {
                                 'menuAnchor' : getTable(0, 'div'),

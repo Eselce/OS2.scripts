@@ -4,9 +4,9 @@
 // @version      0.10+WE+
 // @copyright    2017
 // @author       Sven Loges (SLC)
-// @description  Script zum offizellen FSS-Turnier fuer Online Soccer 2.0
-// @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/haupt\.php(\?changetosecond=\w+(&\S+)*)?(#\S+)?$/
-// @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/fssturnier\.php(\?fordern=\d+(&\S+)*)?(#\S+)?$/
+// @description  Script zum offiziellen FSS-Turnier fuer Online Soccer 2.0
+// @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/haupt\.php(\?changetosecond=\w+(&\w+=?[+\w]+)*)?(#\w+)?$/
+// @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/fssturnier\.php(\?(fordern|cancelforderung)=\d+(&\w+=?[+\w]+)*)?(#\w+)?$/
 // @grant        GM.getValue
 // @grant        GM.setValue
 // @grant        GM.deleteValue
@@ -26,7 +26,7 @@
 
 // ==================== Konfigurations-Abschnitt fuer Optionen ====================
 
-const __LOGLEVEL = 3;
+const __LOGLEVEL = 4;
 
 // Options-Typen
 const __OPTTYPES = {
@@ -135,6 +135,7 @@ const __OPTCONFIG = {
     'team' : {            // Datenspeicher fuer Daten des Erst- bzw. Zweitteams
                    'Name'      : "team",
                    'Type'      : __OPTTYPES.SD,
+                   'ValType'   : 'Team',
                    'Hidden'    : false,
                    'Serial'    : true,
                    'Permanent' : true,
@@ -157,7 +158,7 @@ const __OPTCONFIG = {
                    'Submit'    : undefined,
                    'Cols'      : 36,
                    'Rows'      : 20,
-                   'Replace'   : null,
+                   'Replace'   : replaceArrayFun(padStartFun(4)),
                    'Space'     : 0,
                    'Label'     : "Platz-IDs:"
                },
@@ -170,7 +171,7 @@ const __OPTCONFIG = {
                    'Permanent' : true,
                    'Default'   :
                              /*
-                                 [ undefined, // ZAT 1
+                                 [ undefined, // S12, ZAT 1
                                    1574, 1872,  881, 1476, 1568,  728,  778, 1935, 1175, 1912,  133, 1802, 1755,  300, 1797,  569,  181, 1069, 1810,  705,
                                    1447,  161, 1018, 1652, 1030,  817,  980,  495,  798,  602,  145,  954,   67,  131, 1430,   51,  890,   13, 1261, 1789,
                                     520,  660,  314,  559,  920,  157, 1841,  837,   39,  510,  618,  169, 1420,   68, 1066,  404, 1226, 1933,  224, 1813,
@@ -179,7 +180,7 @@ const __OPTCONFIG = {
                                    1071,  182,  471,  691,  483, 1647,  148, 1662,  477,  689,  132,  273, 1596, 1222,  597,  963,   38,  674,  505,  340,
                                    1395,  330, 1212,  726,  160, 1818,  195, 1526,  333,  629,  582,  741,  595, 1157, 1377,  275, 1238, 1078,  152, 1528,
                                     796, 1820,  188,   86,  313, 1532,  252,  734,   82,  878,   75, 1822,  902,  242,  685, 1451 ],
-                                 [ undefined, // ZAT 2
+                                 [ undefined, // S12, ZAT 2
                                    1574, 1872,  881, 1476, 1568,  728,  778, 1935, 1175, 1912,  133, 1802, 1755,  181, 1797,  569,  300, 1810, 1069,  705,
                                    1447,  161,  602, 1652,  817, 1030,  980,  495,  798, 1018,  145,  954,  559,  131, 1430,   51,  157,   13, 1261, 1789,
                                    1420,  660,  314,   67,  920,  890,  404,   68,   39,  510,  618,  169,  520,  837, 1066, 1841, 1226, 1933,  224, 1813,
@@ -190,7 +191,7 @@ const __OPTCONFIG = {
                                    /#796#/188, 1820,   86,  313, 1532,  252,  734,   82,  878,   75, 1822,  902,  242,/#685#/1078, 1181, 1352,  419,  545,
                                    1209,  610,  346, 1901,  820, 1790,  376, 1659, 1036,  836, 1150, 1576,  463,  667,  352, 1821, 1110,  264, 1190, 1396,
                                     373, 1197,  779 ],
-                                 [ undefined, // ZAT 3
+                                 [ undefined, // S12, ZAT 3
                                    1574, 1872,  881, 1476,  778,  728, 1568, 1935, 1175, 1912,  133, 1755, 1802,  181, 1797, 1447,  300, 1810, 1069,  705,
                                     569,  954,  602, 1652,  817, 1030,  980,/#131#/ 145, 1018,  798,  161,  559,  495, 1430,   51,  157,  510, 1261, 1789,
                                    1420,  169,  314,   67,  920,  890,  404,   68,   39,   13, 1226,  660,  520,  837, 1066, 1841,  618,  930,  224, 1813,
@@ -201,7 +202,7 @@ const __OPTCONFIG = {
                                     188, 1820,   86,  313, 1532,  252,  595,   82,  878,   75,  242,  902, 1822, 1078, 1181, 1352,  419,  545, 1209,  610,
                                     346, 1901,  820, 1790,  376, 1659, 1036,  836, 1150, 1576,  463,  667,  352, 1821, 1110,  264, 1190, 1396,  373, 1197,
                                     779,  763,  455, 1360, 1842, 1787, 1292,  307,  137,   16,  394,  436, 1910, 1203,  172, 1224,  859 ],
-                                 [ undefined, // ZAT 4
+                                 [ undefined, // S12, ZAT 4
                                    1574, 1872,  881, 1912,  778, 1568,  728, 1935, 1175, 1476, 1802, 1755,  133, 1447, 1797,  181,  300, 1810,  705, 1069,
                                     569,  954,  602, 1652,  817, 1030,  980,  145, 1018,  798,  161,  559,  495, 1430,   51,  157,  510, 1261, 1789, 1420,
                                     169,  660,   67,  920,  890,  404,   68,   13,   39, 1226,  314,  520,  837, 1066,  382,  121,  930,  224, 1813,  331,
@@ -212,7 +213,7 @@ const __OPTCONFIG = {
                                      86, 1238, 1532,  252,  595,  242,  878,   75,   82,  902, 1822, 1190, 1181, 1360,  419,  545, 1209,  610, 1821, 1901,
                                     820,  667,  376, 1659, 1036,  836, 1150, 1576,  463,/#1790#/352,  346, 1110,  394, 1078, 1396,  373, 1197,  779,  763,
                                     455, 1352, 1842, 1787, 1292,  307,  137,   16,  264,  436, 1910, 1203,  172, 1224,  859, 1275,  322, 1663 ],
-                                [ undefined, // ZAT 5
+                                 [ undefined, // S12, ZAT 5
                                    1574, 1872,  881, 1912,  778, 1568,  728, 1935, 1175, 1476, 1802, 1755,  133, 1447, 1797,  181,  300, 1810,  705, 1069,
                                     569,  954,   51, 1652,  817, 1030,  980,  145, 1018,  798, 1420,  559,  495, 1430,  602, 1066,  510, 1261, 1789,  161,
                                     169,  660,   67,  920,  890,  404,   68,   13,   39, 1226,  314,  520,  837,  157,  382,  121,  930,  224, 1813,  331,
@@ -223,7 +224,7 @@ const __OPTCONFIG = {
                                     242,  878,   75,   82,  902, 1822, 1190, 1181, 1360,  419,  545, 1209,  610, 1821, 1901,  820,  667,  376, 1659, 1036,
                                     836, 1150, 1576,  463,  352,  346, 1110,  394, 1078, 1396,  373, 1197,  779,  763,  455, 1352, 1842, 1787, 1910,  307,
                                     137,   16,/#264#/ 436, 1292, 1203,  172, 1224,  859, 1275,  322, 1663 ],
-                                [ undefined, // ZAT 6
+                                 [ undefined, // S12, ZAT 6
                                    1574, 1872,  881, 1912,  778, 1568, 1175, 1935,  728, 1476, 1802, 1810,  133, 1447, 1797,  817,  300, 1755,  705, 1069,
                                     569,  954,   51, 1652,  181, 1030,  980,  145, 1018,  798, 1420,  559,  495, 1430,  602, 1066,   39, 1261, 1789,  161,
                                     169,  660,   67,  920,  890,  404,   68,   13,  510,  157,  837,  382,  314, 1226,  520,  121,  761,  224, 1813,  331,
@@ -234,8 +235,7 @@ const __OPTCONFIG = {
                                     878,   82,   75,  902, 1822, 1190, 1181, 1360,  394,  545, 1209,  610, 1821, 1238,  820,  667,  376, 1292, 1910,  836,
                                    1150, 1576,  463,  352,  346, 1110,  419,  595, 1396,  373, 1663,  779,  763,  455, 1352, 1842, 1787,/#1036#/307,  137,
                                      16,  436, 1659, 1203,  172, 1224,  859, 1275,  322, 1197 ],
-                                [ undefined, // ZAT 7
-                                [ undefined, // ZAT 8 - 9
+                                 [ undefined, // S12, ZAT 7 - 9
                                    1574, 1912,  778, 1872,  881, 1568, 1175, 1935,  728, 1802, 1476, 1810,  133, 1447,  705,  817,  300, 1755, 1797, 1069,
                                     569,  559,   51, 1652,  181, 1030,  980,  145, 1018,  798,  602,  954,  495, 1430, 1420, 1066,   39, 1261, 1789,  161,
                                     169,  660,   67,  920,  890,  404,   68,   13,  510,  157,  837,  382,  314, 1226,  520,  121,  761,  224, 1813,  331,
@@ -246,7 +246,7 @@ const __OPTCONFIG = {
                                      82,   75,  902, 1822, 1190, 1181, 1360,  394,  545, 1209,  610,  667, 1238,  820, 1821,  376, 1292, 1910,  836, 1150,
                                    1576,  137,  352,  346, 1110,  419,  595, 1396,  373, 1663,  779,  763,  455, 1352, 1842, 1787,  307,  463,   16,  436,
                                    1659, 1203,  172, 1224,  859, 1275,  322, 1197, 1186,   21,  170 ],
-                                [ undefined, // ZAT 10
+                                 [ undefined, // S12, ZAT 10
                                    1912, 1574,  778, 1872, 1935, 1568, 1175,  881,  728, 1802, 1476, 1810, 1447,  133,  705,  559,  181,   51, 1797, 1652,
                                     569,  817, 1755, 1069,  300, 1420,  980,  145,  161, 1066,  602,  954,  495, 1430, 1030,  798,   39, 1261,  382, 1018,
                                     157,  660,  890,  920,   67,  404,   68,   13,  510,  169,  761, 1789,  314, 1226,  520,  121,  837,  930, 1813,  331,
@@ -257,7 +257,7 @@ const __OPTCONFIG = {
                                      82,   75,  902, 1822, 1190, 1181, 1110,  394, 1209,  545,  610,  667,  346,  779, 1821,  376, 1292,  878,  836,/#1150#/
                                    1576,  137,  352, 1238, 1360, 1352,  595, 1396,  373, 1820,  820,  763,  170,  419, 1224, 1787,  307,  463, 1186,  436,
                                    1659, 1203,  172, 1842,  859, 1275,  322, 1197,   16,   21,  455 ],
-                                [ undefined, // ZAT 11
+                                 [ undefined, // S12, ZAT 11
                                    1912, 1574, 778,/#1872#/1935, 1568,  728,  881, 1175, 1802, 1476, 1810, 1447,  133,  705,  559,  181,   51, 1797, 1652,
                                     569,  817, 1755, 1069,  300, 1420,  980,  145,  161, 1066,  602,  920,  660, 1430, 1030,  798,   68,  404,  382, 1018,
                                     157,  495,  890,  954,   67, 1261,   39,  121,  510,  169,  761, 1789,  314, 1226,  520,   13,  837,  930, 1813,  331,
@@ -268,7 +268,7 @@ const __OPTCONFIG = {
                                      75,  902, 1822,  38,/#1181#/1110,  394, 1209,  545,  610,  836,  346,  779, 1821,  376, 1292,  878,  667, 1576,  137,
                                     352, 1238, 1360, 1352,  595,/#1396#/373, 1820,  820,  763,  170,  419, 1224, 1787,  307,  463, 1186,  436, 1659, 1203,
                                     172, 1842,  859, 1275,  322, 1197,   16,   21,  455, 1076, 1825,  563, 1527, 1554, 1177, 1843 ],
-                                [ undefined, // ZAT 12
+                                 [ undefined, // S12, ZAT 12
                                    1912, 1568,  778, 1935, 1574,  728,  881, 1175, 1802, 1476, 1810, 1447,  133,  705,  559,  181,   51, 1797, 1652,  569,
                                     817,  798,  920,  602, 1420,  980,  145,  161, 1066,  300, 1069,  660, 1430, 1030, 1755,   68,  404,  382, 1018,  510,
                                     761,  890,  954,   67,  930,   39,  121,  157,  331,  495, 1923,  314, 1226,  520,   13, 1813, 1261,  837,  169, 1858,
@@ -279,7 +279,7 @@ const __OPTCONFIG = {
                                      38, 1110,  394, 1209,  545,  610,  836,  346,  779, 1821,  376, 1292,  878,  667, 1576,  137,  352, 1238, 1360, 1352,
                                     595,  373, 1820,  820,  763,  902, 1842, 1224,/#463#/ 307, 1787, 1186,  436, 1659, 1203,  172,  419,  859, 1275,  322,
                                    1197, 1843,   21,  455, 1076, 1825,  563, 1527, 1554, 1177,   16,  977, 1204 ],
-                                [ undefined, // ZAT 13 ???
+                                 [ undefined, // S12, ZAT 13 ???
                                    1912, 1574,  778, 1935, 1568,  728,  881, 1175, 1802, 1476, 1810, 1447,  133,  705,  559,  181,   51, 1797, 1652,  569,
                                     817, 1755, 1069,  300, 1420,  980,  145,  161, 1066,  602,  920,  660, 1430, 1030,  798,   68,  404,  382, 1018,  157,
                                     495,  890,  954,   67, 1261,   39,  121,  510,  169,  761, 1789,  314, 1226,  520,   13,  837,  930, 1813,  331, 1858,
@@ -290,7 +290,7 @@ const __OPTCONFIG = {
                                      38, 1110,  394, 1209,  545,  610,  836,  346,  779, 1821,  376, 1292,  878,  667, 1576,  137,  352, 1238, 1360, 1352,
                                     595,  373, 1820,  820,  763,  170,  419, 1224, 1787,  307,  463, 1186,  436, 1659, 1203,  172, 1842,  859, 1275,  322,
                                    1197,   16,   21,  455, 1076, 1825,  563, 1527, 1554, 1177, 1843 ],
-                                [ undefined, // ZAT 13 Fehler 61 - 85
+                                 [ undefined, // S12, ZAT 13 Fehler 61 - 85
                                     778, 1568, 1912, 1935, 1574,  728,  881, 1175, 1802, 1476, 1810,   51,  133,  705,  559,  817, 1447,  980, 1652,  569,
                                     181,  798,  920,  602, 1420, 1797,  145,  954, 1066,  300, 1069,  660, 1430, 1030, 1755,   68,  404,  382, 1018,  510,
                                     761,  890,  161,   67,  930,   39,  121,  157,  331,  495, 1923,  314, 1226,  520,   13, 1813, 1261,  837,  169,  327,
@@ -301,7 +301,7 @@ const __OPTCONFIG = {
                                    1821, 1110, 1818, 1209,  545,  610,  836,  346,  779,   38,  376, 1197,  878, 1663, 1576,  137,  352, 1238, 1360, 1352,
                                     595,  373, 1820,  820,  763,  902, 1842, 1224,  307, 1787, 1186,  436, 1659, 1203,  172,  419,  859, 1275,  322, 1292,
                                    1843,   21, 1076,  455, 1825,  563, 1527, 1554, 1177,   16,  977, 1204, 1168, 1872,  693, 1086 ],
-                                [ undefined, // ZAT 13 - 14
+                                 [ undefined, // S12, ZAT 13 - 14
                                     778, 1568, 1912, 1935, 1574,  728,  881, 1175, 1802, 1476, 1810,   51,  133,  705,  559,  817, 1447,  980, 1652,  569,
                                     181,  798,  920,  602, 1420, 1797,  145,  954, 1066,  300, 1069,  660, 1430, 1030, 1755,   68,  404,  382, 1018,  510,
                                     761,  890,  161,   67,  930,   39,  121,  157,  331,  495, 1923,  314, 1226,  520,   13, 1813, 1261,  837,  169,  327,
@@ -313,7 +313,7 @@ const __OPTCONFIG = {
                                     595,  373, 1820,  820,  763,  902, 1842, 1224,  307, 1787, 1186,  436, 1659, 1203,  172,  419,  859, 1275,  322, 1292,
                                    1843,   21, 1076,  455, 1825,  563, 1527, 1554, 1177,   16,  977, 1204, 1168, 1872,  693, 1086 ],
                              */
-                                [ undefined, // ZAT 15
+                                 [ undefined, // S12, ZAT 15
                                     778, 1568, 1912, 1935, 1574,  728,  881, 1175, 1802, 1476, 1810,   51,  133,  705,  559,  817, 1447,  980, 1652,  569,
                                     181,  798,  920,  602, 1420, 1797,  145,  954, 1066,  300, 1069,  660, 1430, 1030, 1755,   68,  404,  382, 1018,  510,
                                     761,  890,  161,   67,  930,   39,  121,  157,  331,  495, 1923,  314, 1226,  520,   13, 1813, 1261,  837,  169,  327,
@@ -327,7 +327,7 @@ const __OPTCONFIG = {
                    'Submit'    : undefined,
                    'Cols'      : 36,
                    'Rows'      : 20,
-                   'Replace'   : null,
+                   'Replace'   : replaceArrayFun(padStartFun(4)),
                    'Space'     : 0,
                    'Label'     : "Alte Platz-IDs:"
                },
@@ -359,7 +359,7 @@ const __OPTCONFIG = {
                    'Rows'      : 20,
                    'Replace'   : null,
                    'Space'     : 0,
-                   'Label'     : "Pl\xE4tze:"
+                   'Label'     : "Pl\u00E4tze:"
                },
     'teamIds' : {         // Datenspeicher fuer aktuelle Team-IDs der Teams nach Namen
                    'Name'      : "teamIds",
@@ -430,6 +430,7 @@ const __OPTCONFIG = {
                    'FormPrio'  : undefined,
                    'Name'      : "oldStorage",
                    'Type'      : __OPTTYPES.SD,
+                   'ValType'   : 'String',
                    'PreInit'   : true,
                    'AutoReset' : true,
                    'Hidden'    : true
@@ -445,7 +446,7 @@ const __OPTCONFIG = {
                    'Action'    : __OPTACTION.NXT,
                    'Label'     : "Optionen anzeigen",
                    'Hotkey'    : 'O',
-                   'AltTitle'  : "$V schlie\xDFen",
+                   'AltTitle'  : "$V schlie\u00DFen",
                    'AltLabel'  : "Optionen verbergen",
                    'AltHotkey' : 'O',
                    'FormLabel' : ""
@@ -3501,16 +3502,16 @@ const __TEAMCLASS = new TeamClassification();
 
 // Optionen mit Daten, die ZAT- und Team-bezogen gemerkt werden...
 __TEAMCLASS.optSelect = {
-                       'datenZat'     : true,
-                       'oldDatenZat'  : true,
-                       'rankIds'      : true,
-                       'oldRankIds'   : true,
-                       'challIds'     : true,
-                       'teamRanks'    : true,
-                       'teamIds'      : true,
-                       'teamNames'    : true,
-                       'gegner'       : true
-                   };
+        'datenZat'     : true,
+        'oldDatenZat'  : true,
+        'rankIds'      : true,
+        'oldRankIds'   : true,
+        'challIds'     : true,
+        'teamRanks'    : true,
+        'teamIds'      : true,
+        'teamNames'    : true,
+        'gegner'       : true
+    };
 
 // Gibt die Teamdaten zurueck und aktualisiert sie ggfs. in der Option
 // optSet: Platz fuer die gesetzten Optionen
@@ -3920,7 +3921,7 @@ function calcRanksFromTable(table, optSet) {
         __TEAMNAMES[__TEAMID] = __TEAMNAME;
     }
 
-    const __TEAMRANKS = reverseMapping(__RANKIDS, x => Number(x));
+    const __TEAMRANKS = reverseMapping(__RANKIDS, Number);
 
     // Neuen Rangliste speichern...
     setOpt(optSet.rankIds, __RANKIDS, false);
@@ -3935,7 +3936,7 @@ function calcRanksFromTable(table, optSet) {
 function calcChallengesFromHTML(page, optSet) {
     const __OLISTS = page.getElementsByTagName('ol');
 
-    if (__OLISTS && (__OLISTS.length == 3)) {
+    if (__OLISTS && (__OLISTS.length === 3)) {
         const __CHALLENGES = __OLISTS[0];
         const __CHALLBOXES = __CHALLENGES.getElementsByTagName('span');
         const __CHALLIDS = [];
@@ -3949,7 +3950,7 @@ function calcChallengesFromHTML(page, optSet) {
             __CHALLIDS.push(__TEAMID);
         }
 
-        __LOG[4](__CHALLIDS);
+        __LOG[7](__CHALLIDS);
 
         if (__CHALLIDS.length) {
             // Neuen Forderungsliste speichern...
@@ -3988,7 +3989,7 @@ function formatRankBox(box, color, bgColor, substRank) {
     if (substRank) {
         const __HTML = box.innerHTML;
 
-        box.innerHTML = __HTML.replace(/<b>(\d+)\.<\/b>/, "<b>" + substRank + "<\/b>");
+        box.innerHTML = __HTML.replace(/<b>(\d+)\.<\/b>/, "<B>" + substRank + "<\/B>");
     }
     if (bgColor) {
         box.style.backgroundColor = bgColor;
@@ -4068,7 +4069,7 @@ function markTeam(table, optSet, teamName, gegnerName) {
 
             //if (__CHALLIDS.some(x => (x === __RANKID))) {
             for (let challId of __CHALLIDS) {
-                if (challId == __RANKID) {
+                if (challId == __RANKID) {  // schwacher Vergleich
                     formatRankBox(team, undefined, 'grey');
                 }
             }
@@ -4081,13 +4082,13 @@ function markTeam(table, optSet, teamName, gegnerName) {
 // ==================== Erzeugung von Testdaten ====================
 
 function testItemAppend(node, platz, id, name) {
-    const __LI = document.createElement('li');
-    const __SPAN = document.createElement('span');
-    const __B = document.createElement('b');
-    const __BR1 = document.createElement('br');
-    const __BR2 = document.createElement('br');
-    const __A1 = document.createElement('a');
-    const __A2 = document.createElement('a');
+    const __LI = document.createElement('LI');
+    const __SPAN = document.createElement('SPAN');
+    const __B = document.createElement('B');
+    const __BR1 = document.createElement('BR');
+    const __BR2 = document.createElement('BR');
+    const __A1 = document.createElement('A');
+    const __A2 = document.createElement('A');
 
     __B.append(platz + '.');
 
@@ -4097,7 +4098,7 @@ function testItemAppend(node, platz, id, name) {
 
     __A2.className = "MINUS";
     __A2.href = "https://os.ongapo.com/fssturnier.php?cancelforderung=" + id + "#d";
-    __A2.append("Forderung zur\xFCcknehmen");
+    __A2.append("Forderung zur\u00FCcknehmen");
 
     __SPAN.className = "fsst_team";
     __SPAN.append(__B, __BR1, __A1, __BR2, __A2);
@@ -4108,17 +4109,17 @@ function testItemAppend(node, platz, id, name) {
 }
 
 function testInsertBefore1(node, before) {
-    const __OL = document.createElement('ol');
+    const __OL = document.createElement('OL');
 
     testItemAppend(__OL, 56, 404, "Drovno Siroki Brijeg");
     testItemAppend(__OL, 58, 1933, "Dynamo Astrakhan");
-    testItemAppend(__OL, 57, 1226, "Blo-W\xE4iss Lintgen");
+    testItemAppend(__OL, 57, 1226, "Blo-W\u00E4iss Lintgen");
 
     node.insertBefore(__OL, before);
 }
 
 function testInsertBefore2(node, before) {
-    const __OL = document.createElement('ol');
+    const __OL = document.createElement('OL');
 
     testItemAppend(__OL, 79, 381, "Schleswig Kiel");
     testItemAppend(__OL, 83, 1323, "Atletico Coimbra");

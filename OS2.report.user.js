@@ -18,13 +18,13 @@
 // Variablen zur Identifikation der Seite
 
 var url = window.location.href;
-var osBlau = "#111166";
-var osOrange = "#FF9900";
-var osNeutral = "#FF0000";
-var osNormal = "#FFFFFF";
-var osHome = "#33FF33";
-var osAway = "#3377FF";
-var borderString = "solid white 1px";
+var osBlau = '#111166';
+var osOrange = '#FF9900';
+var osNeutral = '#FF0000';
+var osNormal = '#FFFFFF';
+var osHome = '#33FF33';
+var osAway = '#3377FF';
+var borderString = 'solid white 1px';
 
 var prec = 1;
 var prec0 = 0;
@@ -42,31 +42,31 @@ var labelTaktik = "Taktik";
 
 // 17 Spielernamen in der taktischen Aufstellung
 var dataTaktikName = new Array(new Array(), new Array());
-var labelTaktikName = new Array("A", "B", "C", "D", "E", "F", "G", "H", "K", "L", "T", "U", "V", "W", "X", "Y", "Z");
+var labelTaktikName = new Array('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'K', 'L', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z');
 
-// Einsatz, Härte, Spielweise, Taktik-STU, Taktik-MIT, Taktik-ABW
+// Einsatz, Haerte, Spielweise, Taktik-STU, Taktik-MIT, Taktik-ABW
 var dataEinstellung = new Array(new Array(), new Array());
-var labelEinstellung = new Array("Einsatz", "Härte", "Spielweise", "Taktik - Sturm", "Taktik - Mittelfeld", "Taktik - Abwehr");
+var labelEinstellung = new Array("Einsatz", "H\u00E4rte", "Spielweise", "Taktik - Sturm", "Taktik - Mittelfeld", "Taktik - Abwehr");
 
-// Endstand, Abseits, Eckenverhältnis, Fouls, Elfmeter, Ballbesitz, Schnitt Skill, Schnitt Opt.Skill, Fitness, Moral
+// Endstand, Abseits, Eckenverhaeltnis, Fouls, Elfmeter, Ballbesitz, Schnitt Skill, Schnitt Opt.Skill, Fitness, Moral
 var dataStats = new Array(new Array(), new Array());
-var labelStats = new Array("Endstand", "Abseits", "Eckenverhältnis", "Fouls", "Elfmeter", "Ballbesitz", "Schnitt Skill", "Schnitt Opt.Skill", "Fitness", "Moral");
+var labelStats = new Array("Endstand", "Abseits", "Eckenverh\u00E4ltnis", "Fouls", "Elfmeter", "Ballbesitz", "Schnitt Skill", "Schnitt Opt.Skill", "Fitness", "Moral");
 
 // Ges., 1. Hz., 2. Hz., Verl., Elfmeterschiessen
 var dataTor = new Array(new Array(), new Array());
-var labelTor = new Array("Ergebnis", "1. Halbzeit", "2. Halbzeit", "Verlängerung", "Elfmeterschießen");
+var labelTor = new Array("Ergebnis", "1. Halbzeit", "2. Halbzeit", "Verl\u00E4ngerung", "Elfmeterschie\u00DFen");
 
 // Ballkontakt, dir.FS, indir.FS, Ecke, Elfer, Elferdrin, Schuss, Kopfball, Torchance, Latte, Pfosten, Torschuss, Treffer, Alu, 100%
 var dataChance = new Array(new Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0), new Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0));
-var labelChance = new Array("Ballkontakte", "direkte Freistöße", "indirekte Freistöße", "Eckbälle", "Elfmeter", "Elfmetertreffer", "Schüsse", "Kopfbälle", "Torchancen", "Lattentreffer", "Pfostentreffer", "Schüsse aufs Tor", "Feldtore", "Alutreffer", "Hundertprozentige");
+var labelChance = new Array("Ballkontakte", "direkte Freist\u00F6\u00DFe", "indirekte Freist\u00F6\u00DFe", "Eckb\u00E4lle", "Elfmeter", "Elfmetertreffer", "Sch\u00FCsse", "Kopfb\u00E4lle", "Torchancen", "Lattentreffer", "Pfostentreffer", "Sch\u00FCsse aufs Tor", "Feldtore", "Alutreffer", "Hundertprozentige");
 
-var divTags = document.getElementsByTagName("div");
+var divTags = document.getElementsByTagName('DIV');
 var titleDiv = divTags[0];
 var beforeDiv = divTags[1];
 
 var titleText = titleDiv.childNodes.item(0).textContent;
 var spielArt = titleText.substring(titleText.indexOf("Spielart : ") + 11);
-var posEnd = spielArt.indexOf(" ");
+var posEnd = spielArt.indexOf(' ');
 if (posEnd < 0) {
     posEnd = spielArt.length;
 }
@@ -87,7 +87,7 @@ function parseReport() {
     phasePStatistik = 7;
     phaseEnde = 8;
 
-    var tdTags = document.getElementsByTagName("td");   // Liste aller "td"-Tags
+    var tdTags = document.getElementsByTagName('TD');   // Liste aller 'td'-Tags
     var startInd = new Array();
     var stopInd = new Array();
     var phase = phaseStart;
@@ -115,9 +115,9 @@ function parseReport() {
             first = item.textContent;
         }
         if ((item != null) && (item instanceof HTMLElement)) {
-            cls = item.getAttribute("class");   // "H", "G", "color:orange"
+            cls = item.getAttribute('class');   // 'H', 'G', 'color:orange'
             if (cls == null) {
-                cls = "null";
+                cls = 'null';
             }
         }
 
@@ -138,7 +138,7 @@ function parseReport() {
             if (ofs >= 16 * 25 + 6) {   // 16 Zeilen a 25 (erste 24) + T + T
                 endPhase = true;
             } else if ((zeile == 0) || (zeile == 16) || (spalte == 0) || (spalte == 12) || (spalte == 24)) {
-                // Labels (Spalten, Zeilen) und Torhüter
+                // Labels (Spalten, Zeilen) und Torhueter
             } else if (first != "") {
                 var reihe = ((15 - zeile) / 5 + 0.5).toFixed(prec0) - 1;
                 off = (spalte < 12) ? 0 : 1;
@@ -158,7 +158,7 @@ function parseReport() {
         } else if (phase == phaseEinstellung) {
             var ofs = tdInd - startInd[phase];
             var spalte = ofs % 4;
-            if (ofs >= 7 * 4) { // 1 Überschrift und 6 Zeilen
+            if (ofs >= 7 * 4) { // 1 Ueberschrift und 6 Zeilen
                 endPhase = true;
             } else if ((ofs >= 4) && (spalte % 2 == 1)) {
                 off = (spalte < 2) ? 0 : 1;
@@ -173,7 +173,7 @@ function parseReport() {
             var isDrin = false;
 
             if (cls.length == 1) {
-                off = (cls == "H") ? 0 : 1; // Offensivaktion von Heim / Gast
+                off = (cls == 'H') ? 0 : 1; // Offensivaktion von Heim / Gast
                 if (hz > 0) {
                     dataChance[off][0]++;
                 }
@@ -184,13 +184,13 @@ function parseReport() {
             if (prefix == "Ecke") {
                 isEcke = true;
             }
-            if ((first == "Anpfiff") || (first == "Halbzeit") || (first == "Verlängerung") || (first == "Elfmeterschiessen")) {
+            if ((first == "Anpfiff") || (first == "Halbzeit") || (first == "Verl\u00E4ngerung") || (first == "Elfmeterschiessen")) {
                 hz++;
                 dataTor[0].push(0);
                 dataTor[1].push(0);
             } else if (first == "Abpfiff") {
                 endPhase = true;
-            } else if (first == "Heimteam") {   // das "Abpfiff" fehlt beim Elfmeterschießen
+            } else if (first == "Heimteam") {   // das "Abpfiff" fehlt beim Elfmeterschiessen
                 endPhase = true;
             } else if (first.indexOf("Neuer Spielstand:") == 0) {
                 dataTor[off][hz]++;
@@ -211,9 +211,9 @@ function parseReport() {
                     dataChance[off][14]++;
                 }
 
-                if ((text.indexOf("schiesst") > -1) || (text.indexOf("Schuss von") > -1) || (text.indexOf("schuß von") > -1) /***|| (text.indexOf("kommt zum Schuss") > -1)***/ || (text.indexOf("Flatterball von") > -1) || (text.indexOf("Schlenzer von") > -1)) {
+                if ((text.indexOf("schiesst") > -1) || (text.indexOf("Schuss von") > -1) || (text.indexOf("schu\u00DF von") > -1) /***|| (text.indexOf("kommt zum Schuss") > -1)***/ || (text.indexOf("Flatterball von") > -1) || (text.indexOf("Schlenzer von") > -1)) {
                     isSchuss = true;
-                } else if ((text.indexOf("köpft mit") > -1) || (text.indexOf("Kopfball von") > -1) || (text.indexOf("kommt zum Kopfball") > -1)) {
+                } else if ((text.indexOf("k\u00F6pft mit") > -1) || (text.indexOf("Kopfball von") > -1) || (text.indexOf("kommt zum Kopfball") > -1)) {
                     isKopf = true;
                 }
 
@@ -236,7 +236,7 @@ function parseReport() {
         } else if (phase == phaseGStatistik) {
             var ofs = tdInd - startInd[phase];
             var spalte = ofs % 4;
-            if (ofs >= 11 * 4) {    // 1 Überschrift und 6 Zeilen
+            if (ofs >= 11 * 4) {    // 1 Ueberschrift und 6 Zeilen
                 endPhase = true;
             } else if ((ofs >= 4) && (spalte % 2 == 1)) {
                 off = (spalte < 2) ? 0 : 1;
@@ -257,7 +257,7 @@ function parseReport() {
                 nextPhase = phase + 1;
             }
         } else {
-//          dataName[1] += " " + tdInd + "=" + first;
+//          dataName[1] += ' ' + tdInd + '=' + first;
         }
         if (nextPhase != phase) {
             var ok = false;
@@ -267,22 +267,22 @@ function parseReport() {
             items = null;
 
             if (nextPhase == phaseTaktik) {
-                if (first == "1") { // Zeile "  1 2 3 ..."
+                if (first == '1') { // Zeile "  1 2 3 ..."
                     ok = true;
                     tdInd--;
                 }
             } else if (nextPhase == phaseSpieler) {
-                if (first == "A") { // Zeile "A <name> ..."
+                if (first == 'A') { // Zeile "A <name> ..."
                     ok = true;
                 }
             } else if (nextPhase == phaseEinstellung) {
-                if (first == "Heimteam") {  // Zeile "  Heimteam Auswärtsteam"
+                if (first == "Heimteam") {  // Zeile "  Heimteam Ausw\u00E4rtsteam"
                     ok = true;
                     tdInd--;
                 }
             } else if (nextPhase == phaseBericht) {
                 if (first == "1.") {    // vor "Anpfiff"
-                    hz = dataTor[0].length; // 0, falls vorher korrekt gelöscht!
+                    hz = dataTor[0].length; // 0, falls vorher korrekt geloescht!
 
                     dataTor[0].push(0);
                     dataTor[1].push(0);
@@ -290,7 +290,7 @@ function parseReport() {
                     ok = true;
                 }
             } else if (nextPhase == phaseGStatistik) {
-                if (first == "Heimteam") {  // Zeile "  Heimteam Auswärtsteam"
+                if (first == "Heimteam") {  // Zeile "  Heimteam Auswaertsteam"
                     ok = true;
                     tdInd--;
                 }
@@ -321,12 +321,12 @@ function parseReport() {
     var pos = url.indexOf("/rep/");
     if (pos > -1) {
         var baseURL = url.substring(0, pos);
-        pos = url.lastIndexOf("/");
-        var pos2 = url.indexOf("-", pos);
+        pos = url.lastIndexOf('/');
+        var pos2 = url.indexOf('-', pos);
         dataNameURL.push("<a href=\"" + baseURL + "/st.php?c=" + url.substring(pos + 1, pos2) + "\">" + dataName[0] + "</a>");
 //      dataNameURL.push("<a href=\"javascript:teaminfo(" + url.substring(pos + 1, pos2) + ");\">" + dataName[0] + "</a>");
         pos = pos2;
-        pos2 = url.indexOf(".", pos);
+        pos2 = url.indexOf('.', pos);
         dataNameURL.push("<a href=\"" + baseURL + "/st.php?c=" + url.substring(pos + 1, pos2) + "\">" + dataName[1] + "</a>");
 //      dataNameURL.push("<a href=\"javascript:teaminfo(" + url.substring(pos + 1, pos2) + ");\">" + dataName[1] + "</a>");
     }
@@ -334,41 +334,41 @@ function parseReport() {
 /***
     for (var i = 0; i < startInd.length; i++) {
         if (stopInd[i] != startInd[i] - 1) {
-            dataName[1] += " " + i + "[" + startInd[i] + "-" + stopInd[i] + "]";
+            dataName[1] += ' ' + i + '[' + startInd[i] + '-' + stopInd[i] + ']';
         }
     }
     for (var off = 0; off < 2; off++) {
-        dataName[0] += " " + dataTaktik[off][0] + "-" + dataTaktik[off][1] + "-" + dataTaktik[off][2];
+        dataName[0] += ' ' + dataTaktik[off][0] + '-' + dataTaktik[off][1] + '-' + dataTaktik[off][2];
         for (var i = 0; i < dataTaktikZeile[off].length; i++) {
-            dataName[0] += " " + i + "[" + dataTaktikZeile[off][i] + "-" + dataTaktikSpalte[off][i] + "]";
+            dataName[0] += ' ' + i + '[' + dataTaktikZeile[off][i] + '-' + dataTaktikSpalte[off][i] + ']';
         }
     }
     for (var off = 0; off < 2; off++) {
         for (var i = 0; i < dataTaktikName[off].length; i++) {
-            dataName[0] += " " + i + "[" + dataTaktikName[off][i] + "]";
+            dataName[0] += ' ' + i + '[' + dataTaktikName[off][i] + ']';
         }
     }
     for (var off = 0; off < 2; off++) {
         for (var i = 0; i < dataEinstellung[off].length; i++) {
-            dataName[0] += " " + i + "[" + dataEinstellung[off][i] + "]";
+            dataName[0] += ' ' + i + '[' + dataEinstellung[off][i] + ']';
         }
     }
     for (var off = 0; off < 2; off++) {
         for (var i = 0; i < dataStats[off].length; i++) {
-            dataName[0] += " " + i + "[" + dataStats[off][i] + "]";
+            dataName[0] += ' ' + i + '[' + dataStats[off][i] + ']';
         }
     }
 ***/
 }
 
-// Fügt Übersicht ein
+// Fuegt Uebersicht ein
 function procSummary(beforeNode) {
-    var div = document.createElement("div");
-    var br = document.createElement("br");
-    var table = document.createElement("table");
-    var body = document.createElement("tbody");
+    var div = document.createElement('DIV');
+    var br = document.createElement('BR');
+    var table = document.createElement('TABLE');
+    var body = document.createElement('TBODY');
     table.appendChild(body);
-    table.setAttribute("ID", "summary");
+    table.setAttribute('ID', 'summary');
     div.appendChild(br);
     div.appendChild(table);
 
@@ -378,7 +378,7 @@ function procSummary(beforeNode) {
     color = osOrange;
     appendCell(row, "", color);
     appendCell(row, "Heimteam", color);
-    appendCell(row, "Auswärtsteam", color);
+    appendCell(row, "Ausw\u00E4rtsteam", color);
 
     appendRow(table, spielArt, dataName[0], dataName[1], 0);
 /***
@@ -390,8 +390,8 @@ function procSummary(beforeNode) {
     appendRows(table, labelStats, dataStats, 0, 1);
     appendRows(table, labelStats, dataStats, dataStats[0].length - 5, 5);
 
-    appendRow(table, labelTaktik, dataTaktik[0][0] + "-" + dataTaktik[0][1] + "-" + dataTaktik[0][2],
-                    dataTaktik[1][0] + "-" + dataTaktik[1][1] + "-" + dataTaktik[1][2], 0);
+    appendRow(table, labelTaktik, dataTaktik[0][0] + '-' + dataTaktik[0][1] + '-' + dataTaktik[0][2],
+                    dataTaktik[1][0] + '-' + dataTaktik[1][1] + '-' + dataTaktik[1][2], 0);
 
     appendRows(table, labelEinstellung, dataEinstellung, 0, 2);
 
@@ -406,23 +406,23 @@ function procSummary(beforeNode) {
 // Fuegt eine Zelle ans Ende der uebergebenen Zeile hinzu und fuellt sie
 // row: Zeile, die verlaengert wird
 // content: Textinhalt der neuen Zelle
-// color: Schriftfarbe der neuen Zelle (z.B. "#FFFFFF" fuer weiss)
+// color: Schriftfarbe der neuen Zelle (z.B. '#FFFFFF' fuer weiss)
 // Bei Aufruf ohne Farbe wird die Standardfarbe benutzt
 function appendCell(row, content, color) {
     row.insertCell(-1);
     var colIdx = row.cells.length - 1;
     row.cells[colIdx].textContent = content;
-    row.cells[colIdx].align = "center";
+    row.cells[colIdx].align = 'center';
     row.cells[colIdx].style.color = color;
 }
 
 // Fuegt eine Zeile ans Ende der Tabelle hinzu und fuellt sie
 // table: Tabelle, die verlaengert wird
 // cat: Textinhalt des Labels der neuen Zeile
-// home: Inhalt für das Heimteam
-// away: Inhalt für das Auswärtsteam
+// home: Inhalt fuer das Heimteam
+// away: Inhalt fuer das Auswaertsteam
 // comp: Ergebnis des Vergleichs (bestimmt die Farbe des Label-Textes)
-// Es wird die Heim-/Auswärtsfarbe genutzt bzw. die Standardfarbe bei Gleichheit
+// Es wird die Heim-/Auswaertsfarbe genutzt bzw. die Standardfarbe bei Gleichheit
 function appendRow(table, cat, home, away, comp) {
     var row = table.insertRow(-1);
     var color = (comp < 0) ? osAway : (comp > 0) ? osHome : osNormal;
@@ -434,17 +434,17 @@ function appendRow(table, cat, home, away, comp) {
 // Fuegt eine Zeile ans Ende der Tabelle hinzu und fuellt sie mit ganzen Zahlwerten
 // table: Tabelle, die verlaengert wird
 // cat: Textinhalt des Labels der neuen Zeile
-// home: Ganzzahl für das Heimteam
-// away: Ganzzahl für das Auswärtsteam
+// home: Ganzzahl fuer das Heimteam
+// away: Ganzzahl fuer das Auswaertsteam
 function appendRowInteger(table, cat, home, away) {
     appendRow(table, cat, home.toFixed(prec0), away.toFixed(prec0), home - away);
 }
 
-// Fuegt eine Zeile ans Ende der Tabelle hinzu und fuellt sie mit Dezimalbrüchen
+// Fuegt eine Zeile ans Ende der Tabelle hinzu und fuellt sie mit Dezimalbruechen
 // table: Tabelle, die verlaengert wird
 // cat: Textinhalt des Labels der neuen Zeile
-// home: Dezimalbruch für das Heimteam
-// away: Dezimalbruch für das Auswärtsteam
+// home: Dezimalbruch fuer das Heimteam
+// away: Dezimalbruch fuer das Auswaertsteam
 function appendRowFloat(table, cat, home, away) {
     appendRow(table, cat, home.toFixed(prec2), away.toFixed(prec2), home - away);
 }
@@ -452,7 +452,7 @@ function appendRowFloat(table, cat, home, away) {
 // Fuegt Zeilen ans Ende der Tabelle hinzu und fuellt sie mit Werten
 // table: Tabelle, die verlaengert wird
 // label: Array mit Labeltexten
-// data: doppeltes Array mit Werten (jeweils Heim/Auswärts)
+// data: doppeltes Array mit Werten (jeweils Heim/Auswaerts)
 // ind: Startindex in den Daten
 // len: Anzahl der aufeinander folgenden Werte (Zeilen)
 function appendRows(table, label, data, ind, len) {
@@ -465,7 +465,7 @@ function appendRows(table, label, data, ind, len) {
 // Fuegt Zeilen ans Ende der Tabelle hinzu und fuellt sie mit ganzen Zahlwerten
 // table: Tabelle, die verlaengert wird
 // label: Array mit Labeltexten
-// data: doppeltes Array mit Zahlwerten (jeweils Heim/Auswärts)
+// data: doppeltes Array mit Zahlwerten (jeweils Heim/Auswaerts)
 // ind: Startindex in den Daten
 // len: Anzahl der aufeinander folgenden Werte (Zeilen)
 // showZero: Angabe, ob Zeile angezeigt werden soll, wenn beide Werte 0 sind

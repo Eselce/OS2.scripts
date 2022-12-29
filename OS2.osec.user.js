@@ -194,7 +194,7 @@ function procContent(beforeNode, teams) {
     appendCell(rowResults, "Heim", color);
     appendCell(rowResults, "(H)", color);
     appendCell(rowResults, "(A)", color);
-    appendCell(rowResults, "Ausw\xE4rts", color);
+    appendCell(rowResults, "Ausw\u00E4rts", color);
     appendCell(rowResults, "-", color);
     appendCell(rowResults, "HH", color);
     appendCell(rowResults, "AH", color);

@@ -29,7 +29,7 @@ gruppen.SCH = [/e eck/i, / link/i, / recht/i, /richtung/i, /aufs Tor/i, /kopfbal
 gruppen.Erfolg_l_TB = [/Keeper/i, /ABSEITS/i, /gefahrenzone/i, /der Ball/i, /kann den Ball/i, /Bein in/i, /streckt/i]; // TB ueberpruefen
 
 var kopfz = [ "ZWKo", "ZWKo %","ZWKd", "ZWKd %","Pass", "P\u00E4sse %","Ansp."]; //der Tabelle berichtsstatistik
-var kategorien = [ "Z_o_v", "Z_d_g","P_e", "P_f","Ansp_e", "Ansp_f","Sch_e","Sch_f"]; //zu zaehlende Elemente
+var kategorien = [ 'Z_o_v', 'Z_d_g','P_e', 'P_f','Ansp_e', 'Ansp_f','Sch_e','Sch_f']; //zu zaehlende Elemente
 
 function regexsuche (begriff) {
     var ergebnis = false;
@@ -52,16 +52,16 @@ function regexsuche (begriff) {
 }
 
 function tabelleneu () {
-    var node = document.getElementsByTagName("table")[4];
-    node.parentNode.insertBefore(document.createElement("div"), node.nextSibling );
-    var node1 = document.getElementsByTagName("div")[6];
-    node1.innerHTML = "<br><br><b>Es folgen die Berichtsstatistiken</b><br><br>";
-    node1.parentNode.insertBefore(document.createElement("table"), node1.nextSibling );
-    var node2 = document.getElementsByTagName("table")[5];
+    var node = document.getElementsByTagName('TABLE')[4];
+    node.parentNode.insertBefore(document.createElement('DIV'), node.nextSibling );
+    var node1 = document.getElementsByTagName('DIV')[6];
+    node1.innerHTML = "<BR><BR><B>Es folgen die Berichtsstatistiken</B><BR><BR>";
+    node1.parentNode.insertBefore(document.createElement('TABLE'), node1.nextSibling );
+    var node2 = document.getElementsByTagName('TABLE')[5];
     node2.innerHTML = node.innerHTML;
-    node2.setAttribute("cellspacing", 2);
-    node2.setAttribute("cellpadding", 2);
-    node2.setAttribute("border", 0);
+    node2.setAttribute('cellspacing', 2);
+    node2.setAttribute('cellpadding', 2);
+    node2.setAttribute('border', 0);
 
     for (var i = 0; i < kopfz.length; i++) {
         node2.rows[0].cells[i+1].textContent = kopfz[i];
@@ -74,18 +74,18 @@ function tabelleneu () {
 }
 
 function textbausteine(){
-    var spielernamen = ["A", "B"];
+    var spielernamen = ['A', 'B'];
     var l;     // Heimteam/Gastteam
 
     for (var j = 0; j < spielbericht.rows.length; j++) {     //Zeilen des Spielberichts
         var ergebnis = regexsuche(spielbericht.rows[j].cells[1]);
         var folgezeile = ((j + 1) < spielbericht.rows.length);     // Kann der Inhalt der Folgezeile analysiert werden?
-        spielerakt[j] = ["", "a"];
+        spielerakt[j] = ["", 'a'];
         ereignis[j] = ["", 0];
         if (ergebnis !== "") {  //SCH, PASS, ZWK_ov registriert
             inflateRow(spielbericht.rows[j], 3);          //.........................................................Spalten neben Bericht einfuegen
 
-            spielernamen = spielbericht.rows[j].getElementsByTagName ("b");
+            spielernamen = spielbericht.rows[j].getElementsByTagName ('B');
 
             for (var i = 0; i < Math.min(2, spielernamen.length); i++) { // aktiven und passiven Spieler feststellen
                 if ((/erk\u00E4mpft sich den Ball/i).test(spielbericht.rows[j].cells[1].textContent) === true) {
@@ -109,20 +109,20 @@ function textbausteine(){
                     spielerakt[j][0+i] = spielernamen[i].textContent;
                 }
             }
-            if (spielerakt[j][0] === "Freistoss") {
+            if (spielerakt[j][0] === 'Freistoss') {
                 spielerakt[j][0] = spielerakt[j][1];
-                spielerakt[j][1] = "a";
+                spielerakt[j][1] = 'a';
             }
 
             //spielbericht.rows[j].cells[4].textContent = ergebnis;          //.........................................................Aktion neben Bericht einfuegen
             ereignis[j][0] = ergebnis;
 
-            if (ereignis[j][0] === "ZWK_ov") {
-                //spielbericht.rows[j].cells[5].textContent = "0";          //.........................................................Erfolg neben Bericht einfuegen
+            if (ereignis[j][0] === 'ZWK_ov') {
+                //spielbericht.rows[j].cells[5].textContent = '0';          //.........................................................Erfolg neben Bericht einfuegen
                 ereignis[j][1] = 0;
             }
             else {
-                //spielbericht.rows[j].cells[5].textContent = "1";          //.........................................................Erfolg neben Bericht einfuegen
+                //spielbericht.rows[j].cells[5].textContent = '1';          //.........................................................Erfolg neben Bericht einfuegen
                 ereignis[j][1] = 1;
             }
             if ((/TOR/).test(spielbericht.rows[j].cells[1].textContent) === true) { //Erfolgsmeldung zweiter Halbsatz
@@ -130,24 +130,22 @@ function textbausteine(){
             }
             else {
                 if ((/ - /).test(spielbericht.rows[j].cells[1].textContent) === true) { //Misserfolgsmeldung zweiter Halbsatz
-                    //spielbericht.rows[j].cells[5].textContent = "0";          //.........................................................Erfolg neben Bericht einfuegen
+                    //spielbericht.rows[j].cells[5].textContent = '0';          //.........................................................Erfolg neben Bericht einfuegen
                     ereignis[j][1] = 0;
                 }
                 else if (folgezeile && ((/ABSEITS/).test(spielbericht.rows[j+1].cells[1].textContent) === true)) { //Abseits Folgesatz
-                    //spielbericht.rows[j].cells[5].textContent = "0";          //.........................................................Erfolg neben Bericht einfuegen
+                    //spielbericht.rows[j].cells[5].textContent = '0';          //.........................................................Erfolg neben Bericht einfuegen
                     ereignis[j][1] = 0;
                 }
                 else if (folgezeile && ((/ - /).test(spielbericht.rows[j+1].cells[1].textContent) === false)) { //Erfolgsmeldung Folgesatz
                     ergebnis = false;
-                    var x = 0;
-                    var y = 0;
-                    var temp = "Erfolg_l_TB";
+                    var temp = 'Erfolg_l_TB';
                     var suche = "";
-                    for (y = 0; y < gruppen[temp].length; y++) {
+                    for (var y = 0; y < gruppen[temp].length; y++) {
                         suche = gruppen[temp][y];
                         ergebnis = suche.test(spielbericht.rows[j+1].cells[1].textContent);
                         if (ergebnis === true) {
-                            //spielbericht.rows[j].cells[5].textContent = "0";          //.........................................................Erfolg neben Bericht einfuegen
+                            //spielbericht.rows[j].cells[5].textContent = '0';          //.........................................................Erfolg neben Bericht einfuegen
                             ereignis[j][1] = 0;
                             break;
                         }
@@ -173,29 +171,29 @@ function textbausteine(){
                 //__CELL.textContent = ereignis[j][0];  // Ereignis in Spielbericht eintragen
                 switch (ereignis[j][0]) {
                     case 'SCH':
-                        addIcon(__CELL, 'SCH', "schuss", 10);
+                        addIcon(__CELL, 'SCH', 'schuss', 10);
                         break;
                     case 'Pass':
-                        addIcon(__CELL, 'PAS', "pass", 15);
+                        addIcon(__CELL, 'PAS', 'pass', 15);
                         break;
                     case 'ZWK_ov':
-                        addIcon(__CELL, 'ZWK', "zwk", 25);
+                        addIcon(__CELL, 'ZWK', 'zwk', 25);
                         break;
                 }
             }
             else if (ereignis[j][0] === 'SCH') { // Tor weil Erfolg = 1 (else)
-                //__CELL.textContent = "TOR";  // Ereignis in Spielbericht eintragen
-                addIcon(__CELL, 'TOR', "<TOR>", 30); // TOR
+                //__CELL.textContent = 'TOR';  // Ereignis in Spielbericht eintragen
+                addIcon(__CELL, 'TOR', '<TOR>', 30); // TOR
             }
 
-            if (spielbericht.rows[j].cells[0].textContent !== "y") {
-                spielbericht.rows[j].cells[3].style.fontWeight="bold";
+            if (spielbericht.rows[j].cells[0].textContent !== 'y') {
+                spielbericht.rows[j].cells[3].style.fontWeight='bold';
                 if (l === 0) {
-                    spielbericht.rows[j].cells[3].style.color="#33ff33";
+                    spielbericht.rows[j].cells[3].style.color='#33ff33';
                     spielbericht.rows[j].cells[3].textContent=" | ";
                 }
                 else {
-                    spielbericht.rows[j].cells[3].style.color="#3377ff";
+                    spielbericht.rows[j].cells[3].style.color='#3377ff';
                     spielbericht.rows[j].cells[3].textContent=" | ";
                 }
             }
@@ -208,7 +206,7 @@ function berstatistik () {
 
     for (var i = 0; i < spielbericht.rows.length; i++) {  // Berichtszeilen
         switch (ereignis[i][0]) {
-            case "Pass":
+            case 'Pass':
                 for (j = 1; j < tabberstat.rows.length; j++) {  // Spieler
                     if (tabberstat.rows[j].cells[0].textContent === spielerakt[i][0]) {
                         tabberstat.rows[j].cells[5].textContent ++;
@@ -227,7 +225,7 @@ function berstatistik () {
                 }
                 break;
 
-            case "ZWK_ov":
+            case 'ZWK_ov':
                 for (j = 1; j < tabberstat.rows.length; j++) {  // Spieler
                     if (tabberstat.rows[j].cells[0].textContent === spielerakt[i][0]) {
                         tabberstat.rows[j].cells[2].textContent ++;
@@ -244,7 +242,7 @@ function berstatistik () {
                 }
                 break;
 
-            case "SCH":
+            case 'SCH':
                 // Anweisungen werden ausgefuehrt,
                 // falls expression mit valueN uebereinstimmt
                 break;
@@ -263,12 +261,12 @@ function berstatistik () {
         if (tabberstat.rows[j].cells[16].textContent !== ""){tabberstat.rows[j].cells[11].textContent = (tabspielstat.rows[j].cells[13].textContent * (100 - tabspielstat.rows[j].cells[14].textContent) / 100).toFixed(0) - tabberstat.rows[j].cells[10].textContent + tabberstat.rows[j].cells[12].textContent * 1;}
 
         // ZWKo %
-        if (tabberstat.rows[j].cells[1].textContent === "0"){tabberstat.rows[j].cells[2].textContent = (0).toFixed(2);}else if (tabberstat.rows[j].cells[1].textContent === ""){tabberstat.rows[j].cells[2].textContent = "";} else {tabberstat.rows[j].cells[2].textContent = (100 - tabberstat.rows[j].cells[2].textContent / tabberstat.rows[j].cells[1].textContent * 100).toFixed(2);}
-        if (tabberstat.rows[j].cells[9].textContent === "0"){tabberstat.rows[j].cells[10].textContent = (0).toFixed(2);}else if (tabberstat.rows[j].cells[9].textContent === ""){tabberstat.rows[j].cells[10].textContent = "";} else {tabberstat.rows[j].cells[10].textContent = (100 - tabberstat.rows[j].cells[10].textContent / tabberstat.rows[j].cells[9].textContent * 100).toFixed(2);}
+        if (tabberstat.rows[j].cells[1].textContent === '0'){tabberstat.rows[j].cells[2].textContent = (0).toFixed(2);}else if (tabberstat.rows[j].cells[1].textContent === ""){tabberstat.rows[j].cells[2].textContent = "";} else {tabberstat.rows[j].cells[2].textContent = (100 - tabberstat.rows[j].cells[2].textContent / tabberstat.rows[j].cells[1].textContent * 100).toFixed(2);}
+        if (tabberstat.rows[j].cells[9].textContent === '0'){tabberstat.rows[j].cells[10].textContent = (0).toFixed(2);}else if (tabberstat.rows[j].cells[9].textContent === ""){tabberstat.rows[j].cells[10].textContent = "";} else {tabberstat.rows[j].cells[10].textContent = (100 - tabberstat.rows[j].cells[10].textContent / tabberstat.rows[j].cells[9].textContent * 100).toFixed(2);}
 
         // ZWKd %
-        if (tabberstat.rows[j].cells[3].textContent === "0"){tabberstat.rows[j].cells[4].textContent = (0).toFixed(2);}else if (tabberstat.rows[j].cells[3].textContent === ""){tabberstat.rows[j].cells[4].textContent = "";} else {tabberstat.rows[j].cells[4].textContent = (tabberstat.rows[j].cells[4].textContent / tabberstat.rows[j].cells[3].textContent * 100).toFixed(2);}
-        if (tabberstat.rows[j].cells[11].textContent === "0"){tabberstat.rows[j].cells[12].textContent = (0).toFixed(2);}else if (tabberstat.rows[j].cells[11].textContent === ""){tabberstat.rows[j].cells[12].textContent = "";} else {tabberstat.rows[j].cells[12].textContent = (tabberstat.rows[j].cells[12].textContent / tabberstat.rows[j].cells[11].textContent * 100).toFixed(2);}
+        if (tabberstat.rows[j].cells[3].textContent === '0'){tabberstat.rows[j].cells[4].textContent = (0).toFixed(2);}else if (tabberstat.rows[j].cells[3].textContent === ""){tabberstat.rows[j].cells[4].textContent = "";} else {tabberstat.rows[j].cells[4].textContent = (tabberstat.rows[j].cells[4].textContent / tabberstat.rows[j].cells[3].textContent * 100).toFixed(2);}
+        if (tabberstat.rows[j].cells[11].textContent === '0'){tabberstat.rows[j].cells[12].textContent = (0).toFixed(2);}else if (tabberstat.rows[j].cells[11].textContent === ""){tabberstat.rows[j].cells[12].textContent = "";} else {tabberstat.rows[j].cells[12].textContent = (tabberstat.rows[j].cells[12].textContent / tabberstat.rows[j].cells[11].textContent * 100).toFixed(2);}
 
         // Zellen nullen
         if (tabberstat.rows[j].cells[0].textContent !== "") {
@@ -291,27 +289,27 @@ function berstatistik () {
 
 // ==================== Code neu fuer Textbausteine ====================
 
-var spielbericht = document.getElementsByTagName("table")[2];
+var spielbericht = document.getElementsByTagName('TABLE')[2];
 var spielerakt = Array(spielbericht.rows.length); // Beteiligte je Zeile
 var ereignis = Array(spielbericht.rows.length); // Ereignis, Erfolg je Zeile
 
 tabelleneu();
 
-var tabspielstat = document.getElementsByTagName("table")[4];
-var tabberstat = document.getElementsByTagName("table")[5];
+var tabspielstat = document.getElementsByTagName('TABLE')[4];
+var tabberstat = document.getElementsByTagName('TABLE')[5];
 
 textbausteine();
 berstatistik();
 
-window.resizeTo(1100,800);
+window.resizeTo(1100, 800);
 
 console.log("End of script");
 
 // ==================== Ende Code fuer Textbausteine ====================
 
-var borderString = "solid white 1px";
-var playerStatistics = document.getElementsByTagName("table")[4];
-var playerStatistics2 = document.getElementsByTagName("table")[5];
+var borderString = 'solid white 1px';
+var playerStatistics = document.getElementsByTagName('TABLE')[4];
+var playerStatistics2 = document.getElementsByTagName('TABLE')[5];
 var offsetsHorizontal = new Array(0, 0); // Linien in gesamter Breite zeichnen
 var offsetsVertical = new Array(1, 2); // 1 Titel-Zeile und die 2 neuen Zeilen auslassen
 // Die einfach zu berechnenden Spalten als Array
@@ -505,8 +503,8 @@ function drawHorizontalLine(table, rowIdx, offsets) {
 
 // Wandelt einen String in eine Zahl um.
 // Prozentzahlen-Strings werden als Zahl interpretiert (d.h. "100%" -> 1).
-// Ganze Zahlen mit Tausenderpunkten werden erkannt, wenn sie mit "." gefolgt von 3 Ziffern enden.
-// Dezimalzahlen werden erkannt, wenn sie mit "." gefolgt von beliebig vielen Ziffern enden.
+// Ganze Zahlen mit Tausenderpunkten werden erkannt, wenn sie mit '.' gefolgt von 3 Ziffern enden.
+// Dezimalzahlen werden erkannt, wenn sie mit '.' gefolgt von beliebig vielen Ziffern enden.
 // Da zuerst auf ganze Zahlen geprueft wird, koennen Dezimalzahlen nicht 3 Nachkommaziffern haben.
 function stringToNumber(string) {
     // parseXXX interpretiert einen Punkt immer als Dezimaltrennzeichen
@@ -515,7 +513,7 @@ function stringToNumber(string) {
     // Buchstaben und Whitespaces entfernen
     string = string.replace(/[\sa-zA-Z]/g, "");
     // Auf % pruefen und % entfernen
-    if (string.lastIndexOf("%") !== -1) {
+    if (string.lastIndexOf('%') !== -1) {
         percent = true;
         string = string.replace(/%/g, "");
     }
@@ -547,7 +545,7 @@ function stringToNumber(string) {
 // width: Breite des Icons in Pixel
 // return Die IMG-Resource, die asynchron gefuellt wird
 function addIcon(node, iconName, altText = iconName, height = 32, width = height) {
-    const __IMG = document.createElement('img');
+    const __IMG = document.createElement('IMG');
 
     GM.getResourceUrl(iconName).then(src => {
             //console.log(`Got icon ${iconName}`);
@@ -557,7 +555,7 @@ function addIcon(node, iconName, altText = iconName, height = 32, width = height
             __IMG.width = width;
             node.appendChild(__IMG);
         }).catch(error => {
-            //console.error(`Failed to load icon ${iconName}:`, error);
+            console.error(`Failed to load icon ${iconName}:`, error);
 
             node.innerHTML = node.innerHTML + altText;
         });
