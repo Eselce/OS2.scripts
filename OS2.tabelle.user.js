@@ -152,8 +152,8 @@ const __OPTCONFIG = {
                    'ValType'   : 'Number',
                    'FreeValue' : true,
                    'SelValue'  : false,
-                   'Choice'    : [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19 ],
-                   'Default'   : 12,
+                   'Choice'    : [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25 ],
+                   'Default'   : 19,
                    'Action'    : __OPTACTION.NXT,
                    'Label'     : "Saison: $",
                    'Hotkey'    : 'S',
@@ -4541,7 +4541,8 @@ function initFairplayData(data, laender) {
                          14 : [  191,  466, 1352 ],
                          15 : [  346, 1756,  754 ],
                          16 : [  927, 1608, 1466 ],
-                         17 : [  266,  346,  693 ]
+                         17 : [  266,  346,  693 ],
+                         18 : [ 1501, 1917,  980,   39 ]
                      };
 
     for (let saison in __FPDATA) {
