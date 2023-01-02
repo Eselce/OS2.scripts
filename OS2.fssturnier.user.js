@@ -2,7 +2,7 @@
 // @name         OS2.fssturnier
 // @namespace    http://os.ongapo.com/
 // @version      0.10+WE+
-// @copyright    2017
+// @copyright    2017+
 // @author       Sven Loges (SLC)
 // @description  Script zum offiziellen FSS-Turnier fuer Online Soccer 2.0
 // @include      /^https?://(www\.)?(os\.ongapo\.com|online-soccer\.eu|os-zeitungen\.com)/haupt\.php(\?changetosecond=\w+(&\w+=?[+\w]+)*)?(#\w+)?$/
@@ -3562,7 +3562,7 @@ const __LOG = {
 
 __LOG.init(window, __LOGLEVEL);
 
-// Kompatibilitaetsfunktion zur Ermittlung des Namens einer Funktion (falle <Function>.name nicht vorhanden ist)
+// Kompatibilitaetsfunktion zur Ermittlung des Namens einer Funktion (falls <Function>.name nicht vorhanden ist)
 if (Function.prototype.name === undefined) {
     Object.defineProperty(Function.prototype, 'name', {
             get : function() {
@@ -4741,9 +4741,9 @@ function replaceArraySimple(key, value) {
 // return Fuer Arrays eine kompakte Darstellung, sonst derselbe Wert
 function replaceArray(key, value) {
     if (Array.isArray(value)) {
-        __RET = value.map(function(element) {
-                              return safeStringify(element, replaceArray, 0);
-                          });
+        const __RET = value.map(function(element) {
+                                    return safeStringify(element, replaceArray, 0);
+                                });
 
         return __RET;
     }
@@ -7508,6 +7508,9 @@ function procOSFSSTurnier() {
                 markTeam(__TABLE, __OPTSET, __MYTEAM.Team, __GEGNERNAME);
             });
     }
+
+    // Promise fuer alle Faelle ohne Rueckgabewert...
+    return Promise.resolve();
 }
 
 (() => {
