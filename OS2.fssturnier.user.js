@@ -3571,6 +3571,62 @@ if (Function.prototype.name === undefined) {
         });
 }
 
+// Fuehrt eine Map-Function auf ein Object aus und liefert ein neues Objekt zurueck.
+// Zusaetzlich kann die Auswahl der Elemente per Filter eingeschraenkt werden sowie
+// das Ergebnis sortiert (Default nach Wert, aber auch nach Schluessel).
+// obj: Das Object, das gemappt wird
+// mapFun: Eine Mapping-Funktion (value [, key [, index [, array]]])
+// - value: Wert
+// - key: Schluessel
+// - index: lfd. Nummer des Eintrags
+// - array: entries() des Objekts obj
+// | Alternativ Ein zu setzender Wert (keine Funktion)
+// thisArg: Wert, der als this verwendet wird, wenn mapFun, filterFun und sortFun ausgeführt werden (Default: obj)
+// filterFun: Eine Filter-Funktion auf (value [, key [, index [, array]]]) (Default: alle Elemente)
+// - value: Wert
+// - key: Schluessel
+// - index: lfd. Nummer des Eintrags
+// - array: entries() des Objekts obj
+// | Alternativ undefined, null: alle Elemente
+// | Alternativ Ein (schwach "==") zu vergleichender Wert (keine Funktion)
+// sortFun: Eine Sortier-Funktion auf (value1, value2 [, key1, key2])
+// - value1: Erster Wert
+// - value2: Zweiter Wert
+// - key1: Erster Schluessel
+// - key2: Zweiter Schluessel
+// | Alternativ undefined, false: unsortiert
+// | Alternativ true: Normale Sortierung anhand der UTF-16 Codepoints
+// return Ein neues Object mit gemappten Werten
+Object.map = function(obj, mapFun, thisArg, filterFun, sortFun) {
+    if (! obj) {
+        __LOG[4]("Object.map():", "Keine Aktion bei leerem Objekt", obj);
+
+        return obj;
+    } else if ((typeof obj) === 'object') {
+        const __THIS = (thisArg || obj);
+        const __MAPFUN = (((typeof mapFun) === 'function')
+                          ? (([key, value], index) => [key, mapFun.call(__THIS, value, key, index, __FILTERARR)])
+                          : (([key, value]) => [key, mapFun]));
+        const __FILTERFUN = ((filterFun == undefined)
+                             ? (element => true)
+                             : (((typeof filterFun) === 'function')
+                                ? (([key, value], index) => [key, filterFun.call(__THIS, value, key, index, __ARR)])
+                                : (([key, value]) => (value == filterFun))));
+        const __SORTFUN = ((sortFun === true)
+                           ? undefined
+                           : (([key1, value1], [key2, value2]) => sortFun.call(__THIS, value1, value2, key1, key2)));
+        const __ARR = Object.entries(obj);
+        const __FILTERARR = __ARR.filter(__FILTERFUN);  // [, __THIS] wird bereits erledigt
+        const __MAPPEDARR = __FILTERARR.map(__MAPFUN);  // [, __THIS] wird bereits erledigt
+
+        return Object.fromEntries(((sortFun) ? __MAPPEDARR.sort(__SORTFUN) : __MAPPEDARR));
+    } else {
+        __LOG[1]("Object.map():", "Illegales Objekt erhalten", obj);
+
+        return obj;
+    }
+}
+
 // Ergaenzung fuer Strings: Links oder rechts auffuellen nach Vorlage
 // padStr: Vorlage, z.B. "00" fuer zweistellige Zahlen
 // padLeft: true = rechtsbuendig, false = linksbuendig
@@ -4251,6 +4307,147 @@ Class.define(ObjRef, Directory, {
                 });
 
 // ==================== Ende Abschnitt fuer Klasse ObjRef ====================
+
+// ==================== Abschnitt fuer Klasse Options ====================
+
+// Basisklasse fuer Optionen
+function Options(optConfig, optSetLabel) {
+    'use strict';
+
+    this.setConst('config', (optConfig || { }), false);
+    this.setConst('setLabel', (optSetLabel || '__OPTSET'), false);
+}
+
+Class.define(Options, Object, {
+                    'checkKey' : function(key) {
+                        // Hier kann man Keys 'unsichtbar' machen...
+                        return true;
+                    },
+                    'toString' : function() {
+                        let retStr = this.setLabel + " = {\n";
+
+                        for (const [ __KEY, __OPT ] of Object.entries(this)) {
+                            if (this.checkKey(__KEY)) {
+                                const __CONFIG = getOptConfig(__OPT);
+                                const __NAME = getOptName(__OPT);
+                                const __VAL = getOptValue(__OPT);
+                                const __OUT = [
+                                                  getValStr(__VAL, false, true, true),
+                                                  getValStr(__KEY, true),
+                                                  getValStr(__NAME, true),
+                                                  getValStr(__CONFIG.FormLabel),
+                                                  getValStr(__CONFIG.Default, false, true, true)
+                                    ];
+
+                                retStr += '\t' + __OUT.join('\t') + '\n';
+                            }
+                        }
+
+                        retStr += "}";
+
+                        return retStr;
+                    }
+                });
+
+//
+// Hilfsfunktionen, die von Options.toString() genutzt werden
+//
+
+function getClass(obj) {
+    if (obj != undefined) {
+        if (typeof obj === 'object') {
+            if (obj.getClass) {
+                return obj.getClass();
+            }
+        }
+    }
+
+    return undefined;
+}
+
+function getClassName(obj) {
+    const __CLASS = getClass(obj);
+
+    return ((__CLASS ? __CLASS.className : undefined));  // __CLASS.getName() problematisch?
+}
+
+function getObjInfo(obj, keyStrings, longForm, stepIn) {
+    const __TYPEOF = typeof obj;
+    const __VALUEOF = Object.valueOf(obj);
+    const __LENGTH = ((obj != undefined) ? ((__TYPEOF === 'object') ? Object.entries(obj) : obj).length : obj);
+    const __STRDELIM1 = (keyStrings ? "'" : '"');
+    const __STRDELIM2 = (keyStrings ? "'" : '"');
+    const __NUMDELIM1 = (keyStrings ? "" : '<');
+    const __NUMDELIM2 = (keyStrings ? "" : '>');
+    const __SPACE = (keyStrings ? "" : ' ');
+    const __ARRDELIM = ',' + __SPACE;
+    const __ARRDELIM1 = '[';
+    const __ARRDELIM2 = ']';
+    const __OBJSETTER = __SPACE + ':' + __SPACE;
+    const __OBJDELIM = ',' + __SPACE;
+    const __OBJDELIM1 = '{';
+    const __OBJDELIM2 = '}';
+    const __LENSTR = ((__LENGTH !== undefined) ? __ARRDELIM1 + __LENGTH + __ARRDELIM2 : "")
+    const __VALUESTR = String(obj);
+    let typeStr = __TYPEOF;
+    let valueStr = __VALUESTR;
+
+    switch (__TYPEOF) {
+    case 'undefined' : break;
+    case 'string'    : typeStr = 'String';
+                       valueStr = __STRDELIM1 + valueStr + __STRDELIM2;
+                       break;
+    case 'boolean'   : typeStr = 'Boolean';
+                       break;
+    case 'number'    : if (Number.isInteger(obj)) {
+                           typeStr = 'Integer';
+                       } else {
+                           typeStr = 'Number';
+                           valueStr = __NUMDELIM1 + valueStr + __NUMDELIM2;
+                       }
+                       break;
+    case 'function'  : break;
+    case 'object'    : if (Array.isArray(obj)) {
+                           const __VALSTR = (__LENGTH ? obj.map(item => getValStr(item, false, stepIn, longForm, stepIn)).join(__ARRDELIM) : "");
+
+                           typeStr = 'Array';
+                           valueStr = __ARRDELIM1 + (__LENGTH ? __SPACE + __VALSTR + __SPACE : "") + __ARRDELIM2;
+                       } else {
+                           const __CLASS = getClass(obj);
+                           const __CLASSNAME = (__CLASS ? getClassName(obj) : "");
+                           const __VALSTR = (__LENGTH ? Object.values(Object.map(obj, (value, key) => (getValStr(key, true) + __OBJSETTER
+                                            + getValStr(value, false, stepIn, longForm, stepIn)))).join(__OBJDELIM) : "");
+
+                           typeStr = (__CLASSNAME ? __CLASSNAME : typeStr);
+                           valueStr = (__CLASSNAME ? __CLASSNAME + __SPACE : "") + __OBJDELIM1 + (__LENGTH ? __SPACE + __VALSTR + __SPACE : "") + __OBJDELIM2;
+                       }
+    default :          break;
+    }
+
+    if (obj == undefined) {
+        if (obj === undefined) {  // sic!
+            valueStr = "";
+        } else {  // null o.ä.
+            valueStr = __VALUESTR;
+        }
+    }
+
+    return [
+               typeStr + (longForm ? __LENSTR : ""),
+               valueStr,
+               __TYPEOF,
+               __VALUEOF,
+               __LENGTH
+           ];
+}
+
+function getValStr(obj, keyStrings, showType, showLen, stepIn) {
+    const [ __TYPESTR, __VALUESTR ] = getObjInfo(obj, keyStrings, showLen, stepIn);
+
+    return (showType ? __TYPESTR + ' ' : "") + __VALUESTR;
+}
+
+// ==================== Ende Abschnitt fuer Klasse Options ====================
 
 // ==================== Abschnitt fuer diverse Utilities ====================
 
@@ -5390,7 +5587,7 @@ function initOptions(optConfig, optSet = undefined, preInit = undefined) {
     let value;
 
     if (optSet === undefined) {
-        optSet = { };
+        optSet = new Options();
     }
 
     for (let opt in optConfig) {
@@ -6574,7 +6771,7 @@ Class.define(Verein, Team, {
 // ==================== Spezialisierter Abschnitt fuer Optionen ====================
 
 // Gesetzte Optionen (wird von initOptions() angelegt und von loadOptions() gefuellt):
-const __OPTSET = { };
+const __OPTSET = new Options(__OPTCONFIG, '__OPTSET');
 
 // Teamparameter fuer getrennte Speicherung der Optionen fuer Erst- und Zweitteam...
 const __TEAMCLASS = new TeamClassification();
@@ -7313,6 +7510,7 @@ function procOSFSSTurnier() {
         }
     })().then(rc => {
             __LOG[1]('SCRIPT END', __DBMOD.Name, '(' + rc + ')');
+            __LOG[3](String(__OPTSET));
         })
 })();
 
