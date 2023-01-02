@@ -4701,6 +4701,28 @@ function serializer(replacer = undefined, cycleReplacer = undefined) {
         };
 }
 
+function padStartFun(targetLength = 4, padString = ' ') {
+    return (value => String(value).padStart(targetLength, padString));
+}
+
+function padEndFun(targetLength = 4, padString = ' ') {
+    return (value => String(value).padEnd(targetLength, padString));
+}
+
+function replaceArrayFun(formatFun, space = ' ') {
+    return function(key, value) {
+               const __VALUE = getValue(this[""], value);
+
+               if (Array.isArray(__VALUE)) {
+                   const __RET = (formatFun ? __VALUE.map((element, index, arr) => formatFun(element, index, arr)) : __VALUE);
+
+                   return '[' + space + __RET.join(',' + space) + space + ']';
+               }
+
+               return value;
+           };
+}
+
 // Replacer fuer JSON.stringify() oder safeStringify(), der Arrays kompakter darstellt
 // key: Der uebergebene Schluessel
 // value: Der uebergebene Wert
@@ -6480,6 +6502,7 @@ function getOptionTextarea(opt) {
     const __ELEMENTTEXT = '<textarea name="' + __NAME + '" id="' + __NAME + '" cols="' + __CONFIG.Cols +
                            '" rows="' + __CONFIG.Rows + '"' + __ONSUBMIT + __ACTION + '>' +
                            safeStringify(__VALUE, __CONFIG.Replace, __CONFIG.Space) + '</textarea>';
+    //if (__CONFIG.Replace) { __LOG[0]('TextArea', getOptName(opt), typeof __VALUE, __ELEMENTTEXT); }
 
     return [ withTitle(__ELEMENTLABEL, __TITLE), __ELEMENTTEXT ];
 }
