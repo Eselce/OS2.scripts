@@ -55,7 +55,7 @@ const GM_info = {  // Mock GM_info data
         <DIV id="index-generator">
             <H3>Generator OS2-Benutzerscripts unter dem Greasemonkey AddOn</H3>
 
-            || <A onClick="__MAIN();return false;">index.html generieren</A> ||
+            || <A onClick="__MAIN(); return false;">index.html generieren</A> ||
         </DIV>
         <BR />
 
@@ -188,7 +188,7 @@ function getHeader() {
 								//	'&lt;INPUT type="hidden" name="scriptid" value="' + id + '" /&gt;' +
 									'&lt;INPUT type="submit" value="Installieren" /&gt;&lt;/FORM&gt;&lt;/TD&gt;';
 					colText1.push('&lt;IMG src="img/geschlossen.gif" style="cursor: help;" onclick=' + openclose + ' id="openclose_' + id + '" /&gt;\n' +
-									'&lt;A href="https://github.com/Eselce/GitTest/blob/master/misc/OS2/' + filename + '"&gt;' + name + '&lt;/A&gt;');
+									'&lt;A href="https://github.com/Eselce/OS2.scripts/blob/master/' + filename + '"&gt;' + name + '&lt;/A&gt;');
 					colText1.push(version);
 					colText1.push(desc);
 					colText1.push(author);
@@ -205,7 +205,7 @@ function getHeader() {
 					var colText2 = [];
 					colText2.push('&lt;PRE&gt;' + data.meta + '&lt;/PRE&gt;' + install);
 					tr = addRow(table, colText2);
-					tr.id = 'script_' + id;
+					tr.setAttribute('id', 'script_' + id);
 					tr.style.display = 'none';
 					tr.firstChild.setAttribute('colspan', 5);
 				}

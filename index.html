@@ -98,7 +98,7 @@
                                 //  '<INPUT type="hidden" name="scriptid" value="' + id + '" />' +
                                     '<INPUT type="submit" value="Installieren" /></FORM></TD>';
                     colText1.push('<IMG src="img/geschlossen.gif" style="cursor: help;" onclick=' + openclose + ' id="openclose_' + id + '" />\n' +
-                                    '<A href="https://github.com/Eselce/GitTest/blob/master/misc/OS2/' + filename + '">' + name + '</A>');
+                                    '<A href="https://github.com/Eselce/OS2.scripts/blob/master/' + filename + '">' + name + '</A>');
                     colText1.push(version);
                     colText1.push(desc);
                     colText1.push(author);
@@ -115,7 +115,7 @@
                     var colText2 = [];
                     colText2.push('<PRE>' + data.meta + '</PRE>' + install);
                     tr = addRow(table, colText2);
-                    tr.id = 'script_' + id;
+                    tr.setAttribute('id', 'script_' + id);
                     tr.style.display = 'none';
                     tr.firstChild.setAttribute('colspan', 5);
                 }
