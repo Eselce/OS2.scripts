@@ -11,7 +11,7 @@ var skills = getArrayPositionOfSkills(pos);
 
 for (var i = 0; i < skills.length; i++) {
     tds[skills[i]].style.fontWeight = 'bold';
-    tds[skills].style.color = '#80FFFF';
+    tds[skills[i]].style.color = '#80FFFF';
 }
 
 function getArrayPositionOfSkills(pos) {
