@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name OS2.spielbericht
 // @version 0.1
-// @description OS 2.0 - Ergänzt Summen- und Durchschnittswerte bei den Spielerstatistiken im Spielbericht
+// @description OS 2.0 - Ergaenzt Summen- und Durchschnittswerte bei den Spielerstatistiken im Spielbericht
 // @include http://os.ongapo.com/rep/saison/*
 // @include http://online-soccer.eu/rep/saison/*
 // @include http://www.online-soccer.eu/rep/saison/*
